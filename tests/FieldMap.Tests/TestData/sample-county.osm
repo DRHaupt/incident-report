@@ -1,0 +1,1199 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<osm version="0.6" generator="Field Map SampleRegion – FICTITIOUS SAMPLE DATA">
+  <!-- Sample County: entirely fictitious names and features for testing Field Map. Not real data. -->
+  <node id="1" lat="57.4000000" lon="-125.9093476" />
+  <node id="2" lat="57.4000000" lon="-125.9066768" />
+  <node id="3" lat="57.4000000" lon="-125.9040061" />
+  <node id="4" lat="57.4000000" lon="-125.9013354" />
+  <node id="5" lat="57.4000000" lon="-125.8986646" />
+  <node id="6" lat="57.4000000" lon="-125.8959939" />
+  <node id="7" lat="57.4000000" lon="-125.8933232" />
+  <node id="8" lat="57.4000000" lon="-125.8906524" />
+  <node id="9" lat="57.4014389" lon="-125.9093476" />
+  <node id="10" lat="57.4014389" lon="-125.9066768" />
+  <node id="11" lat="57.4014389" lon="-125.9040061" />
+  <node id="12" lat="57.4014389" lon="-125.9013354" />
+  <node id="13" lat="57.4014389" lon="-125.8986646" />
+  <node id="14" lat="57.4014389" lon="-125.8959939" />
+  <node id="15" lat="57.4014389" lon="-125.8933232" />
+  <node id="16" lat="57.4014389" lon="-125.8906524" />
+  <node id="17" lat="57.4028778" lon="-125.9093476" />
+  <node id="18" lat="57.4028778" lon="-125.9066768" />
+  <node id="19" lat="57.4028778" lon="-125.9040061" />
+  <node id="20" lat="57.4028778" lon="-125.9013354" />
+  <node id="21" lat="57.4028778" lon="-125.8986646" />
+  <node id="22" lat="57.4028778" lon="-125.8959939" />
+  <node id="23" lat="57.4028778" lon="-125.8933232" />
+  <node id="24" lat="57.4028778" lon="-125.8906524" />
+  <node id="25" lat="57.4043167" lon="-125.9093476" />
+  <node id="26" lat="57.4043167" lon="-125.9066768" />
+  <node id="27" lat="57.4043167" lon="-125.9040061" />
+  <node id="28" lat="57.4043167" lon="-125.9013354" />
+  <node id="29" lat="57.4043167" lon="-125.8986646" />
+  <node id="30" lat="57.4043167" lon="-125.8959939" />
+  <node id="31" lat="57.4043167" lon="-125.8933232" />
+  <node id="32" lat="57.4043167" lon="-125.8906524" />
+  <node id="33" lat="57.4057557" lon="-125.9093476" />
+  <node id="34" lat="57.4057557" lon="-125.9066768" />
+  <node id="35" lat="57.4057557" lon="-125.9040061" />
+  <node id="36" lat="57.4057557" lon="-125.9013354" />
+  <node id="37" lat="57.4057557" lon="-125.8986646" />
+  <node id="38" lat="57.4057557" lon="-125.8959939" />
+  <node id="39" lat="57.4057557" lon="-125.8933232" />
+  <node id="40" lat="57.4057557" lon="-125.8906524" />
+  <node id="41" lat="57.4071946" lon="-125.9093476" />
+  <node id="42" lat="57.4071946" lon="-125.9066768" />
+  <node id="43" lat="57.4071946" lon="-125.9040061" />
+  <node id="44" lat="57.4071946" lon="-125.9013354" />
+  <node id="45" lat="57.4071946" lon="-125.8986646" />
+  <node id="46" lat="57.4071946" lon="-125.8959939" />
+  <node id="47" lat="57.4071946" lon="-125.8933232" />
+  <node id="48" lat="57.4071946" lon="-125.8906524" />
+  <node id="49" lat="57.4086335" lon="-125.9093476" />
+  <node id="50" lat="57.4086335" lon="-125.9066768" />
+  <node id="51" lat="57.4086335" lon="-125.9040061" />
+  <node id="52" lat="57.4086335" lon="-125.9013354" />
+  <node id="53" lat="57.4086335" lon="-125.8986646" />
+  <node id="54" lat="57.4086335" lon="-125.8959939" />
+  <node id="55" lat="57.4086335" lon="-125.8933232" />
+  <node id="56" lat="57.4086335" lon="-125.8906524" />
+  <node id="57" lat="57.4100724" lon="-125.9093476" />
+  <node id="58" lat="57.4100724" lon="-125.9066768" />
+  <node id="59" lat="57.4100724" lon="-125.9040061" />
+  <node id="60" lat="57.4100724" lon="-125.9013354" />
+  <node id="61" lat="57.4100724" lon="-125.8986646" />
+  <node id="62" lat="57.4100724" lon="-125.8959939" />
+  <node id="63" lat="57.4100724" lon="-125.8933232" />
+  <node id="64" lat="57.4100724" lon="-125.8906524" />
+  <node id="81" lat="57.3964027" lon="-126.0001525" />
+  <node id="82" lat="57.3964027" lon="-125.9667683" />
+  <node id="83" lat="57.3964027" lon="-125.9333842" />
+  <node id="84" lat="57.3964027" lon="-125.9093476" />
+  <node id="85" lat="57.3964027" lon="-125.8986646" />
+  <node id="86" lat="57.3964027" lon="-125.8813049" />
+  <node id="87" lat="57.3964027" lon="-125.8599390" />
+  <node id="88" lat="57.3964027" lon="-125.8566006" />
+  <node id="89" lat="57.3964027" lon="-125.8332317" />
+  <node id="90" lat="57.3964027" lon="-125.7998475" />
+  <node id="94" lat="57.3962948" lon="-126.0001525">
+    <tag k="highway" v="milestone" />
+    <tag k="distance" v="100" />
+    <tag k="ref" v="901" />
+  </node>
+  <node id="95" lat="57.3962948" lon="-125.9834604">
+    <tag k="highway" v="milestone" />
+    <tag k="distance" v="101" />
+    <tag k="ref" v="901" />
+  </node>
+  <node id="96" lat="57.3962948" lon="-125.9667683">
+    <tag k="highway" v="milestone" />
+    <tag k="distance" v="102" />
+    <tag k="ref" v="901" />
+  </node>
+  <node id="97" lat="57.3962948" lon="-125.9500762">
+    <tag k="highway" v="milestone" />
+    <tag k="distance" v="103" />
+    <tag k="ref" v="901" />
+  </node>
+  <node id="98" lat="57.3962948" lon="-125.9333842">
+    <tag k="highway" v="milestone" />
+    <tag k="distance" v="104" />
+    <tag k="ref" v="901" />
+  </node>
+  <node id="99" lat="57.3962948" lon="-125.9166921">
+    <tag k="highway" v="milestone" />
+    <tag k="distance" v="105" />
+    <tag k="ref" v="901" />
+  </node>
+  <node id="100" lat="57.3962948" lon="-125.9000000">
+    <tag k="highway" v="milestone" />
+    <tag k="distance" v="106" />
+    <tag k="ref" v="901" />
+  </node>
+  <node id="101" lat="57.3962948" lon="-125.8833079">
+    <tag k="highway" v="milestone" />
+    <tag k="distance" v="107" />
+    <tag k="ref" v="901" />
+  </node>
+  <node id="102" lat="57.3962948" lon="-125.8666158">
+    <tag k="highway" v="milestone" />
+    <tag k="distance" v="108" />
+    <tag k="ref" v="901" />
+  </node>
+  <node id="103" lat="57.3962948" lon="-125.8499238">
+    <tag k="highway" v="milestone" />
+    <tag k="distance" v="109" />
+    <tag k="ref" v="901" />
+  </node>
+  <node id="104" lat="57.3962948" lon="-125.8332317">
+    <tag k="highway" v="milestone" />
+    <tag k="distance" v="110" />
+    <tag k="ref" v="901" />
+  </node>
+  <node id="105" lat="57.3962948" lon="-125.8165396">
+    <tag k="highway" v="milestone" />
+    <tag k="distance" v="111" />
+    <tag k="ref" v="901" />
+  </node>
+  <node id="106" lat="57.3962948" lon="-125.7998475">
+    <tag k="highway" v="milestone" />
+    <tag k="distance" v="112" />
+    <tag k="ref" v="901" />
+  </node>
+  <node id="107" lat="57.3963128" lon="-125.8981639">
+    <tag k="highway" v="motorway_junction" />
+    <tag k="ref" v="106" />
+    <tag k="name" v="Sampleton" />
+  </node>
+  <node id="108" lat="57.3982014" lon="-125.8986646">
+    <tag k="railway" v="level_crossing" />
+  </node>
+  <node id="109" lat="57.3982014" lon="-126.0001525" />
+  <node id="110" lat="57.3982014" lon="-125.9333842" />
+  <node id="111" lat="57.3982014" lon="-125.8666158" />
+  <node id="112" lat="57.3982014" lon="-125.7998475" />
+  <node id="115" lat="57.4098925" lon="-125.8599390" />
+  <node id="116" lat="57.4098925" lon="-125.8566006" />
+  <node id="117" lat="57.4053959" lon="-125.8332317" />
+  <node id="118" lat="57.4100724" lon="-125.8749619" />
+  <node id="122" lat="57.3991007" lon="-126.0001525">
+    <tag k="barrier" v="gate" />
+    <tag k="access" v="no" />
+    <tag k="emergency" v="yes" />
+    <tag k="note" v="Locked gate – key with fire department (SAMPLE)" />
+  </node>
+  <node id="123" lat="57.4134898" lon="-126.0001525" />
+  <node id="124" lat="57.4269796" lon="-125.9968140" />
+  <node id="125" lat="57.4377715" lon="-126.0001525" />
+  <node id="127" lat="57.4233823" lon="-126.0068293" />
+  <node id="128" lat="57.4233823" lon="-125.9901372" />
+  <node id="129" lat="57.4305769" lon="-125.9901372" />
+  <node id="130" lat="57.4305769" lon="-126.0068293" />
+  <node id="132" lat="57.4341742" lon="-125.9984833">
+    <tag k="hazard" v="rockfall" />
+    <tag k="name" v="Rockfall – Sample Creek bluffs" />
+  </node>
+  <node id="133" lat="57.4382211" lon="-126.0001525">
+    <tag k="amenity" v="shelter" />
+    <tag k="shelter_type" v="basic_hut" />
+    <tag k="name" v="Sample Creek Cabin (SAMPLE)" />
+  </node>
+  <node id="134" lat="57.3730204" lon="-125.8582698" />
+  <node id="135" lat="57.3820136" lon="-125.8572683" />
+  <node id="136" lat="57.3910068" lon="-125.8582698" />
+  <node id="137" lat="57.4000000" lon="-125.8572683" />
+  <node id="138" lat="57.4089932" lon="-125.8582698" />
+  <node id="139" lat="57.4179864" lon="-125.8572683" />
+  <node id="140" lat="57.4269796" lon="-125.8582698" />
+  <node id="142" lat="57.4134898" lon="-125.9317149" />
+  <node id="143" lat="57.4148864" lon="-125.9320562" />
+  <node id="144" lat="57.4161878" lon="-125.9330567" />
+  <node id="145" lat="57.4173053" lon="-125.9346483" />
+  <node id="146" lat="57.4181628" lon="-125.9367226" />
+  <node id="147" lat="57.4187019" lon="-125.9391381" />
+  <node id="148" lat="57.4188857" lon="-125.9417302" />
+  <node id="149" lat="57.4187019" lon="-125.9443223" />
+  <node id="150" lat="57.4181628" lon="-125.9467378" />
+  <node id="151" lat="57.4173053" lon="-125.9488120" />
+  <node id="152" lat="57.4161878" lon="-125.9504037" />
+  <node id="153" lat="57.4148864" lon="-125.9514042" />
+  <node id="154" lat="57.4134898" lon="-125.9517454" />
+  <node id="155" lat="57.4120932" lon="-125.9514042" />
+  <node id="156" lat="57.4107918" lon="-125.9504037" />
+  <node id="157" lat="57.4096743" lon="-125.9488120" />
+  <node id="158" lat="57.4088168" lon="-125.9467378" />
+  <node id="159" lat="57.4082777" lon="-125.9443223" />
+  <node id="160" lat="57.4080939" lon="-125.9417302" />
+  <node id="161" lat="57.4082777" lon="-125.9391381" />
+  <node id="162" lat="57.4088168" lon="-125.9367226" />
+  <node id="163" lat="57.4096743" lon="-125.9346483" />
+  <node id="164" lat="57.4107918" lon="-125.9330567" />
+  <node id="165" lat="57.4120932" lon="-125.9320562" />
+  <node id="167" lat="57.4071946" lon="-125.9066768" />
+  <node id="168" lat="57.4071946" lon="-125.9040061" />
+  <node id="169" lat="57.4086335" lon="-125.9040061" />
+  <node id="170" lat="57.4086335" lon="-125.9066768" />
+  <node id="172" lat="57.3996403" lon="-125.9100152" />
+  <node id="173" lat="57.3996403" lon="-125.8899848" />
+  <node id="174" lat="57.4104321" lon="-125.8899848" />
+  <node id="175" lat="57.4104321" lon="-125.9100152" />
+  <node id="177" lat="57.4179864" lon="-125.8799695" />
+  <node id="178" lat="57.4179864" lon="-125.8666158" />
+  <node id="179" lat="57.4233823" lon="-125.8799695" />
+  <node id="180" lat="57.4233823" lon="-125.8666158" />
+  <node id="182" lat="57.4161878" lon="-125.8732927" />
+  <node id="184" lat="57.4202347" lon="-125.8712896" />
+  <node id="185" lat="57.4209978" lon="-125.8718763" />
+  <node id="186" lat="57.4213139" lon="-125.8732927" />
+  <node id="187" lat="57.4209978" lon="-125.8747090" />
+  <node id="188" lat="57.4202347" lon="-125.8752957" />
+  <node id="189" lat="57.4194716" lon="-125.8747090" />
+  <node id="190" lat="57.4191555" lon="-125.8732927" />
+  <node id="191" lat="57.4194716" lon="-125.8718763" />
+  <node id="194" lat="57.4050362" lon="-125.9000000">
+    <tag k="place" v="town" />
+    <tag k="name" v="Sampleton" />
+    <tag k="population" v="4200" />
+  </node>
+  <node id="195" lat="57.4359728" lon="-126.0001525">
+    <tag k="place" v="hamlet" />
+    <tag k="name" v="North Sample" />
+  </node>
+  <node id="196" lat="57.4197850" lon="-125.9417302">
+    <tag k="place" v="locality" />
+    <tag k="name" v="Example Lake" />
+  </node>
+  <node id="197" lat="57.4093529" lon="-125.9053415">
+    <tag k="amenity" v="hospital" />
+    <tag k="emergency" v="yes" />
+    <tag k="name" v="Sampleton General Hospital (SAMPLE)" />
+    <tag k="addr:housenumber" v="650" />
+    <tag k="addr:street" v="Birch Street" />
+    <tag k="phone" v="+1-555-0100" />
+  </node>
+  <node id="198" lat="57.4097127" lon="-125.9046738">
+    <tag k="aeroway" v="helipad" />
+    <tag k="name" v="Sampleton General Helipad (SAMPLE)" />
+  </node>
+  <node id="199" lat="57.4034174" lon="-125.8896509">
+    <tag k="amenity" v="hospital" />
+    <tag k="emergency" v="no" />
+    <tag k="name" v="Sample Valley Clinic Hospital (SAMPLE)" />
+  </node>
+  <node id="200" lat="57.4015288" lon="-125.8958270" />
+  <node id="201" lat="57.4015288" lon="-125.8934901" />
+  <node id="202" lat="57.4027879" lon="-125.8934901" />
+  <node id="203" lat="57.4027879" lon="-125.8958270" />
+  <node id="205" lat="57.4050362" lon="-125.9026707">
+    <tag k="amenity" v="school" />
+    <tag k="name" v="Sampleton Secondary School (SAMPLE)" />
+  </node>
+  <node id="206" lat="57.4044966" lon="-125.8981639">
+    <tag k="amenity" v="fire_station" />
+    <tag k="name" v="Sampleton Fire Hall No. 1 (SAMPLE)" />
+  </node>
+  <node id="207" lat="57.4045865" lon="-125.9006677">
+    <tag k="amenity" v="police" />
+    <tag k="name" v="Sampleton Police Office (SAMPLE)" />
+  </node>
+  <node id="208" lat="57.4060254" lon="-125.8954931">
+    <tag k="emergency" v="ambulance_station" />
+    <tag k="name" v="Sampleton Ambulance Station (SAMPLE)" />
+  </node>
+  <node id="209" lat="57.3919061" lon="-125.9500762">
+    <tag k="aeroway" v="aerodrome" />
+    <tag k="name" v="Sampleton Airstrip (SAMPLE)" />
+    <tag k="icao" v="ZZZZ" />
+  </node>
+  <node id="210" lat="57.4069248" lon="-125.8979970">
+    <tag k="amenity" v="pharmacy" />
+    <tag k="name" v="Sample Drugs (SAMPLE)" />
+  </node>
+  <node id="211" lat="57.3967624" lon="-125.8978300">
+    <tag k="amenity" v="fuel" />
+    <tag k="name" v="Highway Fuel (SAMPLE)" />
+    <tag k="fuel:diesel" v="yes" />
+    <tag k="hgv" v="yes" />
+  </node>
+  <node id="212" lat="57.4002698" lon="-125.8926555">
+    <tag k="amenity" v="fuel" />
+    <tag k="name" v="Town Gas (SAMPLE)" />
+  </node>
+  <node id="213" lat="57.3960430" lon="-125.9667683">
+    <tag k="highway" v="rest_area" />
+    <tag k="name" v="Sample Valley Rest Area (SAMPLE)" />
+  </node>
+  <node id="214" lat="57.3959531" lon="-125.9669352">
+    <tag k="amenity" v="toilets" />
+  </node>
+  <node id="215" lat="57.3961329" lon="-125.8165396">
+    <tag k="parking" v="layby" />
+    <tag k="amenity" v="parking" />
+    <tag k="name" v="Brake check (SAMPLE)" />
+  </node>
+  <node id="216" lat="57.4061154" lon="-125.8991654">
+    <tag k="amenity" v="social_facility" />
+    <tag k="social_facility" v="shelter" />
+    <tag k="name" v="Sampleton Community Hall – reception centre (SAMPLE)" />
+  </node>
+  <node id="217" lat="57.4104321" lon="-125.9000000">
+    <tag k="emergency" v="assembly_point" />
+    <tag k="name" v="Sample Park muster point (SAMPLE)" />
+  </node>
+  <node id="218" lat="57.4094529" lon="-125.9053415">
+    <tag k="emergency" v="defibrillator" />
+    <tag k="name" v="Hospital main entrance AED" />
+    <tag k="defibrillator:location" v="Inside main entrance, left wall" />
+    <tag k="check_date" v="2026-03-14" />
+    <tag k="access" v="yes" />
+    <tag k="opening_hours" v="24/7" />
+  </node>
+  <node id="219" lat="57.4017986" lon="-125.8949924">
+    <tag k="emergency" v="defibrillator" />
+    <tag k="name" v="Elementary school AED" />
+    <tag k="defibrillator:location" v="Gym lobby" />
+    <tag k="check_date" v="2025-09-02" />
+    <tag k="opening_hours" v="Mo-Fr 08:00-16:00" />
+  </node>
+  <node id="220" lat="57.4060254" lon="-125.8989985">
+    <tag k="emergency" v="defibrillator" />
+    <tag k="defibrillator:location" v="Community hall kitchen" />
+    <tag k="access" v="customers" />
+  </node>
+  <node id="221" lat="57.3959081" lon="-125.9667683">
+    <tag k="emergency" v="defibrillator" />
+    <tag k="name" v="Rest area AED" />
+    <tag k="check_date" v="2024-06-20" />
+    <tag k="indoor" v="no" />
+  </node>
+  <node id="222" lat="57.4006295" lon="-125.8984643">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-100" />
+  </node>
+  <node id="223" lat="57.4020684" lon="-125.8984643">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-101" />
+  </node>
+  <node id="224" lat="57.4035073" lon="-125.8984643">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-102" />
+  </node>
+  <node id="225" lat="57.4049463" lon="-125.8984643">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-103" />
+  </node>
+  <node id="226" lat="57.4063852" lon="-125.8984643">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-104" />
+  </node>
+  <node id="227" lat="57.4078241" lon="-125.8984643">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-105" />
+  </node>
+  <node id="228" lat="57.4092630" lon="-125.8984643">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-106" />
+  </node>
+  <node id="229" lat="57.4107019" lon="-125.8984643">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-107" />
+  </node>
+  <node id="230" lat="57.3998921" lon="-125.9081791">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-200" />
+  </node>
+  <node id="231" lat="57.3998921" lon="-125.9055084">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-201" />
+  </node>
+  <node id="232" lat="57.3998921" lon="-125.9028377">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-202" />
+  </node>
+  <node id="233" lat="57.3998921" lon="-125.9001669">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-203" />
+  </node>
+  <node id="234" lat="57.3998921" lon="-125.8974962">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-204" />
+  </node>
+  <node id="235" lat="57.3998921" lon="-125.8948255">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-205" />
+  </node>
+  <node id="236" lat="57.3998921" lon="-125.8921547">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-206" />
+  </node>
+  <node id="237" lat="57.3998921" lon="-125.8894840">
+    <tag k="emergency" v="fire_hydrant" />
+    <tag k="fire_hydrant:type" v="pillar" />
+    <tag k="ref" v="H-207" />
+  </node>
+  <node id="238" lat="57.4017986" lon="-125.9998186">
+    <tag k="emergency" v="water_tank" />
+    <tag k="water_tank:volume" v="45000" />
+    <tag k="name" v="FSR water tank (SAMPLE)" />
+  </node>
+  <node id="239" lat="57.4001349" lon="-125.8989651">
+    <tag k="addr:housenumber" v="100" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="240" lat="57.4002968" lon="-125.8983642">
+    <tag k="addr:housenumber" v="110" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="241" lat="57.4004587" lon="-125.8989651">
+    <tag k="addr:housenumber" v="120" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="242" lat="57.4006205" lon="-125.8983642">
+    <tag k="addr:housenumber" v="130" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="243" lat="57.4007824" lon="-125.8989651">
+    <tag k="addr:housenumber" v="140" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="244" lat="57.4009443" lon="-125.8983642">
+    <tag k="addr:housenumber" v="150" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="245" lat="57.4011062" lon="-125.8989651">
+    <tag k="addr:housenumber" v="160" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="246" lat="57.4012680" lon="-125.8983642">
+    <tag k="addr:housenumber" v="170" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="247" lat="57.4015738" lon="-125.8989651">
+    <tag k="addr:housenumber" v="200" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="248" lat="57.4017357" lon="-125.8983642">
+    <tag k="addr:housenumber" v="210" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="249" lat="57.4018976" lon="-125.8989651">
+    <tag k="addr:housenumber" v="220" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="250" lat="57.4020594" lon="-125.8983642">
+    <tag k="addr:housenumber" v="230" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="251" lat="57.4022213" lon="-125.8989651">
+    <tag k="addr:housenumber" v="240" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="252" lat="57.4023832" lon="-125.8983642">
+    <tag k="addr:housenumber" v="250" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="253" lat="57.4025451" lon="-125.8989651">
+    <tag k="addr:housenumber" v="260" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="254" lat="57.4027070" lon="-125.8983642">
+    <tag k="addr:housenumber" v="270" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="255" lat="57.4030127" lon="-125.8989651">
+    <tag k="addr:housenumber" v="300" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="256" lat="57.4031746" lon="-125.8983642">
+    <tag k="addr:housenumber" v="310" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="257" lat="57.4033365" lon="-125.8989651">
+    <tag k="addr:housenumber" v="320" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="258" lat="57.4034984" lon="-125.8983642">
+    <tag k="addr:housenumber" v="330" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="259" lat="57.4036602" lon="-125.8989651">
+    <tag k="addr:housenumber" v="340" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="260" lat="57.4038221" lon="-125.8983642">
+    <tag k="addr:housenumber" v="350" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="261" lat="57.4039840" lon="-125.8989651">
+    <tag k="addr:housenumber" v="360" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="262" lat="57.4041459" lon="-125.8983642">
+    <tag k="addr:housenumber" v="370" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="263" lat="57.4044516" lon="-125.8989651">
+    <tag k="addr:housenumber" v="400" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="264" lat="57.4046135" lon="-125.8983642">
+    <tag k="addr:housenumber" v="410" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="265" lat="57.4047754" lon="-125.8989651">
+    <tag k="addr:housenumber" v="420" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="266" lat="57.4049373" lon="-125.8983642">
+    <tag k="addr:housenumber" v="430" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="267" lat="57.4050991" lon="-125.8989651">
+    <tag k="addr:housenumber" v="440" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="268" lat="57.4052610" lon="-125.8983642">
+    <tag k="addr:housenumber" v="450" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="269" lat="57.4054229" lon="-125.8989651">
+    <tag k="addr:housenumber" v="460" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="270" lat="57.4055848" lon="-125.8983642">
+    <tag k="addr:housenumber" v="470" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="271" lat="57.4058905" lon="-125.8989651">
+    <tag k="addr:housenumber" v="500" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="272" lat="57.4060524" lon="-125.8983642">
+    <tag k="addr:housenumber" v="510" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="273" lat="57.4062143" lon="-125.8989651">
+    <tag k="addr:housenumber" v="520" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="274" lat="57.4063762" lon="-125.8983642">
+    <tag k="addr:housenumber" v="530" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="275" lat="57.4065381" lon="-125.8989651">
+    <tag k="addr:housenumber" v="540" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="276" lat="57.4066999" lon="-125.8983642">
+    <tag k="addr:housenumber" v="550" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="277" lat="57.4068618" lon="-125.8989651">
+    <tag k="addr:housenumber" v="560" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="278" lat="57.4070237" lon="-125.8983642">
+    <tag k="addr:housenumber" v="570" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="279" lat="57.4073295" lon="-125.8989651">
+    <tag k="addr:housenumber" v="600" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="280" lat="57.4074913" lon="-125.8983642">
+    <tag k="addr:housenumber" v="610" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="281" lat="57.4076532" lon="-125.8989651">
+    <tag k="addr:housenumber" v="620" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="282" lat="57.4078151" lon="-125.8983642">
+    <tag k="addr:housenumber" v="630" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="283" lat="57.4079770" lon="-125.8989651">
+    <tag k="addr:housenumber" v="640" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="284" lat="57.4081388" lon="-125.8983642">
+    <tag k="addr:housenumber" v="650" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="285" lat="57.4083007" lon="-125.8989651">
+    <tag k="addr:housenumber" v="660" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="286" lat="57.4084626" lon="-125.8983642">
+    <tag k="addr:housenumber" v="670" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="287" lat="57.4087684" lon="-125.8989651">
+    <tag k="addr:housenumber" v="700" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="288" lat="57.4089303" lon="-125.8983642">
+    <tag k="addr:housenumber" v="710" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="289" lat="57.4090921" lon="-125.8989651">
+    <tag k="addr:housenumber" v="720" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="290" lat="57.4092540" lon="-125.8983642">
+    <tag k="addr:housenumber" v="730" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="291" lat="57.4094159" lon="-125.8989651">
+    <tag k="addr:housenumber" v="740" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="292" lat="57.4095778" lon="-125.8983642">
+    <tag k="addr:housenumber" v="750" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="293" lat="57.4097396" lon="-125.8989651">
+    <tag k="addr:housenumber" v="760" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="294" lat="57.4099015" lon="-125.8983642">
+    <tag k="addr:housenumber" v="770" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="295" lat="57.4102073" lon="-125.8989651">
+    <tag k="addr:housenumber" v="800" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="296" lat="57.4103692" lon="-125.8983642">
+    <tag k="addr:housenumber" v="810" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="297" lat="57.4105310" lon="-125.8989651">
+    <tag k="addr:housenumber" v="820" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="298" lat="57.4106929" lon="-125.8983642">
+    <tag k="addr:housenumber" v="830" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="299" lat="57.4108548" lon="-125.8989651">
+    <tag k="addr:housenumber" v="840" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="300" lat="57.4110167" lon="-125.8983642">
+    <tag k="addr:housenumber" v="850" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="301" lat="57.4111786" lon="-125.8989651">
+    <tag k="addr:housenumber" v="860" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="302" lat="57.4113404" lon="-125.8983642">
+    <tag k="addr:housenumber" v="870" />
+    <tag k="addr:street" v="Main Street" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="303" lat="57.4001619" lon="-125.9086799">
+    <tag k="addr:housenumber" v="10" />
+    <tag k="addr:street" v="1st Avenue" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="304" lat="57.4001619" lon="-125.9060091">
+    <tag k="addr:housenumber" v="30" />
+    <tag k="addr:street" v="1st Avenue" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="305" lat="57.4001619" lon="-125.9033384">
+    <tag k="addr:housenumber" v="50" />
+    <tag k="addr:street" v="1st Avenue" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="306" lat="57.4001619" lon="-125.9006677">
+    <tag k="addr:housenumber" v="70" />
+    <tag k="addr:street" v="1st Avenue" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="307" lat="57.4001619" lon="-125.8979970">
+    <tag k="addr:housenumber" v="90" />
+    <tag k="addr:street" v="1st Avenue" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="308" lat="57.4001619" lon="-125.8953262">
+    <tag k="addr:housenumber" v="110" />
+    <tag k="addr:street" v="1st Avenue" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="309" lat="57.4001619" lon="-125.8926555">
+    <tag k="addr:housenumber" v="130" />
+    <tag k="addr:street" v="1st Avenue" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <node id="310" lat="57.4001619" lon="-125.8899848">
+    <tag k="addr:housenumber" v="150" />
+    <tag k="addr:street" v="1st Avenue" />
+    <tag k="addr:city" v="Sampleton" />
+  </node>
+  <way id="65">
+    <nd ref="1" />
+    <nd ref="2" />
+    <nd ref="3" />
+    <nd ref="4" />
+    <nd ref="5" />
+    <nd ref="6" />
+    <nd ref="7" />
+    <nd ref="8" />
+    <tag k="highway" v="secondary" />
+    <tag k="name" v="1st Avenue" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="66">
+    <nd ref="9" />
+    <nd ref="10" />
+    <nd ref="11" />
+    <nd ref="12" />
+    <nd ref="13" />
+    <nd ref="14" />
+    <nd ref="15" />
+    <nd ref="16" />
+    <tag k="highway" v="residential" />
+    <tag k="name" v="2nd Avenue" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="67">
+    <nd ref="17" />
+    <nd ref="18" />
+    <nd ref="19" />
+    <nd ref="20" />
+    <nd ref="21" />
+    <nd ref="22" />
+    <nd ref="23" />
+    <nd ref="24" />
+    <tag k="highway" v="residential" />
+    <tag k="name" v="3rd Avenue" />
+    <tag k="maxspeed" v="50" />
+    <tag k="oneway" v="yes" />
+  </way>
+  <way id="68">
+    <nd ref="25" />
+    <nd ref="26" />
+    <nd ref="27" />
+    <nd ref="28" />
+    <nd ref="29" />
+    <nd ref="30" />
+    <nd ref="31" />
+    <nd ref="32" />
+    <tag k="highway" v="residential" />
+    <tag k="name" v="4th Avenue" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="69">
+    <nd ref="33" />
+    <nd ref="34" />
+    <nd ref="35" />
+    <nd ref="36" />
+    <nd ref="37" />
+    <nd ref="38" />
+    <nd ref="39" />
+    <nd ref="40" />
+    <tag k="highway" v="secondary" />
+    <tag k="name" v="5th Avenue" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="70">
+    <nd ref="41" />
+    <nd ref="42" />
+    <nd ref="43" />
+    <nd ref="44" />
+    <nd ref="45" />
+    <nd ref="46" />
+    <nd ref="47" />
+    <nd ref="48" />
+    <tag k="highway" v="residential" />
+    <tag k="name" v="6th Avenue" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="71">
+    <nd ref="49" />
+    <nd ref="50" />
+    <nd ref="51" />
+    <nd ref="52" />
+    <nd ref="53" />
+    <nd ref="54" />
+    <nd ref="55" />
+    <nd ref="56" />
+    <tag k="highway" v="residential" />
+    <tag k="name" v="7th Avenue" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="72">
+    <nd ref="57" />
+    <nd ref="58" />
+    <nd ref="59" />
+    <nd ref="60" />
+    <nd ref="61" />
+    <nd ref="62" />
+    <nd ref="63" />
+    <nd ref="64" />
+    <tag k="highway" v="residential" />
+    <tag k="name" v="8th Avenue" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="73">
+    <nd ref="1" />
+    <nd ref="9" />
+    <nd ref="17" />
+    <nd ref="25" />
+    <nd ref="33" />
+    <nd ref="41" />
+    <nd ref="49" />
+    <nd ref="57" />
+    <tag k="highway" v="residential" />
+    <tag k="name" v="Alder Street" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="74">
+    <nd ref="2" />
+    <nd ref="10" />
+    <nd ref="18" />
+    <nd ref="26" />
+    <nd ref="34" />
+    <nd ref="42" />
+    <nd ref="50" />
+    <nd ref="58" />
+    <tag k="highway" v="residential" />
+    <tag k="name" v="Birch Street" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="75">
+    <nd ref="3" />
+    <nd ref="11" />
+    <nd ref="19" />
+    <nd ref="27" />
+    <nd ref="35" />
+    <nd ref="43" />
+    <nd ref="51" />
+    <nd ref="59" />
+    <tag k="highway" v="residential" />
+    <tag k="name" v="Cedar Street" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="76">
+    <nd ref="4" />
+    <nd ref="12" />
+    <nd ref="20" />
+    <nd ref="28" />
+    <nd ref="36" />
+    <nd ref="44" />
+    <nd ref="52" />
+    <nd ref="60" />
+    <tag k="highway" v="residential" />
+    <tag k="name" v="Douglas Street" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="77">
+    <nd ref="5" />
+    <nd ref="13" />
+    <nd ref="21" />
+    <nd ref="29" />
+    <nd ref="37" />
+    <nd ref="45" />
+    <nd ref="53" />
+    <nd ref="61" />
+    <tag k="highway" v="tertiary" />
+    <tag k="name" v="Main Street" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="78">
+    <nd ref="6" />
+    <nd ref="14" />
+    <nd ref="22" />
+    <nd ref="30" />
+    <nd ref="38" />
+    <nd ref="46" />
+    <nd ref="54" />
+    <nd ref="62" />
+    <tag k="highway" v="residential" />
+    <tag k="name" v="Fir Street" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="79">
+    <nd ref="7" />
+    <nd ref="15" />
+    <nd ref="23" />
+    <nd ref="31" />
+    <nd ref="39" />
+    <nd ref="47" />
+    <nd ref="55" />
+    <nd ref="63" />
+    <tag k="highway" v="residential" />
+    <tag k="name" v="Garnet Street" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="80">
+    <nd ref="8" />
+    <nd ref="16" />
+    <nd ref="24" />
+    <nd ref="32" />
+    <nd ref="40" />
+    <nd ref="48" />
+    <nd ref="56" />
+    <nd ref="64" />
+    <tag k="highway" v="residential" />
+    <tag k="name" v="Hemlock Street" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="91">
+    <nd ref="81" />
+    <nd ref="82" />
+    <nd ref="83" />
+    <nd ref="84" />
+    <nd ref="85" />
+    <nd ref="86" />
+    <nd ref="87" />
+    <tag k="highway" v="trunk" />
+    <tag k="ref" v="901" />
+    <tag k="name" v="Highway 901" />
+    <tag k="maxspeed" v="90" />
+  </way>
+  <way id="92">
+    <nd ref="87" />
+    <nd ref="88" />
+    <tag k="highway" v="trunk" />
+    <tag k="ref" v="901" />
+    <tag k="name" v="Highway 901" />
+    <tag k="maxspeed" v="90" />
+    <tag k="bridge" v="yes" />
+    <tag k="layer" v="1" />
+    <tag k="maxheight" v="4.6" />
+    <tag k="maxweight" v="40" />
+    <tag k="bridge:name" v="Sample River Bridge" />
+  </way>
+  <way id="93">
+    <nd ref="88" />
+    <nd ref="89" />
+    <nd ref="90" />
+    <tag k="highway" v="trunk" />
+    <tag k="ref" v="901" />
+    <tag k="name" v="Highway 901" />
+    <tag k="maxspeed" v="90" />
+  </way>
+  <way id="113">
+    <nd ref="109" />
+    <nd ref="110" />
+    <nd ref="108" />
+    <nd ref="111" />
+    <nd ref="112" />
+    <tag k="railway" v="rail" />
+    <tag k="name" v="Sample Valley Railway" />
+  </way>
+  <way id="114">
+    <nd ref="5" />
+    <nd ref="108" />
+    <nd ref="85" />
+    <tag k="highway" v="tertiary" />
+    <tag k="name" v="Main Street" />
+    <tag k="maxspeed" v="50" />
+  </way>
+  <way id="119">
+    <nd ref="64" />
+    <nd ref="118" />
+    <nd ref="115" />
+    <tag k="highway" v="tertiary" />
+    <tag k="name" v="Mill Road" />
+    <tag k="maxspeed" v="60" />
+  </way>
+  <way id="120">
+    <nd ref="115" />
+    <nd ref="116" />
+    <tag k="highway" v="tertiary" />
+    <tag k="name" v="Mill Road" />
+    <tag k="bridge" v="yes" />
+    <tag k="maxheight" v="3.5" />
+    <tag k="maxweight" v="10" />
+    <tag k="bridge:name" v="Old Mill Bridge" />
+    <tag k="maxspeed" v="60" />
+  </way>
+  <way id="121">
+    <nd ref="116" />
+    <nd ref="117" />
+    <nd ref="89" />
+    <tag k="highway" v="tertiary" />
+    <tag k="name" v="Mill Road" />
+    <tag k="maxspeed" v="60" />
+  </way>
+  <way id="126">
+    <nd ref="81" />
+    <nd ref="122" />
+    <nd ref="123" />
+    <nd ref="124" />
+    <nd ref="125" />
+    <tag k="highway" v="unclassified" />
+    <tag k="name" v="Sample Creek FSR" />
+    <tag k="surface" v="gravel" />
+    <tag k="seasonal" v="yes" />
+    <tag k="maxspeed" v="40" />
+  </way>
+  <way id="131">
+    <nd ref="127" />
+    <nd ref="128" />
+    <nd ref="129" />
+    <nd ref="130" />
+    <nd ref="127" />
+    <tag k="hazard" v="avalanche" />
+    <tag k="name" v="Sample Creek avalanche path" />
+  </way>
+  <way id="141">
+    <nd ref="134" />
+    <nd ref="135" />
+    <nd ref="136" />
+    <nd ref="137" />
+    <nd ref="138" />
+    <nd ref="139" />
+    <nd ref="140" />
+    <tag k="waterway" v="river" />
+    <tag k="name" v="Sample River" />
+  </way>
+  <way id="166">
+    <nd ref="142" />
+    <nd ref="143" />
+    <nd ref="144" />
+    <nd ref="145" />
+    <nd ref="146" />
+    <nd ref="147" />
+    <nd ref="148" />
+    <nd ref="149" />
+    <nd ref="150" />
+    <nd ref="151" />
+    <nd ref="152" />
+    <nd ref="153" />
+    <nd ref="154" />
+    <nd ref="155" />
+    <nd ref="156" />
+    <nd ref="157" />
+    <nd ref="158" />
+    <nd ref="159" />
+    <nd ref="160" />
+    <nd ref="161" />
+    <nd ref="162" />
+    <nd ref="163" />
+    <nd ref="164" />
+    <nd ref="165" />
+    <nd ref="142" />
+    <tag k="natural" v="water" />
+    <tag k="name" v="Fictional Lake" />
+  </way>
+  <way id="171">
+    <nd ref="167" />
+    <nd ref="168" />
+    <nd ref="169" />
+    <nd ref="170" />
+    <nd ref="167" />
+    <tag k="leisure" v="park" />
+    <tag k="name" v="Sample Park" />
+  </way>
+  <way id="176">
+    <nd ref="172" />
+    <nd ref="173" />
+    <nd ref="174" />
+    <nd ref="175" />
+    <nd ref="172" />
+    <tag k="landuse" v="residential" />
+  </way>
+  <way id="181">
+    <nd ref="177" />
+    <nd ref="179" />
+    <nd ref="180" />
+    <nd ref="178" />
+  </way>
+  <way id="183">
+    <nd ref="177" />
+    <nd ref="182" />
+    <nd ref="178" />
+  </way>
+  <way id="192">
+    <nd ref="184" />
+    <nd ref="185" />
+    <nd ref="186" />
+    <nd ref="187" />
+    <nd ref="188" />
+    <nd ref="189" />
+    <nd ref="190" />
+    <nd ref="191" />
+    <nd ref="184" />
+  </way>
+  <way id="204">
+    <nd ref="200" />
+    <nd ref="201" />
+    <nd ref="202" />
+    <nd ref="203" />
+    <nd ref="200" />
+    <tag k="amenity" v="school" />
+    <tag k="name" v="Sampleton Elementary School (SAMPLE)" />
+  </way>
+  <relation id="193">
+    <member type="way" ref="181" role="outer" />
+    <member type="way" ref="183" role="outer" />
+    <member type="way" ref="192" role="inner" />
+    <tag k="type" v="multipolygon" />
+    <tag k="natural" v="wetland" />
+    <tag k="name" v="Sample Marsh" />
+  </relation>
+</osm>

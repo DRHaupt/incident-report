@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>MapBuilder</AssemblyName>
+    <RootNamespace>MapBuilder</RootNamespace>
+    <Description>Command-line companion to Field Map: build region data from OpenStreetMap and open-data files, validate it, and export/install offline update packages.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="Shared.Core" />
+    <ProjectReference Include="..\..\src\FieldMap.Core\FieldMap.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -116,7 +116,13 @@ internal struct ProtoReader
         {
             case 0: ReadVarint(); break;
             case 1: _pos += 8; break;
-            case 2: _pos += (int)ReadVarint(); break;
+            case 2:
+            {
+                // Read the length first: "_pos += ReadVarint()" would add it to the position before the varint.
+                var len = (int)ReadVarint();
+                _pos += len;
+                break;
+            }
             case 5: _pos += 4; break;
             default: throw new InvalidDataException($"Unsupported wire type {wireType}.");
         }
