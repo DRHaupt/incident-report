@@ -21,8 +21,15 @@ jobs:
       - name: Test (content, search, timers, layout, ERG parser)
         run: dotnet test tests/FieldToolkit.Tests -c Release --no-build
 
+      - name: Test Field Map core (import, tiles, search, routing, updates, rendering)
+        run: dotnet test tests/FieldMap.Tests -c Release --no-build
+
       - name: Test (UI smoke test – opens every window)
         run: dotnet test tests/FieldToolkit.UiTests -c Release --no-build
+        timeout-minutes: 15
+
+      - name: Test (Field Map UI smoke test – every window, panel and theme)
+        run: dotnet test tests/FieldMap.UiTests -c Release --no-build
         timeout-minutes: 15
 
       - name: Publish Incident Report Manager (self-contained, single file)
@@ -36,6 +43,24 @@ jobs:
           dotnet publish src/FieldToolkit/FieldToolkit.csproj -c Release -r win-x64
           --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
           -o publish/FieldToolkit
+
+      - name: Publish Field Map (self-contained, single file + Content folder)
+        run: >
+          dotnet publish src/FieldMap/FieldMap.csproj -c Release -r win-x64
+          --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -o publish/FieldMap
+
+      - name: Publish MapBuilder (command line, for building/exporting data on a connected PC)
+        run: >
+          dotnet publish tools/MapBuilder/MapBuilder.csproj -c Release -r win-x64
+          --self-contained true -p:PublishSingleFile=true -o publish/MapBuilder
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FieldMap-win-x64
+          path: |
+            publish/FieldMap/
+            publish/MapBuilder/
 
       - uses: actions/upload-artifact@v4
         with:

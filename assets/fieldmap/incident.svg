@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>Incident map</title>
+  <rect x="8" y="8" width="240" height="240" rx="44" fill="#2B3A4F"/>
+  <circle cx="128" cy="118" r="86" fill="none" stroke="#FFFFFF" stroke-width="6" opacity="0.5" stroke-dasharray="14 10"/>
+  <circle cx="128" cy="118" r="52" fill="none" stroke="#FFFFFF" stroke-width="6" opacity="0.5"/>
+  <path d="M128 212 C128 212 84 162 84 128 C84 104 104 84 128 84 C152 84 172 104 172 128 C172 162 128 212 128 212 Z" fill="#F2A900" stroke="#2B3A4F" stroke-width="8"/>
+  <path d="M128 104 V134" stroke="#2B3A4F" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="128" cy="152" r="7" fill="#2B3A4F"/>
+</svg>

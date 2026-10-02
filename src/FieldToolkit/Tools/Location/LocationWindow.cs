@@ -65,7 +65,8 @@ public sealed class LocationWindow : ToolWindow
 
         var actions = Ui.ButtonRow(
             Ui.Button("Copy for dispatch", ButtonStyle.Primary, CopyForDispatch, FontRole.Heading),
-            Ui.Button("Save this point", ButtonStyle.Accent, SaveCurrent, FontRole.Heading));
+            Ui.Button("Save this point", ButtonStyle.Accent, SaveCurrent, FontRole.Heading),
+            Ui.Button("Open in map", ButtonStyle.Secondary, OpenCurrentInMap, FontRole.Heading));
         actions.Height = Ui.Scaled(64);
         actions.FixedSize();
         actions.Margin = new Padding(0, 6, 0, 6);
@@ -195,6 +196,22 @@ public sealed class LocationWindow : ToolWindow
         Copy(DispatchText(fix), "Location copied – paste it into the dispatch system or message.");
     }
 
+    private void OpenCurrentInMap()
+    {
+        if (Fix is not { } fix)
+        {
+            MessageBox.Show(this, "There is no position to show yet.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        ShowStatus(FieldMapLink.OpenInMap("My position", fix.Latitude, fix.Longitude, fix.Source));
+    }
+
+    private void ShowStatus(string message)
+    {
+        _statusText.Text = "✓ " + message;
+        _confirmUntil = DateTime.UtcNow.AddSeconds(5);
+    }
+
     private void CopyOne(string key)
     {
         if (Fix != null)
@@ -281,6 +298,7 @@ public sealed class LocationWindow : ToolWindow
         row.Controls.Add(text, 1, 0);
         var buttons = Ui.ButtonRow(
             Ui.Button("Copy", ButtonStyle.Secondary, () => CopyPoint(p)),
+            Ui.Button("Map", ButtonStyle.Secondary, () => ShowStatus(FieldMapLink.OpenInMap(p.Name, p.Latitude, p.Longitude, p.Note))),
             Ui.Button("Edit", ButtonStyle.Secondary, () => EditPoint(p)),
             Ui.Button("Delete", ButtonStyle.Danger, () => DeletePoint(p)));
         buttons.Dock = DockStyle.Fill;

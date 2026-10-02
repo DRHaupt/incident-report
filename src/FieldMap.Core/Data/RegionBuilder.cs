@@ -157,7 +157,8 @@ public static class RegionBuilder
     }
 
     /// <summary>Builds the fictitious sample region into <paramref name="outputDir"/>.</summary>
-    public static RegionManifest BuildSample(string outputDir, string workDir, IProgress<(string Stage, double Fraction)>? progress = null, CancellationToken cancel = default)
+    public static RegionManifest BuildSample(string outputDir, string workDir, IProgress<(string Stage, double Fraction)>? progress = null, CancellationToken cancel = default,
+        List<(string Path, string SourceName)>? aedImports = null)
     {
         Directory.CreateDirectory(workDir);
         var osmPath = Path.Combine(workDir, "sample-county.osm");
@@ -179,6 +180,7 @@ public static class RegionBuilder
             RegionName = Sample.SampleRegion.Name,
             OutputDir = outputDir,
             Sources = new List<SourceFile> { new(def, osmPath, info) },
+            AedImports = aedImports ?? new(),
             IsSample = true
         }, progress, cancel);
     }

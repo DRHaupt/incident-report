@@ -95,6 +95,21 @@ public sealed class UpdateService
         Sha256 = RegionManifest.Sha256Of(path)
     };
 
+    /// <summary>The downloaded copies of a region's sources (for rebuilding offline, e.g. after an AED import).</summary>
+    public List<SourceFile>? CachedSources(RegionDefinition region)
+    {
+        var files = new List<SourceFile>();
+        foreach (var s in region.Sources.Where(s => s.Enabled))
+        {
+            var path = Path.Combine(DownloadDir(region.Id), s.FileName);
+            if (File.Exists(path))
+                files.Add(new SourceFile(s, path, Describe(s, path, File.GetLastWriteTimeUtc(path), File.GetLastWriteTimeUtc(path))));
+            else if (s.Required)
+                return null;
+        }
+        return files;
+    }
+
     /// <summary>Source files the user already has (e.g. copied from another PC): the OSM extract, address CSVs and facility tables.</summary>
     public static List<SourceFile> LocalSources(RegionDefinition region, string? pbf, IEnumerable<string> addressFiles, IEnumerable<string> poiFiles)
     {
@@ -196,7 +211,7 @@ public sealed class UpdateService
         var staging = _store.NewStagingDir(SampleRegion.RegionId);
         try
         {
-            RegionBuilder.BuildSample(staging, Path.Combine(_store.Root, "work"), progress, cancel);
+            RegionBuilder.BuildSample(staging, Path.Combine(_store.Root, "work"), progress, cancel, AedImports(_store));
             return ValidateAndPublish(SampleRegion.RegionId, staging, progress);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)

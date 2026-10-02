@@ -13,6 +13,7 @@
   <ItemGroup>
     <Using Include="Shared.Core" />
     <ProjectReference Include="..\..\src\FieldMap.Core\FieldMap.Core.csproj" />
+    <None Include="..\..\src\FieldMap\Content\regions.json" Link="regions.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
 
 </Project>

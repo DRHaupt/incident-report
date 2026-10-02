@@ -103,10 +103,23 @@ public static class AppServices
         CallSigns = new JsonListStore<CallSign>(Path.Combine(ToolkitSettings.DataFolder, "radio-callsigns.json"));
         RadioLog = new JsonListStore<LogEntry>(Path.Combine(ToolkitSettings.DataFolder, "radio-log.json"));
 
+        var exchangeCountdown = 0;
         Clock.Tick += (_, _) =>
         {
             Timers.Tick();
             ClockTick?.Invoke(null, EventArgs.Empty);
+            // Every 5 s: points sent from Field Map ("Send to Field Toolkit") become saved points.
+            if (++exchangeCountdown >= 20)
+            {
+                exchangeCountdown = 0;
+                try
+                {
+                    FieldMapLink.ImportFromFieldMap();
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                }
+            }
         };
         Clock.Start();
     }

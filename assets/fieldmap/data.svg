@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>Data and updates</title>
+  <rect x="8" y="8" width="240" height="240" rx="44" fill="#2B3A4F"/>
+  <ellipse cx="112" cy="70" rx="60" ry="20" fill="#FFFFFF"/>
+  <path d="M52 70 V178 C52 190 79 200 112 200 C145 200 172 190 172 178 V70" fill="#FFFFFF"/>
+  <path d="M52 106 C52 118 79 128 112 128 C145 128 172 118 172 106 M52 142 C52 154 79 164 112 164 C145 164 172 154 172 142" fill="none" stroke="#2B3A4F" stroke-width="6" opacity="0.4"/>
+  <circle cx="182" cy="182" r="44" fill="#F2A900" stroke="#2B3A4F" stroke-width="8"/>
+  <path d="M182 158 V202 M164 186 L182 204 L200 186" fill="none" stroke="#2B3A4F" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

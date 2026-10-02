@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>Field Map</title>
+  <rect x="8" y="8" width="240" height="240" rx="44" fill="#2B3A4F"/>
+  <!-- folded map -->
+  <path d="M40 72 L92 52 L164 72 L216 52 V184 L164 204 L92 184 L40 204 Z" fill="#FFFFFF"/>
+  <path d="M92 52 V184 M164 72 V204" stroke="#2B3A4F" stroke-width="6" opacity="0.35"/>
+  <!-- route -->
+  <path d="M58 182 C84 150 104 168 122 140 C138 116 150 128 168 108" fill="none" stroke="#F2A900" stroke-width="12" stroke-linecap="round" stroke-dasharray="1 22"/>
+  <!-- pin -->
+  <path d="M176 150 C176 150 140 112 140 86 C140 66 156 50 176 50 C196 50 212 66 212 86 C212 112 176 150 176 150 Z" fill="#F2A900" stroke="#2B3A4F" stroke-width="8"/>
+  <circle cx="176" cy="86" r="14" fill="#2B3A4F"/>
+</svg>

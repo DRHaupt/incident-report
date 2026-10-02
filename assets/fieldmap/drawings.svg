@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>Incidents and drawings</title>
+  <rect x="8" y="8" width="240" height="240" rx="44" fill="#2B3A4F"/>
+  <path d="M54 92 L120 54 L196 88 L178 178 L82 196 Z" fill="#FFFFFF" fill-opacity="0.18" stroke="#FFFFFF" stroke-width="10" stroke-linejoin="round" stroke-dasharray="20 12"/>
+  <path d="M150 196 L204 142 L222 160 L168 214 L144 220 Z" fill="#F2A900" stroke="#2B3A4F" stroke-width="6" stroke-linejoin="round"/>
+  <circle cx="120" cy="124" r="20" fill="#F2A900"/>
+</svg>
