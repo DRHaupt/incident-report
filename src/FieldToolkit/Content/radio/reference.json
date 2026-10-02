@@ -1,0 +1,63 @@
+{
+  // Radio & Comms reference. Edit to match your organisation's voice procedure.
+  "source": "Standard voice procedure words as used in ACP 125 and by emergency services. Organisations differ – adapt this file to your own procedure. METHANE is the UK Joint Emergency Services Interoperability Principles (JESIP) major-incident report.",
+  "prowords": [
+    { "group": "Procedure", "word": "THIS IS", "meaning": "This transmission is from the station whose call sign follows." },
+    { "group": "Procedure", "word": "OVER", "meaning": "This is the end of my transmission. A response is expected. Go ahead." },
+    { "group": "Procedure", "word": "OUT", "meaning": "This is the end of my transmission. No answer is expected. (Never \"over and out\".)" },
+    { "group": "Procedure", "word": "SEND", "meaning": "Go ahead with your transmission." },
+    { "group": "Procedure", "word": "ROGER", "meaning": "I have received your last transmission satisfactorily." },
+    { "group": "Procedure", "word": "WILCO", "meaning": "I have received your message, understand it, and will comply. (Not \"roger wilco\".)" },
+    { "group": "Procedure", "word": "AFFIRMATIVE", "meaning": "Yes / permission granted." },
+    { "group": "Procedure", "word": "NEGATIVE", "meaning": "No / permission not granted / that is not correct." },
+    { "group": "Procedure", "word": "WAIT", "meaning": "I must pause for a few seconds. Stay on the net." },
+    { "group": "Procedure", "word": "WAIT OUT", "meaning": "I must pause for longer. I will call you back." },
+    { "group": "Procedure", "word": "BREAK", "meaning": "Separates parts of a message, or one message from the next." },
+    { "group": "Procedure", "word": "ALL STATIONS", "meaning": "This message is for every station on the net." },
+    { "group": "Procedure", "word": "RELAY TO", "meaning": "Pass this message on to the station named." },
+    { "group": "Procedure", "word": "ACKNOWLEDGE", "meaning": "Confirm that you have received and understood this message." },
+    { "group": "Procedure", "word": "CONFIRM", "meaning": "Check that I have this right: …? / Is that correct?" },
+    { "group": "Procedure", "word": "DISREGARD THIS TRANSMISSION", "meaning": "This transmission was sent in error. Ignore it." },
+    { "group": "Accuracy", "word": "SAY AGAIN", "meaning": "Repeat your last transmission (or: SAY AGAIN ALL AFTER … / ALL BEFORE … / WORD AFTER …)." },
+    { "group": "Accuracy", "word": "I SAY AGAIN", "meaning": "I am repeating my transmission, or the part indicated." },
+    { "group": "Accuracy", "word": "CORRECTION", "meaning": "I made an error. The correct version is …" },
+    { "group": "Accuracy", "word": "I SPELL", "meaning": "I will spell the next word phonetically." },
+    { "group": "Accuracy", "word": "FIGURES", "meaning": "Numbers follow." },
+    { "group": "Accuracy", "word": "READ BACK", "meaning": "Repeat this message back to me exactly as you received it." },
+    { "group": "Accuracy", "word": "I READ BACK", "meaning": "The following is the message read back as instructed." },
+    { "group": "Accuracy", "word": "THAT IS CORRECT", "meaning": "What you have just said is correct." },
+    { "group": "Signal reports", "word": "RADIO CHECK", "meaning": "What is my signal strength and readability?" },
+    { "group": "Signal reports", "word": "LOUD AND CLEAR", "meaning": "Strong signal, perfectly readable." },
+    { "group": "Signal reports", "word": "READABLE", "meaning": "Readable, with some difficulty." },
+    { "group": "Signal reports", "word": "WEAK / DISTORTED", "meaning": "Readable only with difficulty." },
+    { "group": "Signal reports", "word": "UNREADABLE", "meaning": "Signal received but cannot be understood." },
+    { "group": "Signal reports", "word": "NOTHING HEARD", "meaning": "No reply received from the station called." },
+    { "group": "Emergency", "word": "MAYDAY MAYDAY MAYDAY", "meaning": "Distress: grave and imminent danger to life. Immediate assistance required. All other traffic stops." },
+    { "group": "Emergency", "word": "PAN-PAN PAN-PAN PAN-PAN", "meaning": "Urgency: a safety problem with a person or vehicle that is not (yet) grave and imminent danger." },
+    { "group": "Emergency", "word": "SILENCE", "meaning": "Stop all transmissions now – emergency traffic in progress." },
+    { "group": "Emergency", "word": "SILENCE FINISHED", "meaning": "Emergency traffic is over. Normal working may resume." }
+  ],
+  "formats": [
+    {
+      "name": "METHANE – major incident report",
+      "source": "JESIP (UK Joint Emergency Services Interoperability Principles)",
+      "lines": [
+        { "key": "M", "meaning": "Major incident declared? (or standby)" },
+        { "key": "E", "meaning": "Exact location (grid reference / what3words / landmarks)" },
+        { "key": "T", "meaning": "Type of incident" },
+        { "key": "H", "meaning": "Hazards – present and potential" },
+        { "key": "A", "meaning": "Access – routes in and out, rendezvous point" },
+        { "key": "N", "meaning": "Number and type of casualties" },
+        { "key": "E", "meaning": "Emergency services present and required" }
+      ]
+    }
+  ],
+  "tips": [
+    "Think before you press. Press, wait half a second, then speak.",
+    "Call format: \"[Their call sign], THIS IS [your call sign], OVER.\" Message: \"[call sign], [message], OVER.\"",
+    "Speak slowly and clearly, normal volume, microphone a few centimetres from your mouth.",
+    "Read numbers digit by digit using the radio figures (WUN, TOO, TREE, FOW-ER, FIFE, SIX, SEV-EN, AIT, NIN-ER, ZE-RO).",
+    "Spell names, registration numbers and grid letters with the phonetic alphabet (\"I SPELL\").",
+    "Ask for a READ BACK of anything critical: locations, numbers, times, casualty details."
+  ]
+}

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>Location</title>
+  <rect x="8" y="8" width="240" height="240" rx="44" fill="#2B3A4F"/>
+  <circle cx="128" cy="128" r="84" fill="none" stroke="#FFFFFF" stroke-width="6" opacity="0.55"/>
+  <path d="M128 30 V62 M128 194 V226 M30 128 H62 M194 128 H226" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity="0.55"/>
+  <path d="M128 206 C128 206 74 146 74 108 C74 78 98 54 128 54 C158 54 182 78 182 108 C182 146 128 206 128 206 Z" fill="#FFFFFF"/>
+  <circle cx="128" cy="108" r="24" fill="#F2A900"/>
+</svg>

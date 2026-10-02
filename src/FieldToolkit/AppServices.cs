@@ -6,6 +6,7 @@ using FieldToolkit.Core.Checklists;
 using FieldToolkit.Core.Hazmat;
 using FieldToolkit.Core.Kit;
 using FieldToolkit.Core.Location;
+using FieldToolkit.Core.Radio;
 using FieldToolkit.Core.Timers;
 using FieldToolkit.Framework;
 using FieldToolkit.Tools.Location;
@@ -37,6 +38,14 @@ public static class AppServices
     public static JsonListStore<ChecklistRun> ChecklistRuns { get; private set; } = null!;
     public static JsonListStore<KitItem> Kit { get; private set; } = null!;
 
+    public static JsonListStore<RadioChannel> Channels { get; private set; } = null!;
+    public static JsonListStore<CallSign> CallSigns { get; private set; } = null!;
+    public static JsonListStore<LogEntry> RadioLog { get; private set; } = null!;
+
+    private static RadioReference? _radio;
+
+    public static RadioReference Radio => _radio ??= RadioReference.LoadOrEmpty(Path.Combine(ContentFolder, "radio", "reference.json"));
+
     public static DateOnly Today => DateOnly.FromDateTime(DateTime.Now);
 
     /// <summary>Raised four times a second for live read-outs (timers). Handlers must be cheap.</summary>
@@ -59,6 +68,7 @@ public static class AppServices
         _firstAid = null;
         _firstAidSearch = null;
         _erg = null;
+        _radio = null;
     }
 
     public static void Initialize()
@@ -86,6 +96,9 @@ public static class AppServices
         }
         ChecklistRuns = new JsonListStore<ChecklistRun>(Path.Combine(ToolkitSettings.DataFolder, "checklist-runs.json"));
         Kit = new JsonListStore<KitItem>(Path.Combine(ToolkitSettings.DataFolder, "kit.json"));
+        Channels = new JsonListStore<RadioChannel>(Path.Combine(ToolkitSettings.DataFolder, "radio-channels.json"));
+        CallSigns = new JsonListStore<CallSign>(Path.Combine(ToolkitSettings.DataFolder, "radio-callsigns.json"));
+        RadioLog = new JsonListStore<LogEntry>(Path.Combine(ToolkitSettings.DataFolder, "radio-log.json"));
 
         Clock.Tick += (_, _) =>
         {

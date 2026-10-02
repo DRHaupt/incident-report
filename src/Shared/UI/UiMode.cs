@@ -276,6 +276,10 @@ public static class UiMode
                         table.RowStyles[i].Height = b.RowHeights[i] * Scale;
                 break;
 
+            case DataGridView grid:
+                ApplyGrid(grid);
+                break;
+
             case TreeView tree:
                 tree.ItemHeight = Touch ? TouchRowHeight : b.ItemHeight;
                 break;
@@ -383,6 +387,29 @@ public static class UiMode
         if (sat > 0.55 && c.R > c.G + 60 && c.R > c.B + 60) return DaylightPalette.Red;
         if (sat > 0.55 && c.G > c.R + 40 && c.G > c.B) return DaylightPalette.Green;
         return Luminance(c) > 0.7 ? Color.White : Color.Black;
+    }
+
+    // ------------------------------------------------------------------ grids
+
+    private static void ApplyGrid(DataGridView grid)
+    {
+        var rowHeight = Touch ? TouchRowHeight + 4 : (int)(GetFont(FontRole.Normal).GetHeight() + 10);
+        grid.DefaultCellStyle.Font = GetFont(FontRole.Normal);
+        grid.ColumnHeadersDefaultCellStyle.Font = GetFont(FontRole.Bold);
+        grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+        grid.ColumnHeadersHeight = rowHeight + 4;
+        grid.RowTemplate.Height = rowHeight;
+        foreach (DataGridViewRow row in grid.Rows)
+            row.Height = rowHeight;
+        grid.EnableHeadersVisualStyles = !Daylight;
+        grid.BackgroundColor = Daylight ? Color.White : SystemColors.AppWorkspace;
+        grid.GridColor = Daylight ? Color.Black : SystemColors.ControlDark;
+        grid.DefaultCellStyle.BackColor = Daylight ? Color.White : SystemColors.Window;
+        grid.DefaultCellStyle.ForeColor = Daylight ? Color.Black : SystemColors.ControlText;
+        grid.DefaultCellStyle.SelectionBackColor = Daylight ? Color.Black : SystemColors.Highlight;
+        grid.DefaultCellStyle.SelectionForeColor = Daylight ? Color.White : SystemColors.HighlightText;
+        grid.ColumnHeadersDefaultCellStyle.BackColor = Daylight ? Color.Black : SystemColors.Control;
+        grid.ColumnHeadersDefaultCellStyle.ForeColor = Daylight ? Color.White : SystemColors.ControlText;
     }
 
     // ------------------------------------------------------------------ tool strips and lists

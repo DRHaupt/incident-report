@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>Checklists</title>
+  <rect x="8" y="8" width="240" height="240" rx="44" fill="#2B3A4F"/>
+  <rect x="58" y="44" width="140" height="180" rx="14" fill="#FFFFFF"/>
+  <rect x="98" y="32" width="60" height="28" rx="8" fill="#F2A900"/>
+  <path d="M76 92 L86 102 L104 82 M76 138 L86 148 L104 128" fill="none" stroke="#1E7B3C" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="76" y="176" width="26" height="26" rx="5" fill="none" stroke="#2B3A4F" stroke-width="7"/>
+  <rect x="118" y="86" width="60" height="12" rx="6" fill="#2B3A4F"/>
+  <rect x="118" y="132" width="60" height="12" rx="6" fill="#2B3A4F"/>
+  <rect x="118" y="182" width="60" height="12" rx="6" fill="#2B3A4F"/>
+</svg>

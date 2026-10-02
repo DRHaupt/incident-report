@@ -4,6 +4,7 @@ using FieldToolkit.Tools.FirstAid;
 using FieldToolkit.Tools.Hazmat;
 using FieldToolkit.Tools.Kit;
 using FieldToolkit.Tools.Location;
+using FieldToolkit.Tools.Radio;
 using FieldToolkit.Tools.Timers;
 
 namespace FieldToolkit.Framework;
@@ -79,6 +80,15 @@ public static class ToolRegistry
             Create = state => new KitWindow(state),
             SingleInstance = true,
             DefaultSize = new Size(680, 700)
+        },
+        new ToolDescriptor
+        {
+            Id = RadioWindow.ToolId,
+            Title = "Radio & Comms",
+            Description = "Phonetic alphabet, phrases, channels, log",
+            IconName = "radio",
+            Create = state => new RadioWindow(state),
+            DefaultSize = new Size(760, 680)
         }
     };
 
