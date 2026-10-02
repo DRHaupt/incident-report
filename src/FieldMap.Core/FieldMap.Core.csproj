@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FieldMap.Core</RootNamespace>
+    <Description>UI-free logic for Field Map: OpenStreetMap import, vector tiles, search, routing, drawings, region data store and updates.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- MBTiles tile store, search index (FTS5 trigram) and R*Tree spatial index. MIT; bundles SQLite (public domain). -->
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared.Core\Shared.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Shared.Core" />
+    <Using Include="Shared.Core.Geo" />
+    <InternalsVisibleTo Include="FieldMap.Tests" />
+  </ItemGroup>
+
+</Project>
