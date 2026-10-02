@@ -12,6 +12,7 @@ public sealed class OptionsDialog : Form
     private readonly TextBox _prefix = new() { Width = 80, MaxLength = 8, CharacterCasing = CharacterCasing.Upper };
     private readonly TextBox _dbPath = new() { Width = 340 };
     private readonly CheckBox _confirmDelete = new() { Text = "Ask for confirmation before deleting reports", AutoSize = true };
+    private readonly CheckBox _touchMode = new() { Text = "Touch-friendly interface (larger text, rows and buttons)", AutoSize = true };
 
     public bool DatabaseChanged { get; private set; }
 
@@ -22,6 +23,7 @@ public sealed class OptionsDialog : Form
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MinimizeBox = false;
         MaximizeBox = false;
+        UiMode.TrackDialog(this);
         ShowIcon = false;
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.CenterParent;
@@ -40,6 +42,7 @@ public sealed class OptionsDialog : Form
         AddRow(g, "Default location:", _location);
         AddRow(g, "Report number prefix:", _prefix, "Example: IR-2026-00001");
         g.Controls.Add(_confirmDelete, 1, g.RowCount++);
+        g.Controls.Add(_touchMode, 1, g.RowCount++);
         general.Controls.Add(g);
 
         var d = NewGrid();
@@ -73,6 +76,7 @@ public sealed class OptionsDialog : Form
         _prefix.Text = settings.ReportNumberPrefix;
         _dbPath.Text = settings.DatabasePath;
         _confirmDelete.Checked = settings.ConfirmOnDelete;
+        _touchMode.Checked = UiMode.Touch;
     }
 
     private static TableLayoutPanel NewGrid()
@@ -126,5 +130,6 @@ public sealed class OptionsDialog : Form
         _settings.ConfirmOnDelete = _confirmDelete.Checked;
         _settings.Save();
         DialogResult = DialogResult.OK;
+        UiMode.SetTouch(_touchMode.Checked);
     }
 }

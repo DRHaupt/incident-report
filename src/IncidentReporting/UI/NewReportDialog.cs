@@ -33,6 +33,7 @@ public sealed class NewReportDialog : Form
         Size = new Size(860, 560);
         MinimumSize = new Size(700, 420);
         StartPosition = FormStartPosition.CenterParent;
+        UiMode.TrackDialog(this);
         ShowIcon = false;
         ShowInTaskbar = false;
         MinimizeBox = false;

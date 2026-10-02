@@ -20,6 +20,7 @@ public sealed class ReportPickerDialog : Form
         Size = new Size(820, 500);
         MinimumSize = new Size(600, 360);
         StartPosition = FormStartPosition.CenterParent;
+        UiMode.TrackDialog(this);
         ShowIcon = false;
         ShowInTaskbar = false;
         MinimizeBox = false;

@@ -13,6 +13,7 @@ A native Windows desktop application (C# / WinForms, .NET 8) for recording, trac
 - **Attachments.** Photos, statements and other documents are stored inside the database with the report.
 - **Audit history.** Every create, save, status change and attachment change is recorded with the user and a timestamp.
 - **Report list.** Filter by status, incident date and category. Search covers every field. Click a column header to sort, and select a report to see it in the preview pane.
+- **Touch Mode.** Use the **Touch Mode** button at the right of the toolbar, **View > Touch Mode** or **Ctrl+T** to switch to a touch-friendly layout. It uses larger text, taller list rows, bigger buttons and menus, wider input fields, and turns multi-select options into large toggle buttons. The switch applies immediately to every open window, and the app remembers your choice. You can also change it under **Tools > Options**.
 - **Printing.** Reports print as paginated forms with header and footer. You can also print a blank form to fill in by hand.
 - **Export.** Export a single report as HTML or CSV, and the report list as CSV.
 - **Options.** Set the organization name (printed on reports), the default reporter, department and location, the report-number prefix, and the database location. Point the database at a network share to use it from several PCs.

@@ -20,6 +20,7 @@ internal static class Program
         try
         {
             AppSession.Initialize();
+            UiMode.Initialize(AppSession.Settings.TouchMode);
         }
         catch (Exception ex)
         {

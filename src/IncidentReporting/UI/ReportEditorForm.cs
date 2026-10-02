@@ -62,6 +62,7 @@ public sealed class ReportEditorForm : Form
 
         BuildLayout();
         BuildPages();
+        UiMode.Track(this);
         LoadValues();
         RefreshHeader();
 
@@ -140,7 +141,7 @@ public sealed class ReportEditorForm : Form
         tools.Items.AddRange(new ToolStripItem[]
         {
             btnSaveTool, new ToolStripSeparator(), btnPreview, btnPrint, export, new ToolStripSeparator(),
-            _btnSubmit, _btnReview, _btnClose, _btnReopen
+            _btnSubmit, _btnReview, _btnClose, _btnReopen, TouchModeButton.Create()
         });
         Controls.Add(tools);
 
@@ -148,7 +149,7 @@ public sealed class ReportEditorForm : Form
         var header = new Panel { Dock = DockStyle.Top, Height = 58, BackColor = Branding.Navy, Padding = new Padding(14, 8, 14, 6) };
         _headerTitle.Dock = DockStyle.Top;
         _headerTitle.Height = 24;
-        _headerTitle.Font = new Font("Segoe UI", 12f, FontStyle.Bold);
+        _headerTitle.Styled(FontRole.Title);
         _headerTitle.ForeColor = Color.White;
         _headerMeta.Dock = DockStyle.Top;
         _headerMeta.Height = 20;
@@ -203,11 +204,10 @@ public sealed class ReportEditorForm : Form
             var title = new Label
             {
                 Text = section.Title,
-                Font = new Font("Segoe UI", 11f, FontStyle.Bold),
                 ForeColor = Branding.Navy,
                 AutoSize = true,
                 Margin = new Padding(0, 0, 0, 2)
-            };
+            }.Styled(FontRole.Heading);
             table.Controls.Add(title, 0, 0);
             table.SetColumnSpan(title, 2);
             var rule = new Label { BorderStyle = BorderStyle.Fixed3D, Height = 2, Width = 700, Margin = new Padding(0, 2, 0, 10) };
@@ -230,7 +230,7 @@ public sealed class ReportEditorForm : Form
                     Margin = new Padding(0, 3, 6, 3)
                 };
                 if (field.Required)
-                    label.Font = new Font(label.Font, FontStyle.Bold);
+                    label.Styled(FontRole.Bold);
                 editor.Control.Margin = new Padding(0, 3, 0, 3);
                 table.Controls.Add(label, 0, row);
                 table.Controls.Add(editor.Control, 1, row);
@@ -288,9 +288,8 @@ public sealed class ReportEditorForm : Form
         _attachmentsNote.Dock = DockStyle.Top;
         _attachmentsNote.Height = 46;
         _attachmentsNote.Text = "Photos, diagrams, statements and other supporting documents.";
-        _attachmentsNote.Font = new Font("Segoe UI", 9f);
 
-        var title = new Label { Text = AttachmentsPage, Dock = DockStyle.Top, Height = 28, Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Branding.Navy };
+        var title = new Label { Text = AttachmentsPage, Dock = DockStyle.Top, Height = 28, ForeColor = Branding.Navy }.Styled(FontRole.Heading);
         page.Controls.Add(_attachments);
         page.Controls.Add(buttons);
         page.Controls.Add(_attachmentsNote);
@@ -329,7 +328,7 @@ public sealed class ReportEditorForm : Form
             Text = "Investigations, witness statements, corrective actions and other reports connected to this report.",
             Dock = DockStyle.Top, Height = 30
         };
-        var title = new Label { Text = LinkedPage, Dock = DockStyle.Top, Height = 28, Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Branding.Navy };
+        var title = new Label { Text = LinkedPage, Dock = DockStyle.Top, Height = 28, ForeColor = Branding.Navy }.Styled(FontRole.Heading);
         page.Controls.Add(_linked);
         page.Controls.Add(buttons);
         page.Controls.Add(note);
@@ -374,7 +373,7 @@ public sealed class ReportEditorForm : Form
         _history.Columns.Add("User", 140);
         _history.Columns.Add("Action", 150);
         _history.Columns.Add("Details", 380);
-        var title = new Label { Text = "Audit History", Dock = DockStyle.Top, Height = 34, Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Branding.Navy };
+        var title = new Label { Text = "Audit History", Dock = DockStyle.Top, Height = 34, ForeColor = Branding.Navy }.Styled(FontRole.Heading);
         page.Controls.Add(_history);
         page.Controls.Add(title);
         return page;
@@ -704,6 +703,9 @@ public sealed class ReportEditorForm : Form
                 return true;
             case Keys.Control | Keys.P:
                 Print();
+                return true;
+            case Keys.Control | Keys.T:
+                UiMode.SetTouch(!UiMode.Touch);
                 return true;
         }
         return base.ProcessCmdKey(ref msg, keyData);

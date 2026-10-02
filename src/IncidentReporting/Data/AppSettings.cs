@@ -11,6 +11,7 @@ public sealed class AppSettings
     public string ReportNumberPrefix { get; set; } = "IR";
     public string DatabasePath { get; set; } = "";
     public bool ConfirmOnDelete { get; set; } = true;
+    public bool TouchMode { get; set; }
 
     public static string AppDataFolder
     {

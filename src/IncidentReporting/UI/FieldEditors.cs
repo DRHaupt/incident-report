@@ -62,7 +62,7 @@ public static class FieldEditorFactory
             }
             if (field.Type == FieldType.Signature)
             {
-                _box.Font = new Font("Segoe UI", 10f, FontStyle.Italic);
+                _box.Styled(FontRole.Signature);
                 _box.Width = 300;
             }
             if (field.Type == FieldType.Phone)
@@ -186,7 +186,7 @@ public static class FieldEditorFactory
             };
             foreach (var option in field.Options)
             {
-                var cb = new CheckBox { Text = option, Width = 186, AutoEllipsis = true, Margin = new Padding(3, 1, 3, 1) };
+                var cb = new CheckBox { Text = option, Width = 186, AutoEllipsis = true, Margin = new Padding(3, 1, 3, 1) }.AsOption();
                 cb.CheckedChanged += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
                 _boxes.Add(cb);
                 _panel.Controls.Add(cb);

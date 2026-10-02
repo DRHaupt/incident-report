@@ -39,6 +39,7 @@ public sealed class MainForm : Form
 
         BuildLayout();
         BuildTree();
+        UiMode.Track(this);
         UpdateStatusBar();
         _searchDelay.Tick += (_, _) => { _searchDelay.Stop(); RefreshList(); };
     }
@@ -67,8 +68,8 @@ public sealed class MainForm : Form
         var treeHeader = new Label
         {
             Text = "  Report Views", Dock = DockStyle.Top, Height = 26, TextAlign = ContentAlignment.MiddleLeft,
-            BackColor = Branding.Navy, ForeColor = Color.White, Font = new Font("Segoe UI", 9f, FontStyle.Bold)
-        };
+            BackColor = Branding.Navy, ForeColor = Color.White
+        }.Styled(FontRole.Bold);
         split.Panel1.Controls.Add(_tree);
         split.Panel1.Controls.Add(treeHeader);
         split.Panel1.BackColor = SystemColors.Window;
@@ -165,6 +166,11 @@ public sealed class MainForm : Form
             _rightSplit.Panel2Collapsed = !_previewMenu.Checked;
         };
         view.DropDownItems.Add(_previewMenu);
+        view.DropDownItems.Add(new ToolStripSeparator());
+        var touchMenu = new ToolStripMenuItem("&Touch Mode") { ShortcutKeys = Keys.Control | Keys.T, Checked = UiMode.Touch };
+        touchMenu.Click += (_, _) => UiMode.SetTouch(!UiMode.Touch);
+        UiMode.Changed += (_, _) => touchMenu.Checked = UiMode.Touch;
+        view.DropDownItems.Add(touchMenu);
 
         var reports = new ToolStripMenuItem("&Reports");
         foreach (var category in FormCatalog.Categories)
@@ -219,6 +225,7 @@ public sealed class MainForm : Form
         tools.Items.Add(Btn("Export List", "Export the current list to CSV", ExportListCsv));
         tools.Items.Add(new ToolStripSeparator());
         tools.Items.Add(Btn("Refresh", "Refresh (F5)", () => { BuildTree(); RefreshList(); }));
+        tools.Items.Add(TouchModeButton.Create());
 
         _search.Alignment = ToolStripItemAlignment.Right;
         _search.Width = 240;
