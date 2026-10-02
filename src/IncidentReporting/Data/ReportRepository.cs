@@ -209,6 +209,31 @@ public sealed class ReportRepository
         return r.Read() ? ReadReport(r) : null;
     }
 
+    public IncidentReport? GetByNumber(string reportNumber)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT Id, ReportNumber, FormCode, Status, CreatedUtc, ModifiedUtc, ValuesJson FROM Reports WHERE ReportNumber = $n COLLATE NOCASE";
+        cmd.Parameters.AddWithValue("$n", reportNumber.Trim());
+        using var r = cmd.ExecuteReader();
+        return r.Read() ? ReadReport(r) : null;
+    }
+
+    /// <summary>Reports whose "related report" field points at the given report number.</summary>
+    public List<IncidentReport> GetLinkedTo(string reportNumber)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT Id, ReportNumber, FormCode, Status, CreatedUtc, ModifiedUtc, ValuesJson FROM Reports " +
+                          "WHERE ValuesJson LIKE $pattern ORDER BY CreatedUtc";
+        cmd.Parameters.AddWithValue("$pattern", $"%{JsonSerializer.Serialize(CommonKeys.RelatedReport)}:{JsonSerializer.Serialize(reportNumber)}%");
+        var list = new List<IncidentReport>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            list.Add(ReadReport(r));
+        return list;
+    }
+
     public List<IncidentReport> Search(ReportQuery q)
     {
         var where = new List<string>();

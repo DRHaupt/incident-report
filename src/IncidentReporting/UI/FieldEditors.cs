@@ -27,6 +27,7 @@ public static class FieldEditorFactory
         FieldType.YesNo => new ChoiceEditor(field, new[] { "Yes", "No", "Unknown" }),
         FieldType.MultiChoice => new MultiChoiceEditor(field),
         FieldType.CheckBox => new CheckEditor(field),
+        FieldType.ReportLink => new ReportLinkEditor(field),
         _ => new TextEditor(field)
     };
 
@@ -223,6 +224,62 @@ public static class FieldEditorFactory
         {
             get => _box.Checked ? "Yes" : "";
             set => _box.Checked = value == "Yes";
+        }
+    }
+
+    private sealed class ReportLinkEditor : IFieldEditor
+    {
+        private readonly FlowLayoutPanel _panel;
+        private readonly TextBox _box;
+        private readonly Label _summary;
+        public FieldDefinition Field { get; }
+        public Control Control => _panel;
+        public event EventHandler? Changed;
+
+        public ReportLinkEditor(FieldDefinition field)
+        {
+            Field = field;
+            _panel = new FlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Margin = Padding.Empty };
+            _box = new TextBox { Width = 150, CharacterCasing = CharacterCasing.Upper, Margin = new Padding(0, 0, 4, 0) };
+            var browse = new Button { Text = "Select...", Width = 80, Height = _box.PreferredHeight + 1, Margin = new Padding(0, 0, 8, 0) };
+            _summary = new Label { AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(0, 4, 0, 0), MaximumSize = new Size(360, 0) };
+            _box.TextChanged += (_, _) => { Changed?.Invoke(this, EventArgs.Empty); };
+            _box.Leave += (_, _) => UpdateSummary();
+            browse.Click += (_, _) =>
+            {
+                using var dlg = new ReportPickerDialog();
+                if (dlg.ShowDialog(_panel.FindForm()) == DialogResult.OK && dlg.SelectedReport != null)
+                {
+                    _box.Text = dlg.SelectedReport.ReportNumber;
+                    UpdateSummary();
+                }
+            };
+            _panel.Controls.AddRange(new Control[] { _box, browse, _summary });
+        }
+
+        private void UpdateSummary()
+        {
+            var number = _box.Text.Trim();
+            if (number.Length == 0)
+            {
+                _summary.Text = "";
+                return;
+            }
+            var linked = Services.AppSession.Repository.GetByNumber(number);
+            _summary.ForeColor = linked == null ? Color.DarkRed : SystemColors.GrayText;
+            _summary.Text = linked == null
+                ? "Report not found"
+                : $"{linked.Title} ({Services.ReportFormatter.FormName(linked.FormCode)})";
+        }
+
+        public string Value
+        {
+            get => _box.Text.Trim();
+            set
+            {
+                _box.Text = value;
+                UpdateSummary();
+            }
         }
     }
 }

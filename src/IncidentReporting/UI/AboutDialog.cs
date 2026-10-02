@@ -19,14 +19,15 @@ public sealed class AboutDialog : Form
         ClientSize = new Size(440, 250);
 
         var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
-        var band = new Panel { Dock = DockStyle.Top, Height = 64, BackColor = Color.FromArgb(0x2B, 0x3A, 0x4F) };
+        var band = new Panel { Dock = DockStyle.Top, Height = 64, BackColor = Branding.Navy };
+        band.Controls.Add(new PictureBox { Image = Branding.Logo48, SizeMode = PictureBoxSizeMode.Zoom, Bounds = new Rectangle(14, 8, 48, 48) });
         band.Controls.Add(new Label
         {
-            Text = "Incident Report Manager",
+            Text = Branding.ProductName,
             Font = new Font("Segoe UI", 14f, FontStyle.Bold),
             ForeColor = Color.White,
             AutoSize = true,
-            Location = new Point(16, 18)
+            Location = new Point(72, 18)
         });
 
         var info = new Label

@@ -1,0 +1,586 @@
+using IncidentReporting.Models;
+
+namespace IncidentReporting.Templates;
+
+/// <summary>Additional forms for the existing categories.</summary>
+public static partial class FormCatalog
+{
+    private static void AddHealthAndSafetyExtended(List<FormDefinition> list)
+    {
+        list.Add(Start("HS-260", "Electrical Shock / Arc Flash Report", "Health & Safety",
+                "Contact with electrical energy, electric shock, or an arc flash / arc blast event.")
+            .Include(f => CommonSections.PersonInvolved(f, "Affected Person"))
+            .Section("Electrical Event")
+            .Choice("elec_event", "Event Type", true, "Electric Shock", "Arc Flash", "Arc Blast", "Static Discharge", "Near Miss - No Contact")
+            .Choice("voltage_class", "Voltage", "Under 50 V", "50 - 600 V", "601 V - 15 kV", "Over 15 kV", "Unknown")
+            .Text("equipment", "Equipment / Circuit Involved", required: true)
+            .Text("panel_id", "Panel / Breaker ID")
+            .Choice("contact_path", "Current Path", "Hand to Hand", "Hand to Foot", "Head to Foot", "Unknown", "Not Applicable")
+            .YesNo("energized_work_permit", "Was an Energized Work Permit in Place?")
+            .YesNo("loto_applied", "Was Lockout / Tagout Applied?")
+            .YesNo("qualified_person", "Was the Worker a Qualified Electrical Person?")
+            .Multi("elec_ppe", "Electrical PPE Worn", "Arc-Rated Clothing", "Arc Flash Suit / Hood", "Voltage-Rated Gloves", "Leather Protectors", "Face Shield", "Safety Glasses", "Dielectric Footwear", "None")
+            .Text("incident_energy", "Incident Energy / Arc Flash Label (cal/cm²)")
+            .Section("Medical")
+            .YesNo("loss_of_consciousness", "Loss of Consciousness?")
+            .Multi("elec_injuries", "Injuries", "Entry Wound", "Exit Wound", "Thermal Burn", "Flash Burn to Eyes", "Cardiac Symptoms", "Muscle Contraction / Fall", "None Apparent")
+            .YesNo("ecg_performed", "ECG / Cardiac Monitoring Performed?")
+            .Choice("treatment_level", "Treatment", "None", "First Aid", "Clinic / Physician", "Emergency Room", "Hospitalized")
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("HS-270", "Lockout / Tagout Violation Report", "Health & Safety",
+                "Failure to isolate hazardous energy, missing locks, or unauthorized lock removal.")
+            .Section("Violation")
+            .Choice("loto_violation", "Type of Violation", true,
+                "No Lockout Applied", "Incomplete Isolation", "No Try-Out / Verification", "Lock Removed by Another Person",
+                "Tag Only Without Lock", "Group Lockout Not Followed", "Procedure Not Available", "Shift Change Handover Failure")
+            .Text("machine", "Machine / Equipment", required: true)
+            .Text("procedure_no", "Energy Control Procedure Number")
+            .Multi("energy_sources", "Energy Sources Involved", "Electrical", "Hydraulic", "Pneumatic", "Mechanical", "Thermal", "Chemical", "Gravity / Stored", "Steam", "Water")
+            .Text("employee_involved", "Employee(s) Involved")
+            .YesNo("authorized_employee", "Was the Employee Authorized for LOTO?")
+            .Date("last_loto_training", "Last LOTO Training Date")
+            .YesNo("injury_occurred", "Did an Injury Occur?")
+            .YesNo("equipment_started", "Did the Equipment Start or Move Unexpectedly?")
+            .Choice("discipline", "Disciplinary Action", "None", "Coaching", "Retraining", "Written Warning", "Suspension", "Termination", "Pending")
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("HS-280", "Heat Stress / Heat Illness Report", "Health & Safety",
+                "Heat rash, cramps, exhaustion or heat stroke related to work or event conditions.")
+            .Include(f => CommonSections.PersonInvolved(f, "Affected Person"))
+            .Section("Conditions")
+            .Text("air_temp", "Air Temperature")
+            .Text("heat_index", "Heat Index / WBGT")
+            .Choice("humidity", "Humidity", "Low", "Moderate", "High")
+            .Choice("work_location", "Work Setting", "Outdoors - Sun", "Outdoors - Shade", "Indoors - No Cooling", "Indoors - Hot Process", "Vehicle / Cab", "Other")
+            .Text("work_rate", "Task / Work Rate")
+            .Number("hours_worked", "Hours Worked Before Onset")
+            .YesNo("acclimatized", "Was the Person Acclimatized (worked 5+ days in heat)?")
+            .YesNo("water_available", "Was Cool Drinking Water Available?")
+            .YesNo("rest_breaks", "Were Shaded Rest Breaks Provided?")
+            .Section("Symptoms & Care")
+            .Choice("heat_illness", "Suspected Condition", true, "Heat Rash", "Heat Cramps", "Heat Syncope (Fainting)", "Heat Exhaustion", "Heat Stroke", "Rhabdomyolysis")
+            .Multi("heat_symptoms", "Symptoms", "Heavy Sweating", "No Sweating / Hot Dry Skin", "Headache", "Dizziness", "Nausea / Vomiting", "Confusion", "Seizure", "Collapse", "Muscle Cramps", "Dark Urine")
+            .Text("body_temp", "Body Temperature (if taken)")
+            .Multi("heat_care", "Cooling Measures", "Moved to Shade / AC", "Fluids Given", "Cold Packs", "Cold Water Immersion", "Fanning / Misting", "Clothing Loosened", "EMS Called")
+            .Choice("treatment_level", "Treatment", "First Aid", "Clinic / Physician", "Emergency Room", "Hospitalized")
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("HS-290", "Serious Injury Regulatory Notification", "Health & Safety",
+                "Record of a regulator notification for a fatality, in-patient hospitalization, amputation or loss of an eye.")
+            .Related(required: true)
+            .Include(f => CommonSections.PersonInvolved(f, "Injured / Deceased Person"))
+            .Section("Notification")
+            .Choice("event_reported", "Reportable Event", true,
+                "Fatality (report within 8 hours)", "In-Patient Hospitalization (24 hours)", "Amputation (24 hours)", "Loss of an Eye (24 hours)", "Other Reportable Event")
+            .DateTime("employer_aware", "Date / Time Employer Became Aware", required: true)
+            .Text("agency", "Agency Notified", required: true)
+            .Choice("notification_method", "Method", "Phone", "Online Portal", "In Person at Area Office", "Email")
+            .DateTime("notified_at", "Date / Time Notified", required: true)
+            .Text("agency_contact", "Agency Contact Name")
+            .Text("agency_reference", "Agency Reference / Inspection Number")
+            .YesNo("within_deadline", "Was Notification Made Within the Deadline?")
+            .Memo("late_reason", "Reason for Late Notification (if applicable)")
+            .YesNo("inspection_expected", "On-Site Inspection Expected?")
+            .YesNo("scene_preserved", "Scene Preserved?")
+            .Include(CommonSections.Narrative)
+            .Include(CommonSections.SignOff)
+            .Build());
+    }
+
+    private static void AddMedicalExtended(List<FormDefinition> list)
+    {
+        // Healthcare & Care additions.
+        list.Add(Start("CARE-1020", "Pressure Injury Report", "Healthcare & Care",
+                "Newly identified or worsening pressure injury (pressure ulcer).")
+            .Include(f => CommonSections.PersonInvolved(f, "Patient / Resident"))
+            .Section("Pressure Injury")
+            .Text("mrn", "Medical Record / Resident Number")
+            .Text("unit_room", "Unit / Room / Bed")
+            .Choice("pi_stage", "Stage", true, "Stage 1", "Stage 2", "Stage 3", "Stage 4", "Unstageable", "Deep Tissue Pressure Injury", "Medical Device Related", "Mucosal Membrane")
+            .Choice("pi_site", "Anatomical Site", "Sacrum / Coccyx", "Heel", "Ischium", "Hip / Trochanter", "Elbow", "Occiput", "Ear", "Scapula", "Ankle", "Other")
+            .Choice("pi_origin", "Origin", "Acquired in This Facility", "Present on Admission", "Unknown")
+            .Text("pi_size", "Size (L x W x D, cm)")
+            .Memo("pi_wound_bed", "Wound Bed Description / Drainage / Odor")
+            .Text("braden_score", "Most Recent Braden Score")
+            .Multi("pi_prevention", "Prevention in Place", "Repositioning Schedule", "Pressure-Redistribution Mattress", "Heel Offloading", "Nutrition Consult", "Moisture Management", "Skin Inspection Each Shift", "Device Padding")
+            .YesNo("wound_care_consult", "Wound Care Specialist Consulted?")
+            .YesNo("physician_notified", "Physician Notified?")
+            .YesNo("family_notified", "Family / Representative Notified?")
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("CARE-1030", "Restraint / Seclusion Use Report", "Healthcare & Care",
+                "Physical, mechanical or chemical restraint or seclusion of a patient, resident or client.")
+            .Include(f => CommonSections.PersonInvolved(f, "Patient / Client"))
+            .Section("Restraint / Seclusion")
+            .Choice("restraint_type", "Type", true, "Physical Hold", "Mechanical Restraint", "Chemical Restraint", "Seclusion", "Combination")
+            .Text("restraint_device", "Device / Hold / Medication Used")
+            .Memo("restraint_reason", "Imminent Risk That Required Restraint", required: true)
+            .Memo("less_restrictive", "Less Restrictive Alternatives Attempted", required: true)
+            .DateTime("restraint_start", "Start Date / Time", required: true)
+            .DateTime("restraint_end", "End Date / Time")
+            .Text("ordered_by", "Ordered / Authorized By")
+            .Text("staff_involved", "Staff Involved")
+            .Multi("monitoring", "Monitoring During Restraint", "Continuous Observation", "15-Minute Checks", "Vital Signs", "Circulation / Skin Checks", "Offered Fluids / Toileting", "Face-to-Face Evaluation Within 1 Hour")
+            .YesNo("restraint_injury", "Injury to Patient or Staff?")
+            .YesNo("debrief_held", "Post-Event Debrief Held?")
+            .YesNo("guardian_notified", "Guardian / Family Notified?")
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("CARE-1040", "Adverse Drug Reaction Report", "Healthcare & Care",
+                "Unintended harmful response to a medication given at a normal dose.")
+            .Include(f => CommonSections.PersonInvolved(f, "Patient / Resident"))
+            .Section("Suspected Drug")
+            .Text("adr_drug", "Suspected Medication", required: true)
+            .Text("adr_dose", "Dose / Frequency")
+            .Choice("adr_route", "Route", "Oral", "IV", "IM", "Subcutaneous", "Topical", "Inhaled", "Other")
+            .Date("adr_started", "Date Medication Started")
+            .Text("adr_indication", "Indication")
+            .Memo("adr_other_meds", "Concurrent Medications")
+            .Section("Reaction")
+            .Memo("adr_description", "Reaction Description", required: true)
+            .Choice("adr_seriousness", "Seriousness", "Non-Serious", "Required Intervention", "Hospitalization / Prolonged Stay", "Life-Threatening", "Disability", "Death")
+            .Choice("adr_action", "Action Taken With Drug", "Discontinued", "Dose Reduced", "Continued", "Not Applicable")
+            .Choice("adr_dechallenge", "Reaction Resolved After Stopping?", "Yes", "No", "Unknown", "Not Applicable")
+            .YesNo("allergy_recorded", "Allergy / Intolerance Added to Record?")
+            .YesNo("external_report", "Reported to Drug Safety Agency?")
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("CARE-1050", "Infection Control Breach Report", "Healthcare & Care",
+                "Lapse in infection prevention practice, sterilization failure, or suspected outbreak.")
+            .Section("Breach")
+            .Choice("ic_type", "Type", true,
+                "Hand Hygiene Lapse", "PPE Not Used / Incorrect", "Isolation Precautions Not Followed", "Sterilization / Reprocessing Failure",
+                "Single-Use Item Reused", "Contaminated Equipment", "Environmental Contamination", "Suspected Outbreak", "Other")
+            .Text("ic_organism", "Organism / Condition (if known)")
+            .Text("ic_equipment", "Equipment / Instrument / Lot Involved")
+            .Number("ic_patients_exposed", "Number of Patients Potentially Exposed")
+            .Number("ic_staff_exposed", "Number of Staff Potentially Exposed")
+            .YesNo("ic_lookback", "Patient Look-Back / Notification Required?")
+            .YesNo("ic_ipc_notified", "Infection Prevention Team Notified?")
+            .YesNo("ic_health_dept", "Public Health Department Notified?")
+            .Include(CommonSections.Footer)
+            .Build());
+    }
+
+    private static void AddPeopleExtended(List<FormDefinition> list)
+    {
+        list.Add(Start("HR-930", "Reasonable Suspicion Drug / Alcohol Report", "Human Resources",
+                "Documents observed behavior supporting a reasonable-suspicion drug or alcohol test.")
+            .Section("Employee")
+            .Text("employee_name", "Employee Name", required: true)
+            .Text("employee_id", "Employee ID")
+            .Text("employee_title", "Job Title")
+            .YesNo("safety_sensitive", "Safety-Sensitive Position?")
+            .Section("Observations")
+            .Multi("rs_appearance", "Appearance", "Bloodshot / Watery Eyes", "Dilated / Constricted Pupils", "Flushed Face", "Disheveled", "Odor of Alcohol", "Odor of Cannabis", "Needle Marks")
+            .Multi("rs_behavior", "Behavior", "Slurred Speech", "Unsteady Gait", "Drowsiness", "Agitation / Aggression", "Confusion", "Excessive Talking", "Paranoia", "Unusual Absence")
+            .Multi("rs_performance", "Performance", "Errors / Near Misses", "Inability to Follow Instructions", "Unsafe Operation of Equipment", "Accident / Incident")
+            .Memo("rs_details", "Specific Observations (who, what, when)", required: true)
+            .Text("rs_second_observer", "Second Trained Observer")
+            .Section("Testing")
+            .YesNo("rs_test_requested", "Test Requested?")
+            .Choice("rs_test_type", "Test Type", "Breath Alcohol", "Urine Drug Screen", "Oral Fluid", "Blood", "Multiple")
+            .DateTime("rs_test_time", "Date / Time of Test")
+            .Text("rs_collection_site", "Collection Site")
+            .YesNo("rs_refused", "Did the Employee Refuse Testing?")
+            .YesNo("rs_transport", "Was Safe Transportation Home Arranged?")
+            .Choice("rs_result", "Result", "Pending", "Negative", "Positive", "Refusal", "Invalid")
+            .Include(CommonSections.Narrative)
+            .Include(CommonSections.SignOff)
+            .Build());
+
+        list.Add(Start("HR-940", "Fitness for Duty / Return to Work Report", "Human Resources",
+                "Tracks medical clearance, restrictions and modified duty after an injury or illness.")
+            .Related()
+            .Section("Employee")
+            .Text("employee_name", "Employee Name", required: true)
+            .Text("employee_id", "Employee ID")
+            .Text("employee_title", "Regular Job Title")
+            .Date("off_work_from", "Off Work From")
+            .Section("Medical Clearance")
+            .Text("provider_name", "Treating Provider")
+            .Date("clearance_date", "Clearance Date")
+            .Choice("clearance_status", "Status", true, "Full Duty - No Restrictions", "Modified / Light Duty", "Not Fit for Duty", "Pending Evaluation")
+            .Multi("restrictions", "Restrictions", "No Lifting Over 10 lbs", "No Lifting Over 25 lbs", "No Overhead Work", "No Climbing / Ladders", "Limited Standing", "Limited Walking", "Seated Work Only", "No Driving", "No Use of Injured Hand", "Reduced Hours")
+            .Date("restrictions_until", "Restrictions Until")
+            .Date("next_appointment", "Next Medical Appointment")
+            .Section("Modified Duty Offer")
+            .Memo("modified_duties", "Modified Duties Offered")
+            .Text("modified_hours", "Schedule / Hours")
+            .Date("modified_start", "Modified Duty Start Date")
+            .Choice("offer_response", "Employee Response", "Accepted", "Declined", "Pending")
+            .Date("full_duty_date", "Returned to Full Duty On")
+            .Include(CommonSections.SignOff)
+            .Build());
+
+        list.Add(Start("HR-950", "Workplace Bullying Report", "Human Resources",
+                "Repeated unreasonable behavior directed at an employee or group that creates a risk to health and safety.")
+            .Section("People Involved")
+            .Text("target_name", "Person Experiencing the Behavior", required: true)
+            .Text("target_title", "Job Title / Department")
+            .Text("alleged_name", "Person(s) Alleged to Be Responsible", required: true)
+            .Text("alleged_relationship", "Working Relationship (manager, peer, report)")
+            .Section("Behavior")
+            .Multi("bullying_types", "Behavior Experienced",
+                "Verbal Abuse / Yelling", "Humiliation in Front of Others", "Exclusion / Isolation", "Unreasonable Workload or Deadlines",
+                "Withholding Information", "Spreading Rumors", "Intimidation", "Cyber / Online Bullying", "Sabotage of Work", "Physical Intimidation")
+            .Choice("frequency", "Frequency", "Daily", "Weekly", "Several Times a Month", "Occasional")
+            .Date("first_occurrence", "Date of First Occurrence")
+            .Memo("impact", "Impact on the Person / Work")
+            .YesNo("previously_raised", "Previously Raised With a Manager?")
+            .YesNo("eap_offered", "Employee Assistance Program Offered?")
+            .Choice("bullying_outcome", "Outcome", "Pending", "Informal Resolution", "Mediation", "Formal Investigation", "Substantiated", "Unsubstantiated")
+            .Include(CommonSections.Footer)
+            .Build());
+
+        // Education & Childcare additions.
+        list.Add(Start("EDU-1120", "Student Bullying Report", "Education & Childcare",
+                "Bullying, harassment or intimidation between students, in person or online.")
+            .Section("Students Involved")
+            .Text("target_student", "Targeted Student", required: true)
+            .Text("target_grade", "Grade / Class")
+            .Text("aggressor_students", "Student(s) Alleged to Be Responsible", required: true)
+            .Text("bystanders", "Bystanders")
+            .Section("Behavior")
+            .Multi("bullying_types", "Type", "Physical", "Verbal", "Social / Relational", "Cyberbullying", "Sexual", "Racial / Ethnic", "Disability-Based", "Gender / Sexual Orientation-Based", "Threats", "Property Taken / Damaged")
+            .Choice("bullying_place", "Where", "Classroom", "Hallway", "Cafeteria", "Playground", "Restroom / Locker Room", "Bus", "Online / Social Media", "Off Campus", "Other")
+            .Choice("frequency", "Frequency", "First Report", "Repeated", "Ongoing Pattern")
+            .YesNo("target_safe", "Has a Safety Plan Been Put in Place for the Target?")
+            .YesNo("target_parents_notified", "Target's Parents / Guardians Notified?")
+            .YesNo("aggressor_parents_notified", "Aggressor's Parents / Guardians Notified?")
+            .Choice("bullying_finding", "Investigation Finding", "Pending", "Bullying Confirmed", "Conflict - Not Bullying", "Unfounded")
+            .Memo("interventions", "Interventions / Consequences")
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("EDU-1130", "School Bus Incident Report", "Education & Childcare",
+                "Student behavior, injury, collision or operational issue on a school bus.")
+            .Section("Bus & Route")
+            .Text("bus_number", "Bus Number", required: true)
+            .Text("route_number", "Route Number")
+            .Text("bus_driver", "Driver Name", required: true)
+            .Text("bus_aide", "Bus Aide / Monitor")
+            .Choice("bus_run", "Run", "Morning Pick-Up", "Afternoon Drop-Off", "Mid-Day", "Activity / Field Trip", "Athletics")
+            .Number("students_on_board", "Students on Board")
+            .Section("Incident")
+            .Choice("bus_incident_type", "Incident Type", true,
+                "Student Behavior", "Student Injury", "Collision", "Breakdown", "Student Left on Bus", "Student Dropped at Wrong Stop",
+                "Stop-Arm Violation by Motorist", "Medical Emergency", "Unauthorized Person Boarded")
+            .Text("students_involved", "Student(s) Involved")
+            .Text("stop_location", "Stop / Road Location")
+            .Text("stop_arm_plate", "Violating Vehicle Plate (stop-arm)")
+            .YesNo("camera_footage", "Bus Camera Footage Available?")
+            .YesNo("parents_notified", "Parents / Guardians Notified?")
+            .Choice("bus_consequence", "Consequence", "None", "Warning", "Assigned Seat", "Parent Conference", "Bus Suspension", "Referred to Administration")
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("EDU-1140", "Field Trip Incident Report", "Education & Childcare",
+                "Incidents occurring during off-site trips, excursions or overnight programs.")
+            .Section("Trip")
+            .Text("trip_destination", "Destination", required: true)
+            .Text("trip_lead", "Trip Leader", required: true)
+            .Number("trip_students", "Number of Students")
+            .Number("trip_adults", "Number of Adults / Chaperones")
+            .Choice("trip_transport", "Transport", "School Bus", "Charter Coach", "Van", "Public Transit", "Walking", "Air", "Other")
+            .YesNo("permission_slips", "Permission Slips on File for All Students?")
+            .YesNo("medical_forms_carried", "Medical Forms / Medications Carried?")
+            .Section("Incident")
+            .Choice("trip_incident_type", "Incident Type", true, "Injury", "Illness", "Missing / Separated Student", "Behavior", "Transport Problem", "Lost Property", "Weather", "Other")
+            .Text("students_involved", "Student(s) Involved")
+            .YesNo("venue_notified", "Venue Staff Notified?")
+            .YesNo("school_notified", "School Office Notified?")
+            .YesNo("parents_notified", "Parents / Guardians Notified?")
+            .Include(CommonSections.Footer)
+            .Build());
+    }
+
+    private static void AddSecurityExtended(List<FormDefinition> list)
+    {
+        list.Add(Start("SEC-470", "Lost Key / Access Card Report", "Security",
+                "Loss, theft or non-return of keys, access cards, fobs or codes.")
+            .Section("Credential")
+            .Choice("credential_type", "Type", true, "Mechanical Key", "Master Key", "Access Card / Badge", "Key Fob", "Vehicle Key", "Alarm Code", "Safe Combination")
+            .Text("credential_id", "Key Number / Card Number", required: true)
+            .Text("credential_holder", "Issued To", required: true)
+            .Choice("credential_event", "Event", true, "Lost", "Stolen", "Not Returned at Separation", "Damaged", "Found")
+            .Text("areas_accessible", "Areas the Credential Opens")
+            .YesNo("card_deactivated", "Card / Code Deactivated?")
+            .DateTime("deactivated_at", "Date / Time Deactivated")
+            .YesNo("rekey_required", "Re-Keying / Lock Change Required?")
+            .Number("rekey_cost", "Re-Keying Cost ($)")
+            .YesNo("replacement_issued", "Replacement Issued?")
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("SEC-480", "Active Threat / Lockdown Report", "Security",
+                "Active assailant, armed intruder, or other event requiring lockdown or shelter-in-place.")
+            .Section("Threat")
+            .Choice("threat_type", "Threat Type", true, "Active Shooter", "Armed Intruder", "Person With Knife / Weapon", "Hostage / Barricade", "Vehicle Ramming", "External Threat Nearby", "Credible Threat Received", "False Alarm")
+            .Text("weapon", "Weapon(s) Observed")
+            .Text("last_known_location", "Last Known Location of Threat")
+            .Section("Response")
+            .Choice("protective_action", "Protective Action", true, "Lockdown", "Secure Perimeter / Lockout", "Shelter in Place", "Evacuation", "Run / Hide / Fight")
+            .DateTime("lockdown_start", "Protective Action Initiated", required: true)
+            .DateTime("all_clear", "All Clear Given")
+            .Text("all_clear_by", "All Clear Authorized By")
+            .Multi("alert_methods", "How Occupants Were Alerted", "PA Announcement", "Mass Notification Text", "Email", "Alarm Tone", "Radio", "Runner / In Person")
+            .Number("occupants", "Approximate Number of Occupants")
+            .Number("casualties", "Number of Casualties")
+            .YesNo("reunification", "Reunification Process Activated?")
+            .Text("reunification_site", "Reunification Site")
+            .Include(SubjectDescription)
+            .Include(LawEnforcement)
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("SEC-490", "Parking Lot / Garage Incident Report", "Security",
+                "Vehicle damage, break-ins, hit-and-run, or personal safety incidents in parking areas.")
+            .Section("Parking Incident")
+            .Choice("parking_type", "Incident Type", true, "Vehicle Damage - Parked", "Hit and Run", "Vehicle Break-In", "Vehicle Theft", "Collision in Lot", "Pedestrian Struck", "Assault / Robbery", "Towing / Booting Dispute", "Abandoned Vehicle")
+            .Text("parking_area", "Lot / Level / Space Number")
+            .Text("vehicle_owner", "Vehicle Owner", required: true)
+            .Phone("vehicle_owner_phone", "Owner Phone")
+            .Text("vehicle_desc", "Vehicle Year / Make / Model / Color")
+            .Text("vehicle_plate", "License Plate")
+            .Memo("vehicle_damage", "Damage / Items Taken")
+            .YesNo("lot_signage", "Liability Signage Posted?")
+            .Choice("lot_lighting", "Lighting", "Adequate", "Dim", "Lights Out")
+            .Include(SubjectDescription)
+            .Include(LawEnforcement)
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("SEC-500", "Emergency Drill Evaluation", "Security",
+                "Evaluation of a fire, evacuation, lockdown, shelter or severe-weather drill.")
+            .Section("Drill")
+            .Choice("drill_type", "Drill Type", true, "Fire Evacuation", "Lockdown", "Shelter in Place", "Severe Weather / Tornado", "Earthquake", "Bomb Threat", "Chemical Release", "Reunification", "Tabletop Exercise")
+            .Choice("drill_notice", "Announced?", "Announced", "Unannounced")
+            .Time("drill_start", "Start Time")
+            .Time("drill_end", "End Time")
+            .Number("drill_minutes", "Time to Complete (minutes)")
+            .Number("drill_participants", "Number of Participants")
+            .YesNo("alarm_audible", "Alarm / Announcement Audible Everywhere?")
+            .YesNo("exits_clear", "Exits and Routes Clear?")
+            .YesNo("accountability", "All Occupants Accounted For?")
+            .YesNo("special_needs", "Occupants Needing Assistance Supported?")
+            .Choice("drill_rating", "Overall Rating", true, "Satisfactory", "Needs Improvement", "Unsatisfactory")
+            .Memo("drill_strengths", "What Went Well")
+            .Memo("drill_issues", "Deficiencies Observed")
+            .Text("observers", "Observers / Evaluators")
+            .Include(CommonSections.FollowUp)
+            .Include(CommonSections.SignOff)
+            .Build());
+
+        list.Add(Start("SEC-510", "Security Daily Activity Log", "Security",
+                "Shift log for security officers: patrols, observations, visitors and handover notes.")
+            .Section("Shift")
+            .Text("officer_name", "Officer Name", required: true)
+            .Text("post", "Post / Site", required: true)
+            .Time("shift_start", "Shift Start")
+            .Time("shift_end", "Shift End")
+            .Text("relieved", "Relieved / Handed Over To")
+            .Multi("equipment_received", "Equipment Received", "Radio", "Keys", "Phone", "Flashlight", "Access Cards", "Vehicle", "Body Camera")
+            .Section("Activity")
+            .Number("patrols_completed", "Patrols Completed")
+            .Memo("patrol_log", "Patrol Log (time - location - observation)", required: true,
+                hint: "One line per entry, e.g. 22:15 - Loading dock - Door found unlocked, secured.")
+            .Memo("doors_found", "Doors / Windows Found Insecure")
+            .Memo("maintenance_issues", "Maintenance Issues Observed")
+            .Memo("visitors_deliveries", "Visitors / Deliveries / Contractors")
+            .Memo("alarms", "Alarms Received and Response")
+            .YesNo("incidents_this_shift", "Were Separate Incident Reports Filed This Shift?")
+            .Memo("handover_notes", "Handover Notes")
+            .Include(CommonSections.SignOff)
+            .Build());
+    }
+
+    private static void AddOperationsExtended(List<FormDefinition> list)
+    {
+        // Hospitality & Retail additions.
+        list.Add(Start("CUS-1230", "Aquatic / Pool Incident Report", "Hospitality & Retail",
+                "Drowning, near drowning, rescue, diving injury or water-quality incident at a pool, spa or beach.")
+            .Include(f => CommonSections.PersonInvolved(f, "Swimmer / Guest"))
+            .Section("Aquatic Details")
+            .Choice("aquatic_type", "Incident Type", true, "Rescue - Distressed Swimmer", "Near Drowning", "Drowning", "Diving / Spinal Injury", "Slip on Deck", "Chemical Exposure", "Fecal / Vomit Contamination", "Entrapment", "Other")
+            .Choice("aquatic_area", "Area", "Main Pool", "Lap Lanes", "Shallow End", "Deep End", "Diving Board", "Slide", "Spa / Hot Tub", "Wading Pool", "Beach / Open Water", "Deck")
+            .Text("lifeguard", "Lifeguard(s) on Duty")
+            .Number("bathers", "Approximate Number of Bathers")
+            .Choice("swim_ability", "Swimming Ability", "Non-Swimmer", "Weak", "Competent", "Unknown")
+            .Multi("aquatic_care", "Care Provided", "Rescue Tube / Assist", "Backboard / Spinal Precautions", "Rescue Breaths", "CPR", "AED Applied", "Oxygen", "First Aid")
+            .YesNo("pool_closed", "Was the Pool Closed / Cleared?")
+            .Number("closure_minutes", "Closure Duration (minutes)")
+            .Text("water_chemistry", "Chlorine / pH Readings at Time")
+            .Choice("treatment_level", "Outcome", "Returned to Activity", "First Aid Only", "Transported by EMS", "Fatality")
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("CUS-1240", "Alcohol Service Incident Report", "Hospitality & Retail",
+                "Refusal of service, ID checks, intoxicated guests, ejections and related liquor-license events.")
+            .Section("Service Incident")
+            .Choice("alcohol_type", "Incident Type", true, "Refusal of Service - Intoxication", "Refusal - No / Invalid ID", "Fake ID Confiscated", "Minor Attempted Purchase", "Intoxicated Guest Ejected", "Guest Driving Impaired", "Over-Service Concern", "Fight / Disturbance", "Liquor Inspector Visit")
+            .Text("guest_name", "Guest Name (if known)")
+            .Text("id_type", "ID Presented")
+            .Text("id_details", "ID Details / Date of Birth Shown")
+            .Text("server_name", "Server / Bartender", required: true)
+            .YesNo("server_certified", "Server Holds Responsible-Service Certification?")
+            .Multi("intox_signs", "Signs of Intoxication", "Slurred Speech", "Loud / Boisterous", "Stumbling", "Spilling Drinks", "Bloodshot Eyes", "Aggression", "Drowsiness", "Odor of Alcohol")
+            .Number("drinks_served", "Drinks Served (approx.)")
+            .Choice("guest_departure", "How Guest Left", "Remained - No Further Service", "Taxi / Rideshare Arranged", "Friend Drove", "Walked", "Drove Self (police notified)", "Removed by Police")
+            .Include(SubjectDescription)
+            .Include(LawEnforcement)
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("CUS-1250", "Guest Room Incident Report", "Hospitality & Retail",
+                "Incidents in hotel guest rooms: damage, theft, welfare checks, disturbances and maintenance issues.")
+            .Section("Room & Guest")
+            .Text("room_number", "Room Number", required: true)
+            .Text("guest_name", "Registered Guest", required: true)
+            .Phone("guest_phone", "Guest Phone")
+            .Date("check_in", "Check-In Date")
+            .Date("check_out", "Check-Out Date")
+            .Section("Incident")
+            .Choice("room_incident", "Incident Type", true, "Room Damage by Guest", "Guest Property Missing", "Noise Complaint", "Smoking in Room", "Welfare Check", "Unattended Death", "Pest Complaint", "Lockout / Unauthorized Entry", "Maintenance Failure", "Other")
+            .Text("room_entered_by", "Staff Who Entered Room")
+            .Time("room_entry_time", "Time of Entry")
+            .YesNo("second_staff_present", "Second Staff Member Present?")
+            .Number("damage_estimate", "Damage / Cleaning Charge ($)")
+            .YesNo("guest_charged", "Charge Posted to Guest Folio?")
+            .YesNo("key_audit", "Lock / Key Audit Performed?")
+            .Include(LawEnforcement)
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("CUS-1260", "Crowd / Event Incident Report", "Hospitality & Retail",
+                "Crowd surges, overcrowding, ejections and safety incidents at concerts, venues and public events.")
+            .Section("Event")
+            .Text("event_name", "Event Name", required: true)
+            .Text("venue_zone", "Venue Zone / Gate / Section")
+            .Number("attendance", "Estimated Attendance")
+            .Number("capacity", "Licensed Capacity")
+            .Section("Incident")
+            .Choice("crowd_type", "Incident Type", true, "Crowd Surge / Crush", "Overcrowding", "Barrier Failure", "Fight", "Ejection", "Prohibited Item Found", "Pyrotechnics / Flare", "Pitch / Stage Invasion", "Lost Child", "Medical Incident", "Evacuation")
+            .Number("persons_involved", "Number of Persons Involved")
+            .YesNo("show_stopped", "Was the Show / Event Paused?")
+            .Number("pause_minutes", "Pause Duration (minutes)")
+            .Text("steward_supervisor", "Steward / Security Supervisor")
+            .YesNo("event_control_informed", "Event Control Informed?")
+            .Include(SubjectDescription)
+            .Include(LawEnforcement)
+            .Include(CommonSections.Footer)
+            .Build());
+
+        // Vehicle & Fleet additions.
+        list.Add(Start("VEH-520", "Post-Accident Drug & Alcohol Testing Record", "Vehicle & Fleet",
+                "Testing determination and results for commercial drivers following a crash.")
+            .Related(required: true)
+            .Section("Driver")
+            .Text("driver_name", "Driver Name", required: true)
+            .Text("driver_license", "CDL Number / State")
+            .Text("veh_unit", "Unit Number")
+            .Section("Testing Determination")
+            .YesNo("fatality", "Was There a Fatality?", required: true)
+            .YesNo("citation_injury", "Citation Issued AND Injury Requiring Treatment Away From Scene?")
+            .YesNo("citation_tow", "Citation Issued AND Vehicle Towed Due to Disabling Damage?")
+            .Choice("test_required", "Testing Required?", true, "Yes", "No")
+            .Section("Alcohol Test")
+            .DateTime("alcohol_test_time", "Date / Time of Alcohol Test")
+            .YesNo("alcohol_within_2h", "Conducted Within 2 Hours?")
+            .Memo("alcohol_delay_reason", "Reason if Not Within 2 Hours (attempts stop at 8)")
+            .Text("alcohol_result", "Result (BAC)")
+            .Section("Drug Test")
+            .DateTime("drug_test_time", "Date / Time of Drug Specimen Collection")
+            .YesNo("drug_within_32h", "Collected Within 32 Hours?")
+            .Text("ccf_number", "Custody & Control Form Number")
+            .Choice("drug_result", "Result", "Pending", "Negative", "Positive", "Refusal", "Cancelled")
+            .Text("collection_site", "Collection Site")
+            .Include(CommonSections.SignOff)
+            .Build());
+
+        list.Add(Start("VEH-530", "Passenger Incident Report", "Vehicle & Fleet",
+                "Injury, illness, disturbance or complaint involving a passenger on a bus, shuttle, van or coach.")
+            .Section("Vehicle & Trip")
+            .Text("veh_unit", "Unit / Vehicle Number", required: true)
+            .Text("route", "Route / Trip")
+            .Text("driver_name", "Driver / Operator", required: true)
+            .Number("passengers", "Passengers on Board")
+            .Choice("vehicle_motion", "Vehicle Status", "Moving", "Stopped", "Boarding", "Alighting", "Parked")
+            .Section("Passenger Incident")
+            .Choice("passenger_type", "Incident Type", true, "Fall While Boarding / Alighting", "Fall on Moving Vehicle", "Wheelchair Securement", "Door Closed on Passenger", "Passenger Illness", "Assault / Disturbance", "Fare Dispute", "Passenger Left Item", "Complaint")
+            .Text("passenger_name", "Passenger Name")
+            .Phone("passenger_phone", "Passenger Phone")
+            .YesNo("passenger_injured", "Passenger Injured?")
+            .YesNo("onboard_video", "On-Board Video Available?")
+            .YesNo("dispatch_notified", "Dispatch Notified?")
+            .Include(LawEnforcement)
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("VEH-540", "Cargo Damage / Shipping Loss Report", "Vehicle & Fleet",
+                "Freight damaged, lost, short-shipped or contaminated in transit or at the dock.")
+            .Section("Shipment")
+            .Text("bol_number", "Bill of Lading / Waybill No.", required: true)
+            .Text("carrier", "Carrier")
+            .Text("trailer_number", "Trailer / Container Number")
+            .Text("seal_number", "Seal Number")
+            .YesNo("seal_intact", "Seal Intact on Arrival?")
+            .Text("shipper", "Shipper")
+            .Text("consignee", "Consignee")
+            .Section("Loss")
+            .Choice("cargo_loss_type", "Type", true, "Damaged", "Shortage", "Overage", "Lost / Not Delivered", "Theft", "Temperature Excursion", "Contamination", "Wet / Water Damage")
+            .Memo("items_affected", "Items Affected (SKU, description, quantity)", required: true)
+            .Number("cargo_value", "Value of Loss ($)")
+            .YesNo("noted_on_pod", "Exception Noted on Delivery Receipt?")
+            .YesNo("photos_taken", "Photos Taken?")
+            .YesNo("claim_filed", "Freight Claim Filed?")
+            .Text("claim_number", "Claim Number")
+            .Include(CommonSections.Footer)
+            .Build());
+
+        // Property & Facilities additions.
+        list.Add(Start("FAC-730", "Indoor Air Quality / Mold Complaint", "Property & Facilities",
+                "Odor, mold, temperature, ventilation or other indoor environmental quality complaints.")
+            .Section("Complaint")
+            .Text("complainant_name", "Complainant", required: true)
+            .Choice("iaq_type", "Concern", true, "Visible Mold", "Musty Odor", "Chemical / Fuel Odor", "Too Hot", "Too Cold", "Stuffy / Poor Ventilation", "Dust", "Humidity", "Sewer Gas", "Carbon Monoxide Alarm")
+            .Multi("iaq_symptoms", "Symptoms Reported", "None", "Headache", "Eye Irritation", "Cough / Wheezing", "Nasal Congestion", "Fatigue", "Nausea", "Skin Irritation")
+            .Number("people_affected", "Number of People Affected")
+            .Section("Assessment")
+            .Text("temp_reading", "Temperature Reading")
+            .Text("rh_reading", "Relative Humidity (%)")
+            .Text("co2_reading", "CO2 (ppm)")
+            .Text("co_reading", "CO (ppm)")
+            .Text("mold_area", "Mold Area (sq ft)")
+            .YesNo("moisture_source", "Moisture Source Identified?")
+            .YesNo("hvac_checked", "HVAC Inspected?")
+            .YesNo("professional_assessment", "Professional Assessment Ordered?")
+            .Include(CommonSections.Footer)
+            .Build());
+
+        list.Add(Start("FAC-740", "Elevator / Escalator Incident Report", "Property & Facilities",
+                "Entrapments, misleveling, sudden stops and injuries on elevators, escalators and lifts.")
+            .Section("Equipment")
+            .Choice("lift_type", "Equipment", true, "Passenger Elevator", "Freight Elevator", "Escalator", "Moving Walkway", "Wheelchair Lift", "Dumbwaiter")
+            .Text("lift_id", "Unit / State ID Number")
+            .Text("lift_contractor", "Maintenance Contractor")
+            .Section("Incident")
+            .Choice("lift_incident", "Incident Type", true, "Entrapment", "Misleveling / Trip Hazard", "Sudden Stop / Drop", "Door Struck Person", "Fall on Escalator", "Clothing / Shoe Caught", "Fire / Smoke", "Flooding")
+            .Number("persons_trapped", "Number of Persons Trapped")
+            .DateTime("entrapment_start", "Entrapment Reported")
+            .DateTime("released_at", "Persons Released")
+            .Choice("released_by", "Released By", "Maintenance Contractor", "Fire Department", "Trained Staff", "Self-Released")
+            .YesNo("emergency_phone_worked", "Did the In-Car Emergency Phone Work?")
+            .YesNo("unit_out_of_service", "Unit Taken Out of Service?")
+            .YesNo("inspector_notified", "State Elevator Inspector Notified?")
+            .Include(CommonSections.Footer)
+            .Build());
+    }
+}

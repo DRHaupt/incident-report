@@ -60,6 +60,7 @@ public static class ExportService
             body{font-family:Segoe UI,Arial,sans-serif;font-size:10pt;color:#000;margin:24px;}
             .hdr{border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:12px;display:flex;justify-content:space-between;}
             .org{font-size:9pt;color:#444;}
+            .logo{float:left;margin:0 10px 0 0;}
             h1{font-size:15pt;margin:0;}
             h2{font-size:10.5pt;background:#e6e6e6;border:1px solid #999;padding:3px 6px;margin:14px 0 0 0;}
             table{border-collapse:collapse;width:100%;}
@@ -70,7 +71,7 @@ public static class ExportService
             </style></head><body>
             """);
         sb.Replace("{{TITLE}}", H(report.ReportNumber));
-        sb.Append("<div class=\"hdr\"><div>");
+        sb.Append($"<div class=\"hdr\"><div><img class=\"logo\" src=\"{Branding.LogoDataUri(48)}\" width=\"40\" height=\"40\" alt=\"\">");
         if (!string.IsNullOrWhiteSpace(organization))
             sb.Append($"<div class=\"org\">{H(organization)}</div>");
         sb.Append($"<h1>{H(ReportFormatter.FormName(report.FormCode))}</h1></div>");

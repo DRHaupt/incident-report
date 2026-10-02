@@ -65,17 +65,21 @@ public sealed class ReportPrinter : IDisposable
         using var shade = new SolidBrush(Color.FromArgb(232, 232, 232));
         using var labelShade = new SolidBrush(Color.FromArgb(246, 246, 246));
 
-        // Page header
+        // Page header: logo, organization, form title and report number.
+        const float logoSize = 40f;
+        g.DrawImage(Branding.Logo48, bounds.Left, y, logoSize, logoSize);
+        float textLeft = bounds.Left + logoSize + 10;
+        float headerTop = y;
         if (!string.IsNullOrWhiteSpace(_organization))
         {
-            g.DrawString(_organization, _orgFont, Brushes.DimGray, bounds.Left, y);
-            y += _orgFont.GetHeight(g) + 2;
+            g.DrawString(_organization, _orgFont, Brushes.DimGray, textLeft, y);
+            y += _orgFont.GetHeight(g) + 1;
         }
-        g.DrawString(ReportFormatter.FormName(_report.FormCode), _titleFont, Brushes.Black, bounds.Left, y);
+        g.DrawString(ReportFormatter.FormName(_report.FormCode), _titleFont, Brushes.Black, textLeft, y);
         var meta = $"Report No. {_report.ReportNumber}    Status: {_report.Status.ToDisplay()}";
         var metaSize = g.MeasureString(meta, _labelFont);
         g.DrawString(meta, _labelFont, Brushes.Black, bounds.Right - metaSize.Width, y + 6);
-        y += _titleFont.GetHeight(g) + 4;
+        y = Math.Max(y + _titleFont.GetHeight(g), headerTop + logoSize) + 4;
         g.DrawLine(Pens.Black, bounds.Left, y, bounds.Right, y);
         y += 8;
 

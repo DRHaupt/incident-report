@@ -30,7 +30,8 @@ public sealed class MainForm : Form
 
     public MainForm()
     {
-        Text = "Incident Report Manager";
+        Text = Branding.ProductName;
+        Icon = Branding.AppIcon;
         Size = new Size(1280, 800);
         MinimumSize = new Size(900, 560);
         StartPosition = FormStartPosition.CenterScreen;
@@ -66,7 +67,7 @@ public sealed class MainForm : Form
         var treeHeader = new Label
         {
             Text = "  Report Views", Dock = DockStyle.Top, Height = 26, TextAlign = ContentAlignment.MiddleLeft,
-            BackColor = Color.FromArgb(0x2B, 0x3A, 0x4F), ForeColor = Color.White, Font = new Font("Segoe UI", 9f, FontStyle.Bold)
+            BackColor = Branding.Navy, ForeColor = Color.White, Font = new Font("Segoe UI", 9f, FontStyle.Bold)
         };
         split.Panel1.Controls.Add(_tree);
         split.Panel1.Controls.Add(treeHeader);
@@ -137,6 +138,7 @@ public sealed class MainForm : Form
         var file = new ToolStripMenuItem("&File");
         file.DropDownItems.Add(Item("&New Report...", Keys.Control | Keys.N, NewReport));
         file.DropDownItems.Add(Item("&Open Report", Keys.Control | Keys.O, OpenSelected));
+        file.DropDownItems.Add(Item("Create &Follow-Up Report...", Keys.Control | Keys.Shift | Keys.N, () => { if (SelectedReport is { } r) CreateFollowUp(r); }));
         file.DropDownItems.Add(new ToolStripSeparator());
         file.DropDownItems.Add(Item("Print Pre&view...", Keys.None, () => PrintSelected(preview: true)));
         file.DropDownItems.Add(Item("&Print...", Keys.Control | Keys.P, () => PrintSelected(preview: false)));
@@ -238,6 +240,8 @@ public sealed class MainForm : Form
     {
         var cm = new ContextMenuStrip();
         cm.Items.Add("Open", null, (_, _) => OpenSelected());
+        cm.Items.Add("Create Follow-Up Report...", null, (_, _) => { if (SelectedReport is { } r) CreateFollowUp(r); });
+        cm.Items.Add(new ToolStripSeparator());
         cm.Items.Add("Print Preview", null, (_, _) => PrintSelected(preview: true));
         cm.Items.Add("Print...", null, (_, _) => PrintSelected(preview: false));
         cm.Items.Add("Export as HTML...", null, (_, _) => ExportSelectedHtml());
@@ -408,7 +412,11 @@ public sealed class MainForm : Form
     }
 
     private static string BlankPreview() =>
-        "<html><body style=\"font-family:Segoe UI;font-size:9pt;color:#777;margin:24px\">Select a report to preview it.</body></html>";
+        "<html><head><meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\"></head>" +
+        "<body style=\"font-family:Segoe UI;font-size:9pt;color:#777;margin:0;text-align:center\">" +
+        $"<div style=\"margin-top:40px\"><img src=\"{Branding.LogoDataUri(128)}\" width=\"96\" height=\"96\" alt=\"\"></div>" +
+        $"<div style=\"font-size:13pt;font-weight:600;color:#2B3A4F;margin-top:10px\">{Branding.ProductName}</div>" +
+        "<div style=\"margin-top:6px\">Select a report to preview it.</div></body></html>";
 
     private void UpdateStatusBar()
     {
@@ -426,7 +434,19 @@ public sealed class MainForm : Form
             CreateReport(dlg.SelectedForm);
     }
 
-    private void CreateReport(FormDefinition form)
+    /// <summary>Starts a new report linked to an existing one, copying its incident details.</summary>
+    private void CreateFollowUp(IncidentReport source)
+    {
+        if (source.Id == 0)
+            return;
+        using var dlg = new NewReportDialog { InitialCategory = "Investigations & Follow-Up" };
+        dlg.Text = $"Create Follow-Up Report for {source.ReportNumber}";
+        if (dlg.ShowDialog(this) != DialogResult.OK || dlg.SelectedForm == null)
+            return;
+        CreateReport(dlg.SelectedForm, source);
+    }
+
+    private void CreateReport(FormDefinition form, IncidentReport? linkedFrom = null)
     {
         var s = AppSession.Settings;
         var today = DateTime.Today.ToString(FieldFormats.Date, CultureInfo.InvariantCulture);
@@ -439,19 +459,36 @@ public sealed class MainForm : Form
             report.Values[CommonKeys.Department] = s.DefaultDepartment;
         if (!string.IsNullOrWhiteSpace(s.DefaultLocation))
             report.Values[CommonKeys.Location] = s.DefaultLocation;
+
+        if (linkedFrom != null)
+        {
+            // Carry the incident details across so the follow-up starts out describing the same event.
+            foreach (var key in new[] { CommonKeys.Title, CommonKeys.IncidentDate, CommonKeys.IncidentTime, "shift", CommonKeys.Location, "specific_area", CommonKeys.Department, CommonKeys.Severity })
+            {
+                var v = linkedFrom.Get(key);
+                if (v.Length > 0)
+                    report.Values[key] = v;
+            }
+            if (form.AllFields.Any(f => f.Key == CommonKeys.RelatedReport))
+                report.Values[CommonKeys.RelatedReport] = linkedFrom.ReportNumber;
+        }
         ShowEditor(report, form);
     }
 
     private void OpenSelected()
     {
-        if (SelectedReport is not { } selected)
-            return;
-        if (_openEditors.TryGetValue(selected.Id, out var existing))
+        if (SelectedReport is { } selected)
+            OpenReport(selected.Id);
+    }
+
+    private void OpenReport(long id)
+    {
+        if (_openEditors.TryGetValue(id, out var existing))
         {
             existing.Activate();
             return;
         }
-        var report = Repo.Get(selected.Id);
+        var report = Repo.Get(id);
         if (report == null)
         {
             RefreshList();
@@ -474,9 +511,13 @@ public sealed class MainForm : Form
         editor.ReportChanged += (_, _) =>
         {
             _openEditors[report.Id] = editor;
+            foreach (var other in _allEditors)
+                other.RefreshLinked();
             BuildTree();
             RefreshList();
         };
+        editor.OpenReportRequested += (_, id) => OpenReport(id);
+        editor.FollowUpRequested += (_, _) => CreateFollowUp(report);
         editor.FormClosed += (_, _) =>
         {
             if (report.Id != 0)

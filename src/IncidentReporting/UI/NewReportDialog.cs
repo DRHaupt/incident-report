@@ -17,6 +17,16 @@ public sealed class NewReportDialog : Form
 
     public FormDefinition? SelectedForm { get; private set; }
 
+    /// <summary>Category to select when the dialog opens; defaults to all forms.</summary>
+    public string? InitialCategory { get; set; }
+
+    protected override void OnLoad(EventArgs e)
+    {
+        base.OnLoad(e);
+        if (InitialCategory != null && _categories.Items.IndexOf(InitialCategory) is var idx and >= 0)
+            _categories.SelectedIndex = idx;
+    }
+
     public NewReportDialog()
     {
         Text = "New Incident Report";

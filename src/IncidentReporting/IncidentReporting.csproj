@@ -14,7 +14,12 @@
     <Version>1.0.0</Version>
     <Company>Incident Report Manager</Company>
     <Copyright>Copyright © 2026</Copyright>
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\*.png;Resources\*.ico" LogicalName="IncidentReporting.Resources.%(Filename)%(Extension)" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />

@@ -50,7 +50,7 @@ public static partial class FormCatalog
         list.Add(Start("GEN-130", "Witness Statement", "General",
                 "Standalone statement from a witness to an incident, linked by reference number.")
             .Section("Statement")
-            .Text("related_report_no", "Related Report Number")
+            .Link(CommonKeys.RelatedReport, "Related Incident Report No.")
             .Text("statement_name", "Witness Full Name", required: true)
             .Text("statement_address", "Address")
             .Phone("statement_phone", "Phone")

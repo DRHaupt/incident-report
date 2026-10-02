@@ -75,6 +75,14 @@ internal sealed class FormBuilder
     public FormBuilder Signature(string key, string label, bool required = false) =>
         Field(key, label, FieldType.Signature, required);
 
+    /// <summary>Reference to another report by its report number, chosen from a picker.</summary>
+    public FormBuilder Link(string key, string label, bool required = false) =>
+        Field(key, label, FieldType.ReportLink, required);
+
+    /// <summary>Adds a "Related Report" section linking a follow-up or supplementary form to the original report.</summary>
+    public FormBuilder Related(bool required = false) =>
+        Section("Related Report").Link(CommonKeys.RelatedReport, "Related Incident Report No.", required);
+
     /// <summary>Applies a reusable block of sections (e.g. the standard header).</summary>
     public FormBuilder Include(Action<FormBuilder> block)
     {

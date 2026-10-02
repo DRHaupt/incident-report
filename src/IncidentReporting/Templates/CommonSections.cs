@@ -77,12 +77,23 @@ internal static class CommonSections
     /// <summary>Narrative, witnesses, follow-up and sign-off appended to every form.</summary>
     public static void Footer(FormBuilder f)
     {
+        Narrative(f);
+        Witnesses(f);
+        FollowUp(f);
+        SignOff(f);
+    }
+
+    public static void Narrative(FormBuilder f)
+    {
         f.Section("Description")
             .Memo("description", "Detailed Description of Incident", required: true,
                 hint: "Describe what happened in sequence, including events leading up to the incident.")
             .Memo("immediate_actions", "Immediate Actions Taken")
             .Memo("contributing_factors", "Contributing Factors");
+    }
 
+    public static void Witnesses(FormBuilder f)
+    {
         f.Section("Witnesses")
             .YesNo("witnesses_present", "Were There Witnesses?")
             .Text("witness1_name", "Witness 1 - Name")
@@ -91,7 +102,10 @@ internal static class CommonSections
             .Text("witness2_name", "Witness 2 - Name")
             .Phone("witness2_phone", "Witness 2 - Phone")
             .Memo("witness2_statement", "Witness 2 - Statement");
+    }
 
+    public static void FollowUp(FormBuilder f)
+    {
         f.Section("Follow-Up")
             .Multi("notified", "Parties Notified", Notifications)
             .Memo("root_cause", "Root Cause")
@@ -99,7 +113,10 @@ internal static class CommonSections
             .Text("action_owner", "Action Owner")
             .Date("action_due", "Target Completion Date")
             .Choice("action_status", "Action Status", "Not Started", "In Progress", "Complete", "Not Required");
+    }
 
+    public static void SignOff(FormBuilder f)
+    {
         f.Section("Sign-Off")
             .Signature("reporter_signature", "Reporter Signature (type full name)")
             .Date("reporter_signed", "Date Signed")

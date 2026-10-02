@@ -9,6 +9,7 @@ public sealed class ReportEditorForm : Form
 {
     private const string AttachmentsPage = "Attachments";
     private const string HistoryPage = "History";
+    private const string LinkedPage = "Linked Reports";
 
     private readonly IncidentReport _report;
     private readonly FormDefinition _form;
@@ -27,6 +28,7 @@ public sealed class ReportEditorForm : Form
     private readonly ToolStripStatusLabel _statusLabel = new();
     private readonly ListView _attachments = new();
     private readonly ListView _history = new();
+    private readonly ListView _linked = new();
     private readonly Label _attachmentsNote = new();
     private readonly Button _btnAddAttachment = new();
     private readonly Button _btnRemoveAttachment = new();
@@ -35,6 +37,14 @@ public sealed class ReportEditorForm : Form
     private bool _loading;
 
     public event EventHandler? ReportChanged;
+
+    /// <summary>Raised when the user asks to open another report (e.g. from the Linked Reports page).</summary>
+    public event EventHandler<long>? OpenReportRequested;
+
+    /// <summary>Raised when the user asks to start a follow-up report linked to this one.</summary>
+    public event EventHandler? FollowUpRequested;
+
+    public long ReportId => _report.Id;
 
     private static ReportRepository Repo => AppSession.Repository;
 
@@ -48,7 +58,7 @@ public sealed class ReportEditorForm : Form
         MinimumSize = new Size(820, 540);
         StartPosition = FormStartPosition.CenterParent;
         KeyPreview = true;
-        ShowIcon = false;
+        Icon = Branding.AppIcon;
 
         BuildLayout();
         BuildPages();
@@ -135,7 +145,7 @@ public sealed class ReportEditorForm : Form
         Controls.Add(tools);
 
         // Header band.
-        var header = new Panel { Dock = DockStyle.Top, Height = 58, BackColor = Color.FromArgb(0x2B, 0x3A, 0x4F), Padding = new Padding(14, 8, 14, 6) };
+        var header = new Panel { Dock = DockStyle.Top, Height = 58, BackColor = Branding.Navy, Padding = new Padding(14, 8, 14, 6) };
         _headerTitle.Dock = DockStyle.Top;
         _headerTitle.Height = 24;
         _headerTitle.Font = new Font("Segoe UI", 12f, FontStyle.Bold);
@@ -145,6 +155,14 @@ public sealed class ReportEditorForm : Form
         _headerMeta.ForeColor = Color.FromArgb(0xD0, 0xD8, 0xE4);
         header.Controls.Add(_headerMeta);
         header.Controls.Add(_headerTitle);
+        header.Controls.Add(new PictureBox
+        {
+            Image = Branding.Logo48,
+            SizeMode = PictureBoxSizeMode.Zoom,
+            Dock = DockStyle.Left,
+            Width = 54,
+            Padding = new Padding(0, 0, 12, 0)
+        });
         Controls.Add(header);
     }
 
@@ -158,7 +176,7 @@ public sealed class ReportEditorForm : Form
         var fg = selected ? SystemColors.HighlightText : SystemColors.ControlText;
         using (var b = new SolidBrush(bg))
             e.Graphics.FillRectangle(b, e.Bounds);
-        var isExtra = text is AttachmentsPage or HistoryPage;
+        var isExtra = text is AttachmentsPage or HistoryPage or LinkedPage;
         if (isExtra && !selected)
             fg = SystemColors.GrayText;
         var rect = new Rectangle(e.Bounds.X + 8, e.Bounds.Y, e.Bounds.Width - 8, e.Bounds.Height);
@@ -186,7 +204,7 @@ public sealed class ReportEditorForm : Form
             {
                 Text = section.Title,
                 Font = new Font("Segoe UI", 11f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(0x2B, 0x3A, 0x4F),
+                ForeColor = Branding.Navy,
                 AutoSize = true,
                 Margin = new Padding(0, 0, 0, 2)
             };
@@ -232,6 +250,8 @@ public sealed class ReportEditorForm : Form
 
         _nav.Items.Add(AttachmentsPage);
         _pages.Add(BuildAttachmentsPage());
+        _nav.Items.Add(LinkedPage);
+        _pages.Add(BuildLinkedPage());
         _nav.Items.Add(HistoryPage);
         _pages.Add(BuildHistoryPage());
         foreach (var p in _pages.Skip(_form.Sections.Count))
@@ -270,13 +290,78 @@ public sealed class ReportEditorForm : Form
         _attachmentsNote.Text = "Photos, diagrams, statements and other supporting documents.";
         _attachmentsNote.Font = new Font("Segoe UI", 9f);
 
-        var title = new Label { Text = AttachmentsPage, Dock = DockStyle.Top, Height = 28, Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Color.FromArgb(0x2B, 0x3A, 0x4F) };
+        var title = new Label { Text = AttachmentsPage, Dock = DockStyle.Top, Height = 28, Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Branding.Navy };
         page.Controls.Add(_attachments);
         page.Controls.Add(buttons);
         page.Controls.Add(_attachmentsNote);
         page.Controls.Add(title);
         return page;
     }
+
+    private Control BuildLinkedPage()
+    {
+        var page = new Panel { Dock = DockStyle.Fill, Visible = false, Padding = new Padding(18, 12, 18, 12) };
+        _linked.Dock = DockStyle.Fill;
+        _linked.View = View.Details;
+        _linked.FullRowSelect = true;
+        _linked.GridLines = true;
+        _linked.MultiSelect = false;
+        _linked.Columns.Add("Relationship", 110);
+        _linked.Columns.Add("Report No.", 120);
+        _linked.Columns.Add("Form", 240);
+        _linked.Columns.Add("Title", 260);
+        _linked.Columns.Add("Status", 90);
+        _linked.DoubleClick += (_, _) => OpenLinked();
+
+        var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 40, Padding = new Padding(0, 6, 0, 0) };
+        var btnOpen = new Button { Text = "Open", Width = 90 };
+        btnOpen.Click += (_, _) => OpenLinked();
+        var btnFollowUp = new Button { Text = "Create Follow-Up Report...", Width = 190 };
+        btnFollowUp.Click += (_, _) =>
+        {
+            if (EnsureSaved("create a follow-up report"))
+                FollowUpRequested?.Invoke(this, EventArgs.Empty);
+        };
+        buttons.Controls.AddRange(new Control[] { btnOpen, btnFollowUp });
+
+        var note = new Label
+        {
+            Text = "Investigations, witness statements, corrective actions and other reports connected to this report.",
+            Dock = DockStyle.Top, Height = 30
+        };
+        var title = new Label { Text = LinkedPage, Dock = DockStyle.Top, Height = 28, Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Branding.Navy };
+        page.Controls.Add(_linked);
+        page.Controls.Add(buttons);
+        page.Controls.Add(note);
+        page.Controls.Add(title);
+        return page;
+    }
+
+    private void LoadLinked()
+    {
+        _linked.BeginUpdate();
+        _linked.Items.Clear();
+        if (_report.Id != 0)
+        {
+            var parentNumber = _report.Get(CommonKeys.RelatedReport);
+            if (parentNumber.Length > 0 && Repo.GetByNumber(parentNumber) is { } parent)
+                _linked.Items.Add(LinkedItem("Parent", parent));
+            foreach (var child in Repo.GetLinkedTo(_report.ReportNumber))
+                _linked.Items.Add(LinkedItem("Follow-Up", child));
+        }
+        _linked.EndUpdate();
+    }
+
+    private static ListViewItem LinkedItem(string relationship, IncidentReport r) =>
+        new(new[] { relationship, r.ReportNumber, ReportFormatter.FormName(r.FormCode), r.Title, r.Status.ToDisplay() }) { Tag = r };
+
+    private void OpenLinked()
+    {
+        if (_linked.SelectedItems.Count > 0 && _linked.SelectedItems[0].Tag is IncidentReport r)
+            OpenReportRequested?.Invoke(this, r.Id);
+    }
+
+    public void RefreshLinked() => LoadLinked();
 
     private Control BuildHistoryPage()
     {
@@ -289,7 +374,7 @@ public sealed class ReportEditorForm : Form
         _history.Columns.Add("User", 140);
         _history.Columns.Add("Action", 150);
         _history.Columns.Add("Details", 380);
-        var title = new Label { Text = "Audit History", Dock = DockStyle.Top, Height = 34, Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Color.FromArgb(0x2B, 0x3A, 0x4F) };
+        var title = new Label { Text = "Audit History", Dock = DockStyle.Top, Height = 34, Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Branding.Navy };
         page.Controls.Add(_history);
         page.Controls.Add(title);
         return page;
@@ -308,6 +393,8 @@ public sealed class ReportEditorForm : Form
             LoadAttachments();
         else if (name == HistoryPage)
             LoadHistory();
+        else if (name == LinkedPage)
+            LoadLinked();
     }
 
     // ------------------------------------------------------------------ data

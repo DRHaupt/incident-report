@@ -54,6 +54,7 @@ public static class CommonKeys
     public const string Location = "location";
     public const string Department = "department";
     public const string ReporterName = "reporter_name";
+    public const string RelatedReport = "related_report_no";
 }
 
 /// <summary>Invariant storage formats for date/time field values.</summary>

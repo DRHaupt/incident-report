@@ -28,6 +28,16 @@ public static partial class FormCatalog
         AddHumanResources(list);
         AddCareAndEducation(list);
         AddHospitalityAndRetail(list);
+        AddHealthAndSafetyExtended(list);
+        AddMedicalExtended(list);
+        AddPeopleExtended(list);
+        AddSecurityExtended(list);
+        AddOperationsExtended(list);
+        AddConstruction(list);
+        AddInvestigations(list);
+        AddSafeguarding(list);
+        AddManufacturing(list);
+        AddRally(list);
         return list.OrderBy(f => f.Category).ThenBy(f => f.Name).ToList();
     }
 

@@ -14,7 +14,8 @@ public enum FieldType
     CheckBox,
     Phone,
     Email,
-    Signature
+    Signature,
+    ReportLink
 }
 
 public sealed class FieldDefinition
