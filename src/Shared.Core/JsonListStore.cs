@@ -1,4 +1,4 @@
-namespace FieldToolkit.Core;
+namespace Shared.Core;
 
 /// <summary>A list of records persisted as one JSON file (written atomically after every change).</summary>
 public sealed class JsonListStore<T>

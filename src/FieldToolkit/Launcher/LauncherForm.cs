@@ -1,6 +1,6 @@
 using FieldToolkit.Core.Kit;
 using FieldToolkit.Core.Timers;
-using FieldToolkit.Core.Windows;
+using Shared.Core.Layout;
 using FieldToolkit.Framework;
 using FieldToolkit.Tools.Kit;
 using FieldToolkit.Tools.Timers;
@@ -67,10 +67,10 @@ public sealed class LauncherForm : Form
 
     private Control BuildHeader()
     {
-        var header = new TableLayoutPanel { Dock = DockStyle.Top, Height = 76, ColumnCount = 5, RowCount = 1, BackColor = Brand.Navy, Padding = new Padding(10, 8, 10, 8) };
+        var header = new TableLayoutPanel { Dock = DockStyle.Top, Height = 76, ColumnCount = 6, RowCount = 1, BackColor = Brand.Navy, Padding = new Padding(10, 8, 10, 8) };
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 64));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        for (var i = 0; i < 3; i++)
+        for (var i = 0; i < 4; i++)
             header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         header.Controls.Add(new PictureBox { Image = Branding.Logo48, SizeMode = PictureBoxSizeMode.Zoom, Dock = DockStyle.Fill, Margin = new Padding(0, 0, 8, 0) }, 0, 0);
         header.Controls.Add(new Label { Text = Branding.ProductName, ForeColor = Color.White, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, AutoEllipsis = true }.Styled(FontRole.Title), 1, 0);
@@ -89,18 +89,22 @@ public sealed class LauncherForm : Form
         }
         var touch = Toggle("", () => UiMode.SetTouch(!UiMode.Touch));
         var daylight = Toggle("", () => UiMode.SetDaylight(!UiMode.Daylight));
+        var night = Toggle("", () => UiMode.SetNight(!UiMode.Night));
         void Sync()
         {
             touch.Text = UiMode.Touch ? "Touch Mode ✓" : "Touch Mode";
             daylight.Text = UiMode.Daylight ? "Daylight ✓" : "Daylight";
             UiMode.SetColors(touch, UiMode.Touch ? Brand.Amber : Color.FromArgb(0x41, 0x52, 0x6A), UiMode.Touch ? Brand.Navy : Color.White);
             UiMode.SetColors(daylight, UiMode.Daylight ? Brand.Amber : Color.FromArgb(0x41, 0x52, 0x6A), UiMode.Daylight ? Brand.Navy : Color.White);
+            night.Text = UiMode.Night ? "Night ✓" : "Night";
+            UiMode.SetColors(night, UiMode.Night ? Brand.Amber : Color.FromArgb(0x41, 0x52, 0x6A), UiMode.Night ? Brand.Navy : Color.White);
         }
         UiMode.Changed += (_, _) => Sync();
         Load += (_, _) => Sync();
         header.Controls.Add(touch, 2, 0);
         header.Controls.Add(daylight, 3, 0);
-        header.Controls.Add(Toggle("Settings", ShowOptions), 4, 0);
+        header.Controls.Add(night, 4, 0);
+        header.Controls.Add(Toggle("Settings", ShowOptions), 5, 0);
         return header;
     }
 

@@ -1,7 +1,8 @@
 using System.ComponentModel;
 using FieldToolkit.Core;
-using FieldToolkit.Core.Location;
+using Shared.Core.Geo;
 using FieldToolkit.Core.Radio;
+using Shared.Core.Radio;
 using FieldToolkit.Framework;
 using FieldToolkit.UI;
 using Shared;

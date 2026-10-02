@@ -1,9 +1,10 @@
 using FieldToolkit.Core.Checklists;
 using CheckState = FieldToolkit.Core.Checklists.CheckState;
 using FieldToolkit.Core.Kit;
-using FieldToolkit.Core.Location;
+using Shared.Core.Geo;
 using FieldToolkit.Core.Radio;
-using FieldToolkit.Core.Windows;
+using Shared.Core.Radio;
+using Shared.Core.Layout;
 using FieldToolkit.Framework;
 using FieldToolkit.Launcher;
 using FieldToolkit.Tools.Cpr;
@@ -12,6 +13,7 @@ using FieldToolkit.Tools.Checklists;
 using FieldToolkit.Tools.Hazmat;
 using FieldToolkit.Tools.Kit;
 using FieldToolkit.Tools.Location;
+using Shared.Location;
 using FieldToolkit.Tools.Radio;
 using FieldToolkit.Tools.Timers;
 using Shared.UI;
@@ -132,10 +134,10 @@ public class ToolkitSmokeTests
         Assert.InRange(cpr.Metronome.TotalCompressions, 2, 4);
 
         // Live mode switches with everything open.
-        foreach (var (touch, daylight) in new[] { (true, false), (true, true), (false, true), (false, false) })
+        foreach (var (touch, theme) in new[] { (true, UiTheme.Standard), (true, UiTheme.Daylight), (false, UiTheme.Night), (true, UiTheme.Night), (false, UiTheme.Daylight), (false, UiTheme.Standard) })
         {
             UiMode.SetTouch(touch);
-            UiMode.SetDaylight(daylight);
+            UiMode.SetTheme(theme);
             Pump(100);
         }
 
@@ -228,10 +230,10 @@ public class ToolkitSmokeTests
             Assert.Equal(tab, radio.SaveState());
         }
 
-        foreach (var (touch, daylight) in new[] { (true, true), (false, false) })
+        foreach (var (touch, theme) in new[] { (true, UiTheme.Daylight), (true, UiTheme.Night), (false, UiTheme.Standard) })
         {
             UiMode.SetTouch(touch);
-            UiMode.SetDaylight(daylight);
+            UiMode.SetTheme(theme);
             Pump(150);
         }
         AppServices.Windows.Arrange(ArrangeMode.Grid);

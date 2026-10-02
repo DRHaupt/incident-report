@@ -5,11 +5,13 @@ using FieldToolkit.Core;
 using FieldToolkit.Core.Checklists;
 using FieldToolkit.Core.Hazmat;
 using FieldToolkit.Core.Kit;
-using FieldToolkit.Core.Location;
+using Shared.Core.Geo;
 using FieldToolkit.Core.Radio;
+using Shared.Core.Radio;
 using FieldToolkit.Core.Timers;
 using FieldToolkit.Framework;
 using FieldToolkit.Tools.Location;
+using Shared.Location;
 using Shared.UI;
 
 namespace FieldToolkit;
@@ -29,7 +31,7 @@ public static class AppServices
     private static LocationService? _location;
 
     /// <summary>Current position (started on first use, on the UI thread).</summary>
-    public static LocationService Location => _location ??= new LocationService();
+    public static LocationService Location => _location ??= new LocationService(Settings);
 
     /// <summary>Saved locations (incident site, rendezvous points…).</summary>
     public static JsonListStore<SavedPoint> Points { get; private set; } = null!;
@@ -74,11 +76,12 @@ public static class AppServices
     public static void Initialize()
     {
         Settings = ToolkitSettings.Load();
-        UiMode.Initialize(Settings.TouchMode, Settings.DaylightTheme, baseFontSize: 10f);
+        UiMode.Initialize(Settings.TouchMode, Settings.DaylightTheme, baseFontSize: 10f, night: Settings.NightTheme);
         UiMode.Changed += (_, _) =>
         {
             Settings.TouchMode = UiMode.Touch;
             Settings.DaylightTheme = UiMode.Daylight;
+            Settings.NightTheme = UiMode.Night;
             Settings.Save();
         };
 

@@ -28,8 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- GPS receivers that appear as a COM port (NMEA). -->
-    <PackageReference Include="System.IO.Ports" Version="8.0.0" />
+    <Using Include="Shared.Core" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,6 +38,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />
     <ProjectReference Include="..\FieldToolkit.Core\FieldToolkit.Core.csproj" />
+    <ProjectReference Include="..\Shared.Core\Shared.Core.csproj" />
+    <ProjectReference Include="..\Shared.Location\Shared.Location.csproj" />
   </ItemGroup>
 
 </Project>

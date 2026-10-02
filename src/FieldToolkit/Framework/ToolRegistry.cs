@@ -4,6 +4,7 @@ using FieldToolkit.Tools.FirstAid;
 using FieldToolkit.Tools.Hazmat;
 using FieldToolkit.Tools.Kit;
 using FieldToolkit.Tools.Location;
+using Shared.Location;
 using FieldToolkit.Tools.Radio;
 using FieldToolkit.Tools.Timers;
 

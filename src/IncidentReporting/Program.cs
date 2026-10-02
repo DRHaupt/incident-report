@@ -21,7 +21,7 @@ internal static class Program
         try
         {
             AppSession.Initialize();
-            UiMode.Initialize(AppSession.Settings.TouchMode, AppSession.Settings.DaylightTheme);
+            UiMode.Initialize(AppSession.Settings.TouchMode, AppSession.Settings.DaylightTheme, night: AppSession.Settings.NightTheme);
             UiMode.Changed += (_, _) => SaveUiPreferences();
         }
         catch (Exception ex)
@@ -39,6 +39,7 @@ internal static class Program
     {
         AppSession.Settings.TouchMode = UiMode.Touch;
         AppSession.Settings.DaylightTheme = UiMode.Daylight;
+        AppSession.Settings.NightTheme = UiMode.Night;
         try
         {
             AppSession.Settings.Save();

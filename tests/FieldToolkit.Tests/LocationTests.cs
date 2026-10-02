@@ -1,5 +1,6 @@
-using FieldToolkit.Core.Location;
+using Shared.Core.Geo;
 using FieldToolkit.Core.Radio;
+using Shared.Core.Radio;
 
 namespace FieldToolkit.Tests;
 

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Shared.Core</RootNamespace>
+    <Description>UI-free code shared by the suite: coordinate formats (UTM/MGRS/DMS), distance and bearing, NMEA, phonetic read-out, JSON/CSV helpers and window layout maths.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="FieldToolkit.Tests" />
+    <InternalsVisibleTo Include="FieldMap.Tests" />
+  </ItemGroup>
+
+</Project>

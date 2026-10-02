@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace FieldToolkit.Core.Radio;
+namespace Shared.Core.Radio;
 
 public sealed record PhoneticEntry(string Character, string Word, string Pronunciation);
 

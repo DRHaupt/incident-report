@@ -13,6 +13,7 @@ public sealed class AppSettings
     public bool ConfirmOnDelete { get; set; } = true;
     public bool TouchMode { get; set; }
     public bool DaylightTheme { get; set; }
+    public bool NightTheme { get; set; }
 
     public static string AppDataFolder => JsonSettings.AppDataFolder("IncidentReportManager");
 

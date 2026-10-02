@@ -1,8 +1,10 @@
-using FieldToolkit.Core.Location;
+using Shared.Core.Geo;
 using FieldToolkit.Framework;
 using FieldToolkit.UI;
 using Shared;
 using Shared.UI;
+
+using Shared.Location;
 
 namespace FieldToolkit.Tools.Location;
 
@@ -181,20 +183,7 @@ public sealed class LocationWindow : ToolWindow
         _readoutToggle.Text = AppServices.Settings.ReadoutFormat == "mgrs" ? "Reading grid reference – switch to lat/long" : "Reading lat/long – switch to grid reference";
 
     /// <summary>Plain-ASCII block for pasting into dispatch systems, messages or the radio log.</summary>
-    internal static string DispatchText(GeoFix fix, string? label = null)
-    {
-        static string Ascii(string s) => s.Replace('′', '\'').Replace('″', '"');
-        var lines = new List<string>
-        {
-            $"LOCATION{(label is { Length: > 0 } ? " – " + label : "")} at {fix.TimestampUtc.ToLocalTime():HH:mm:ss} {DateTime.Now:dd MMM yyyy}",
-            $"Lat/Long: {CoordinateFormat.Decimal(fix.Latitude, fix.Longitude)} (WGS84)",
-            $"DMS: {Ascii(CoordinateFormat.Dms(fix.Latitude, fix.Longitude))}",
-            $"Grid (MGRS): {CoordinateFormat.Mgrs(fix.Latitude, fix.Longitude)}"
-        };
-        var quality = fix.Source + (fix.AccuracyMeters is { } a ? $", accuracy about {a:0} m" : "");
-        lines.Add($"Source: {quality}");
-        return string.Join(Environment.NewLine, lines);
-    }
+    internal static string DispatchText(GeoFix fix, string? label = null) => Shared.Core.Geo.DispatchText.Block(fix, label);
 
     private void CopyForDispatch()
     {
@@ -254,7 +243,7 @@ public sealed class LocationWindow : ToolWindow
 
     private void ChooseSource()
     {
-        using var d = new SourceDialog();
+        using var d = new SourceDialog(AppServices.Location);
         d.ShowDialog(this);
     }
 

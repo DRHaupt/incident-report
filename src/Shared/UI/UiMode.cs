@@ -16,8 +16,18 @@ public enum FontRole
     Display
 }
 
+/// <summary>Colour themes. Exactly one is active; switching applies live to every tracked window.</summary>
+public enum UiTheme
+{
+    Standard,
+    /// <summary>High contrast for direct sunlight: pure black and white, heavy borders.</summary>
+    Daylight,
+    /// <summary>Dark surfaces and dim warm text that keep night vision (no white).</summary>
+    Night
+}
+
 /// <summary>
-/// Interface scale (Standard / Touch) and colour theme (Standard / Daylight high-contrast). Windows register
+/// Interface scale (Standard / Touch) and colour theme (Standard / Daylight high-contrast / Night). Windows register
 /// with <see cref="Track"/>; switching either setting restyles every open window in place without rebuilding it.
 /// </summary>
 public static class UiMode
@@ -54,8 +64,16 @@ public static class UiMode
 
     public static bool Touch { get; private set; }
 
+    public static UiTheme Theme { get; private set; }
+
     /// <summary>High-contrast theme for use in direct sunlight.</summary>
-    public static bool Daylight { get; private set; }
+    public static bool Daylight => Theme == UiTheme.Daylight;
+
+    /// <summary>Dark theme that keeps night vision.</summary>
+    public static bool Night => Theme == UiTheme.Night;
+
+    /// <summary>"Standard", "Daylight" or "Night" (for status bars).</summary>
+    public static string ThemeName => Theme.ToString();
 
     public static float Scale => Touch ? TouchScale : 1f;
 
@@ -65,11 +83,11 @@ public static class UiMode
     /// <summary>Raised after the scale or theme changes (and the change has been applied to tracked windows).</summary>
     public static event EventHandler? Changed;
 
-    public static void Initialize(bool touch, bool daylight = false, float baseFontSize = 9f)
+    public static void Initialize(bool touch, bool daylight = false, float baseFontSize = 9f, bool night = false)
     {
         BaseFontSize = baseFontSize;
         Touch = touch;
-        Daylight = daylight;
+        Theme = daylight ? UiTheme.Daylight : night ? UiTheme.Night : UiTheme.Standard;
     }
 
     public static void SetTouch(bool touch)
@@ -80,11 +98,17 @@ public static class UiMode
         Changed?.Invoke(null, EventArgs.Empty);
     }
 
-    public static void SetDaylight(bool daylight)
+    /// <summary>Turns Daylight on, or back to Standard.</summary>
+    public static void SetDaylight(bool daylight) => SetTheme(daylight ? UiTheme.Daylight : Daylight ? UiTheme.Standard : Theme);
+
+    /// <summary>Turns Night on, or back to Standard.</summary>
+    public static void SetNight(bool night) => SetTheme(night ? UiTheme.Night : Night ? UiTheme.Standard : Theme);
+
+    public static void SetTheme(UiTheme theme)
     {
-        if (Daylight == daylight)
+        if (Theme == theme)
             return;
-        Daylight = daylight;
+        Theme = theme;
         Changed?.Invoke(null, EventArgs.Empty);
     }
 
@@ -148,7 +172,12 @@ public static class UiMode
     }
 
     /// <summary>The colour a standard-theme colour becomes in the current theme (for custom painting).</summary>
-    public static Color Map(Color standard, bool background) => Daylight ? DaylightColor(standard, background) : standard;
+    public static Color Map(Color standard, bool background) => Theme switch
+    {
+        UiTheme.Daylight => DaylightColor(standard, background),
+        UiTheme.Night => NightColor(standard, background),
+        _ => standard
+    };
 
     /// <summary>Applies the current mode now and whenever it changes, for the lifetime of the form.</summary>
     public static void Track(Form form)
@@ -320,6 +349,19 @@ public static class UiMode
         if (c is ToolStrip or WebBrowser)
             return;
 
+        if (Night)
+        {
+            c.BackColor = NightColor(b.BackColor, background: true);
+            c.ForeColor = NightColor(b.ForeColor, background: false);
+            if (c is ButtonBase nb and (Button or CheckBox { Appearance: Appearance.Button } or RadioButton { Appearance: Appearance.Button }))
+            {
+                nb.FlatStyle = FlatStyle.Flat;
+                nb.FlatAppearance.BorderSize = 1;
+                nb.FlatAppearance.BorderColor = NightPalette.Border;
+            }
+            return;
+        }
+
         if (!Daylight)
         {
             c.BackColor = b.BackColor;
@@ -351,6 +393,60 @@ public static class UiMode
         public static readonly Color Red = Color.FromArgb(0xC0, 0x00, 0x00);
         public static readonly Color Green = Color.FromArgb(0x00, 0x6B, 0x2D);
         public static readonly Color Blue = Color.FromArgb(0x00, 0x3C, 0xB4);
+    }
+
+    /// <summary>
+    /// Colours used by the night theme: near-black surfaces, dim warm text and dimmed signal colours. Nothing is brighter
+    /// than about 75 % so the screen doesn't ruin dark adaptation; the cab's display brightness should also be turned down.
+    /// </summary>
+    public static class NightPalette
+    {
+        public static readonly Color Background = Color.FromArgb(0x0A, 0x0C, 0x0F);
+        public static readonly Color Surface = Color.FromArgb(0x14, 0x17, 0x1C);
+        public static readonly Color Raised = Color.FromArgb(0x1E, 0x23, 0x2B);
+        public static readonly Color Header = Color.FromArgb(0x0E, 0x14, 0x1C);
+        public static readonly Color Border = Color.FromArgb(0x3A, 0x33, 0x28);
+        public static readonly Color Text = Color.FromArgb(0xC4, 0xB4, 0x96);
+        public static readonly Color MutedText = Color.FromArgb(0x86, 0x7A, 0x66);
+        public static readonly Color Amber = Color.FromArgb(0xC8, 0x8A, 0x10);
+        public static readonly Color AmberBack = Color.FromArgb(0x4A, 0x33, 0x00);
+        public static readonly Color Red = Color.FromArgb(0xD8, 0x50, 0x40);
+        public static readonly Color RedBack = Color.FromArgb(0x55, 0x10, 0x0E);
+        public static readonly Color Green = Color.FromArgb(0x4E, 0x9A, 0x62);
+        public static readonly Color GreenBack = Color.FromArgb(0x10, 0x36, 0x1E);
+        public static readonly Color Blue = Color.FromArgb(0x6A, 0x88, 0xC0);
+        public static readonly Color BlueBack = Color.FromArgb(0x12, 0x24, 0x44);
+    }
+
+    private static Color NightColor(Color c, bool background)
+    {
+        if (c.IsEmpty || c == Color.Transparent)
+            return c;
+        var sat = Saturation(c);
+        var lum = Luminance(c);
+        if (background)
+        {
+            if (sat > 0.55 && lum > 0.15)
+            {
+                if (IsAmber(c) || (c.R > 200 && c.G > 150)) return NightPalette.AmberBack;
+                if (c.R > c.G && c.R > c.B) return NightPalette.RedBack;
+                if (c.G > c.R && c.G >= c.B) return NightPalette.GreenBack;
+                if (c.B > c.R && c.B > c.G) return NightPalette.BlueBack;
+            }
+            if (lum > 0.6) return NightPalette.Surface;
+            if (lum > 0.3) return NightPalette.Raised;
+            // Dark navy headers keep a hint of blue so they still read as headers.
+            return c.B > c.R + 15 ? NightPalette.Header : NightPalette.Background;
+        }
+        if (sat > 0.55 && lum > 0.15)
+        {
+            if (IsAmber(c) || (c.R > 200 && c.G > 150)) return NightPalette.Amber;
+            if (c.R > c.G + 60 && c.R > c.B + 60) return NightPalette.Red;
+            if (c.G > c.R + 40 && c.G > c.B) return NightPalette.Green;
+            if (c.B > c.R + 40 && c.B > c.G) return NightPalette.Blue;
+        }
+        // Mid-grey text (captions, hints) stays dimmer than body text.
+        return lum is > 0.3 and < 0.6 ? NightPalette.MutedText : NightPalette.Text;
     }
 
     private static double Luminance(Color c) => (0.2126 * c.R + 0.7152 * c.G + 0.0722 * c.B) / 255.0;
@@ -401,6 +497,19 @@ public static class UiMode
         grid.RowTemplate.Height = rowHeight;
         foreach (DataGridViewRow row in grid.Rows)
             row.Height = rowHeight;
+        if (Night)
+        {
+            grid.EnableHeadersVisualStyles = false;
+            grid.BackgroundColor = NightPalette.Background;
+            grid.GridColor = NightPalette.Border;
+            grid.DefaultCellStyle.BackColor = NightPalette.Surface;
+            grid.DefaultCellStyle.ForeColor = NightPalette.Text;
+            grid.DefaultCellStyle.SelectionBackColor = NightPalette.AmberBack;
+            grid.DefaultCellStyle.SelectionForeColor = NightPalette.Amber;
+            grid.ColumnHeadersDefaultCellStyle.BackColor = NightPalette.Header;
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = NightPalette.Text;
+            return;
+        }
         grid.EnableHeadersVisualStyles = !Daylight;
         grid.BackgroundColor = Daylight ? Color.White : SystemColors.AppWorkspace;
         grid.GridColor = Daylight ? Color.Black : SystemColors.ControlDark;
@@ -425,7 +534,12 @@ public static class UiMode
             strip.RenderMode = ToolStripRenderMode.Professional;
             strip.Renderer = DaylightRenderer.Instance;
         }
-        else if (strip.Renderer == DaylightRenderer.Instance)
+        else if (Night)
+        {
+            strip.RenderMode = ToolStripRenderMode.Professional;
+            strip.Renderer = NightRenderer.Instance;
+        }
+        else if (strip.Renderer == DaylightRenderer.Instance || strip.Renderer == NightRenderer.Instance)
         {
             strip.RenderMode = strip is MenuStrip or ContextMenuStrip or StatusStrip ? ToolStripRenderMode.ManagerRenderMode : ToolStripRenderMode.System;
         }
@@ -440,7 +554,7 @@ public static class UiMode
     {
         var b = _itemBase.GetValue(item, i => new StrongBox<(Padding, int)>((i.Padding, i.Width))).Value;
         item.Padding = Touch ? touchPadding : b.Padding;
-        item.ForeColor = Daylight ? Color.Black : SystemColors.ControlText;
+        item.ForeColor = Daylight ? Color.Black : Night ? NightPalette.Text : SystemColors.ControlText;
         if (item is ToolStripTextBox text)
         {
             text.Font = font;
@@ -451,7 +565,9 @@ public static class UiMode
             dropDown.DropDown.Font = font;
             if (Daylight)
                 dropDown.DropDown.Renderer = DaylightRenderer.Instance;
-            else if (dropDown.DropDown.Renderer == DaylightRenderer.Instance)
+            else if (Night)
+                dropDown.DropDown.Renderer = NightRenderer.Instance;
+            else if (dropDown.DropDown.Renderer == DaylightRenderer.Instance || dropDown.DropDown.Renderer == NightRenderer.Instance)
                 dropDown.DropDown.RenderMode = ToolStripRenderMode.ManagerRenderMode;
             foreach (ToolStripItem child in dropDown.DropDownItems)
                 ApplyToolStripItem(child, new Padding(4, 8, 4, 8), font);
@@ -505,17 +621,66 @@ public static class UiMode
         }
     }
 
+    private sealed class NightRenderer : ToolStripProfessionalRenderer
+    {
+        public static readonly NightRenderer Instance = new();
+
+        private NightRenderer() : base(new NightColorTable()) => RoundedEdges = false;
+
+        protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
+        {
+            e.TextColor = e.Item.Selected || e.Item.Pressed || (e.Item as ToolStripButton)?.Checked == true ? NightPalette.Amber : NightPalette.Text;
+            base.OnRenderItemText(e);
+        }
+
+        private sealed class NightColorTable : ProfessionalColorTable
+        {
+            private static Color Bg => NightPalette.Surface;
+            private static Color Sel => NightPalette.Raised;
+            public override Color ToolStripGradientBegin => Bg;
+            public override Color ToolStripGradientMiddle => Bg;
+            public override Color ToolStripGradientEnd => Bg;
+            public override Color MenuStripGradientBegin => Bg;
+            public override Color MenuStripGradientEnd => Bg;
+            public override Color StatusStripGradientBegin => Bg;
+            public override Color StatusStripGradientEnd => Bg;
+            public override Color ToolStripDropDownBackground => Bg;
+            public override Color ImageMarginGradientBegin => Bg;
+            public override Color ImageMarginGradientMiddle => Bg;
+            public override Color ImageMarginGradientEnd => Bg;
+            public override Color MenuItemSelected => Sel;
+            public override Color MenuItemSelectedGradientBegin => Sel;
+            public override Color MenuItemSelectedGradientEnd => Sel;
+            public override Color MenuItemPressedGradientBegin => Sel;
+            public override Color MenuItemPressedGradientEnd => Sel;
+            public override Color MenuItemBorder => NightPalette.Border;
+            public override Color MenuBorder => NightPalette.Border;
+            public override Color ButtonSelectedGradientBegin => Sel;
+            public override Color ButtonSelectedGradientMiddle => Sel;
+            public override Color ButtonSelectedGradientEnd => Sel;
+            public override Color ButtonSelectedBorder => NightPalette.Border;
+            public override Color ButtonPressedGradientBegin => Sel;
+            public override Color ButtonPressedGradientMiddle => Sel;
+            public override Color ButtonPressedGradientEnd => Sel;
+            public override Color ButtonCheckedGradientBegin => Sel;
+            public override Color ButtonCheckedGradientMiddle => Sel;
+            public override Color ButtonCheckedGradientEnd => Sel;
+            public override Color SeparatorDark => NightPalette.Border;
+            public override Color ToolStripBorder => NightPalette.Border;
+        }
+    }
+
     private static void DrawListItem(object? sender, DrawItemEventArgs e)
     {
         if (sender is not ListBox list || e.Index < 0)
             return;
         var selected = (e.State & DrawItemState.Selected) != 0;
-        var back = selected ? (Daylight ? Color.Black : SystemColors.Highlight) : list.BackColor;
+        var back = selected ? (Daylight ? Color.Black : Night ? NightPalette.AmberBack : SystemColors.Highlight) : list.BackColor;
         using (var brush = new SolidBrush(back))
             e.Graphics.FillRectangle(brush, e.Bounds);
         var rect = new Rectangle(e.Bounds.X + 4, e.Bounds.Y, e.Bounds.Width - 4, e.Bounds.Height);
         TextRenderer.DrawText(e.Graphics, list.GetItemText(list.Items[e.Index]), list.Font, rect,
-            selected ? (Daylight ? Color.White : SystemColors.HighlightText) : list.ForeColor,
+            selected ? (Daylight ? Color.White : Night ? NightPalette.Amber : SystemColors.HighlightText) : list.ForeColor,
             TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
         e.DrawFocusRectangle();
     }

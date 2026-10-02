@@ -20,6 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="Shared.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\FieldToolkit.Core\FieldToolkit.Core.csproj" />
   </ItemGroup>
 

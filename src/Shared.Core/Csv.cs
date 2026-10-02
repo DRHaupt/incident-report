@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text;
 
-namespace FieldToolkit.Core;
+namespace Shared.Core;
 
 /// <summary>RFC 4180 CSV for simple records: the header row holds the property names (case-insensitive).</summary>
 public static class Csv

@@ -1,9 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace FieldToolkit.Core;
+namespace Shared.Core;
 
-/// <summary>JSON settings used for every Field Toolkit data file (camelCase, enums as strings, comments allowed).</summary>
+/// <summary>JSON settings used for the suite's data files (camelCase, enums as strings, comments allowed).</summary>
 public static class Json
 {
     public static readonly JsonSerializerOptions Options = new()

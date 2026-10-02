@@ -1,6 +1,6 @@
 using System.Drawing;
 
-namespace FieldToolkit.Core.Windows;
+namespace Shared.Core.Layout;
 
 public enum ArrangeMode
 {

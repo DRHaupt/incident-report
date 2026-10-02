@@ -1,7 +1,9 @@
-using FieldToolkit.Core.Location;
+using Shared.Core.Geo;
 using FieldToolkit.UI;
 using Shared;
 using Shared.UI;
+
+using Shared.Location;
 
 namespace FieldToolkit.Tools.Location;
 

@@ -2,6 +2,8 @@ using System.Drawing.Drawing2D;
 using Shared;
 using Shared.UI;
 
+using Shared.Location;
+
 namespace FieldToolkit.Tools.Location;
 
 /// <summary>North-up dial with an arrow pointing along a bearing (degrees true).</summary>

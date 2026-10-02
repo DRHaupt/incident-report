@@ -1,6 +1,4 @@
-using Shared.UI;
-
-namespace FieldToolkit.UI;
+namespace Shared.UI;
 
 /// <summary>A large single-line text prompt (works with the Windows touch keyboard).</summary>
 public sealed class InputDialog : Form

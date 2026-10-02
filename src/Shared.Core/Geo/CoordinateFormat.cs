@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using FieldToolkit.Core.Radio;
+using Shared.Core.Radio;
 
-namespace FieldToolkit.Core.Location;
+namespace Shared.Core.Geo;
 
 /// <summary>Formatting and parsing of WGS84 coordinates in the forms used on the radio and by dispatch.</summary>
 public static class CoordinateFormat
@@ -40,10 +40,10 @@ public static class CoordinateFormat
     }
 
     public static string Utm(double lat, double lon) =>
-        Location.Utm.InRange(lat) ? Location.Utm.FromLatLon(lat, lon).ToString() : "n/a (polar)";
+        Geo.Utm.InRange(lat) ? Geo.Utm.FromLatLon(lat, lon).ToString() : "n/a (polar)";
 
     public static string Mgrs(double lat, double lon) =>
-        Location.Utm.InRange(lat) ? Location.Mgrs.FromLatLon(lat, lon) : "n/a (polar)";
+        Geo.Utm.InRange(lat) ? Geo.Mgrs.FromLatLon(lat, lon) : "n/a (polar)";
 
     /// <summary>How to say a grid reference over the radio: "TREE WUN NOVEMBER / ALFA ALFA / SIX SIX ZE-RO TOO WUN / …".</summary>
     public static string SpokenMgrs(string mgrs) => string.Join(" / ", mgrs.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(group =>
@@ -69,8 +69,8 @@ public static class CoordinateFormat
         if (string.IsNullOrWhiteSpace(text))
             return false;
         var t = text.Trim();
-        if (Location.Mgrs.LooksLikeMgrs(t))
-            return Location.Mgrs.TryParse(t, out lat, out lon);
+        if (Geo.Mgrs.LooksLikeMgrs(t))
+            return Geo.Mgrs.TryParse(t, out lat, out lon);
 
         // Normalise symbols to spaces and pull out hemisphere letters next to each half.
         var s = Regex.Replace(t.ToUpperInvariant(), "[°º˚′'’″\"]", " ");

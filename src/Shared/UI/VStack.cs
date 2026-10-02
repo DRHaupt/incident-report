@@ -1,6 +1,4 @@
-using Shared.UI;
-
-namespace FieldToolkit.UI;
+namespace Shared.UI;
 
 /// <summary>
 /// Stacks its children vertically at full width and sizes its own height to fit them. Used for banners and boxes whose

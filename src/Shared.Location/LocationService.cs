@@ -1,8 +1,30 @@
 using System.IO.Ports;
-using FieldToolkit.Core.Location;
+using Shared.Core.Geo;
 using Windows.Devices.Geolocation;
 
-namespace FieldToolkit.Tools.Location;
+namespace Shared.Location;
+
+/// <summary>Where the position comes from.</summary>
+public enum LocationSourceKind
+{
+    /// <summary>Windows location service (built-in GNSS, Wi-Fi positioning).</summary>
+    Windows,
+    /// <summary>GPS receiver on a COM port sending NMEA sentences.</summary>
+    Serial,
+    /// <summary>Position typed in by the user.</summary>
+    Manual
+}
+
+/// <summary>The app settings the location service reads and writes (each app keeps them in its own settings file).</summary>
+public interface ILocationSettings
+{
+    LocationSourceKind LocationSource { get; set; }
+    string SerialPortName { get; set; }
+    int SerialBaud { get; set; }
+    double? ManualLatitude { get; set; }
+    double? ManualLongitude { get; set; }
+    void Save();
+}
 
 public enum LocationState
 {
@@ -24,11 +46,18 @@ public sealed class LocationService
     private Geolocator? _geolocator;
     private SerialPort? _serial;
     private CancellationTokenSource? _serialCancel;
+    private readonly ILocationSettings _settings;
 
-    public LocationService()
+    public LocationService(ILocationSettings settings)
     {
+        _settings = settings;
         _ui = SynchronizationContext.Current ?? new WindowsFormsSynchronizationContext();
     }
+
+    public ILocationSettings Settings => _settings;
+
+    /// <summary>True while at least one window is using the service.</summary>
+    public bool Running => _users > 0;
 
     public GeoFix? Fix { get; private set; }
     public LocationState State { get; private set; } = LocationState.Starting;
@@ -64,7 +93,7 @@ public sealed class LocationService
 
     private void Start()
     {
-        var s = AppServices.Settings;
+        var s = _settings;
         switch (s.LocationSource)
         {
             case LocationSourceKind.Manual:
@@ -226,7 +255,7 @@ public sealed class LocationService
 
     public void SetManual(double lat, double lon)
     {
-        var s = AppServices.Settings;
+        var s = _settings;
         s.LocationSource = LocationSourceKind.Manual;
         s.ManualLatitude = lat;
         s.ManualLongitude = lon;

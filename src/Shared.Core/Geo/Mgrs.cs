@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace FieldToolkit.Core.Location;
+namespace Shared.Core.Geo;
 
 /// <summary>Military Grid Reference System (WGS84, "AA" lettering), 80°S–84°N.</summary>
 public static class Mgrs

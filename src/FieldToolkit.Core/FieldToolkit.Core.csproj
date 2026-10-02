@@ -8,4 +8,12 @@
     <Description>UI-independent logic for the Field Toolkit: content models, loaders, search, timers and window layout.</Description>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Shared.Core\Shared.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Shared.Core" />
+  </ItemGroup>
+
 </Project>

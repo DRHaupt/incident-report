@@ -1,6 +1,6 @@
 namespace Shared.UI;
 
-/// <summary>Right-aligned toolbar toggles for the touch-friendly scale and the daylight (high-contrast) theme.</summary>
+/// <summary>Right-aligned toolbar toggles for the touch-friendly scale and the Daylight (high-contrast) and Night themes.</summary>
 public static class UiModeButtons
 {
     public static ToolStripButton Touch() => Create(
@@ -14,6 +14,12 @@ public static class UiModeButtons
         on: "Standard Colors", off: "Daylight",
         tipOn: "Switch back to the standard colours (Ctrl+D)",
         tipOff: "High-contrast colours for direct sunlight (Ctrl+D)");
+
+    public static ToolStripButton Night() => Create(
+        () => UiMode.Night, v => UiMode.SetNight(v),
+        on: "Standard Colors", off: "Night",
+        tipOn: "Switch back to the standard colours (Ctrl+N)",
+        tipOff: "Dark colours that keep night vision (Ctrl+N)");
 
     private static ToolStripButton Create(Func<bool> get, Action<bool> set, string on, string off, string tipOn, string tipOff)
     {
@@ -37,7 +43,7 @@ public static class UiModeButtons
         return button;
     }
 
-    /// <summary>Handles Ctrl+T / Ctrl+D. Call from a form's ProcessCmdKey.</summary>
+    /// <summary>Handles Ctrl+T / Ctrl+D / Ctrl+N. Call from a form's ProcessCmdKey.</summary>
     public static bool HandleShortcut(Keys keyData)
     {
         switch (keyData)
@@ -47,6 +53,9 @@ public static class UiModeButtons
                 return true;
             case Keys.Control | Keys.D:
                 UiMode.SetDaylight(!UiMode.Daylight);
+                return true;
+            case Keys.Control | Keys.N:
+                UiMode.SetNight(!UiMode.Night);
                 return true;
             default:
                 return false;

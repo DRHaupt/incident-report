@@ -1,4 +1,4 @@
-namespace FieldToolkit.Core.Location;
+namespace Shared.Core.Geo;
 
 public sealed record UtmCoordinate(int Zone, char Band, double Easting, double Northing)
 {

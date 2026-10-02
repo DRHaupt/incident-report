@@ -1,9 +1,8 @@
 using System.IO.Ports;
-using FieldToolkit.Core.Location;
-using FieldToolkit.UI;
+using Shared.Core.Geo;
 using Shared.UI;
 
-namespace FieldToolkit.Tools.Location;
+namespace Shared.Location;
 
 /// <summary>Chooses where the position comes from: Windows location, a serial GPS (COM port), or typed in.</summary>
 public sealed class SourceDialog : Form
@@ -15,8 +14,11 @@ public sealed class SourceDialog : Form
     private readonly ComboBox _baud = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 160 };
     private readonly TextBox _coords = new() { Width = 420 };
 
-    public SourceDialog()
+    private readonly LocationService _service;
+
+    public SourceDialog(LocationService service)
     {
+        _service = service;
         Text = "Position source";
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MinimizeBox = MaximizeBox = false;
@@ -25,7 +27,7 @@ public sealed class SourceDialog : Form
         ClientSize = new Size(560, 470);
         Padding = new Padding(14);
 
-        var s = AppServices.Settings;
+        var s = service.Settings;
         _windows.Checked = s.LocationSource == LocationSourceKind.Windows;
         _serial.Checked = s.LocationSource == LocationSourceKind.Serial;
         _manual.Checked = s.LocationSource == LocationSourceKind.Manual;
@@ -72,7 +74,7 @@ public sealed class SourceDialog : Form
 
     private void Accept()
     {
-        var s = AppServices.Settings;
+        var s = _service.Settings;
         if (_manual.Checked)
         {
             if (!CoordinateFormat.TryParse(_coords.Text, out var lat, out var lon))
@@ -80,7 +82,7 @@ public sealed class SourceDialog : Form
                 MessageBox.Show(this, "The coordinates could not be read.", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            AppServices.Location.SetManual(lat, lon);
+            _service.SetManual(lat, lon);
         }
         else
         {
@@ -88,7 +90,7 @@ public sealed class SourceDialog : Form
             s.SerialPortName = _port.Text.Trim();
             s.SerialBaud = _baud.SelectedItem is int b ? b : 4800;
             s.Save();
-            AppServices.Location.Restart();
+            _service.Restart();
         }
         DialogResult = DialogResult.OK;
     }

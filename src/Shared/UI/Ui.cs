@@ -1,9 +1,8 @@
 using Shared;
-using Shared.UI;
 
-namespace FieldToolkit.UI;
+namespace Shared.UI;
 
-/// <summary>Button styles used across the toolkit. All are large, flat and high-contrast so they work with gloves.</summary>
+/// <summary>Button styles used across the suite. All are large, flat and high-contrast so they work with gloves.</summary>
 public enum ButtonStyle
 {
     Primary,

@@ -1,4 +1,4 @@
-namespace FieldToolkit.Core.Location;
+namespace Shared.Core.Geo;
 
 /// <summary>A WGS84 position fix.</summary>
 public sealed record GeoFix(

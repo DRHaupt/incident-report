@@ -1,5 +1,5 @@
 using System.Drawing;
-using FieldToolkit.Core.Windows;
+using Shared.Core.Layout;
 
 namespace FieldToolkit.Tests;
 

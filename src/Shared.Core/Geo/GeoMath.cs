@@ -1,4 +1,4 @@
-namespace FieldToolkit.Core.Location;
+namespace Shared.Core.Geo;
 
 /// <summary>Great-circle distance and bearing on the WGS84 mean sphere (accurate to about 0.5 %).</summary>
 public static class GeoMath

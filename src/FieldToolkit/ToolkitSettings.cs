@@ -1,3 +1,4 @@
+using Shared.Location;
 using Shared.Settings;
 
 namespace FieldToolkit;
@@ -9,16 +10,6 @@ public enum RestoreWindowsMode
     Never
 }
 
-public enum LocationSourceKind
-{
-    /// <summary>Windows location service (built-in GNSS, Wi-Fi positioning).</summary>
-    Windows,
-    /// <summary>GPS receiver on a COM port sending NMEA sentences.</summary>
-    Serial,
-    /// <summary>Position typed in by the user.</summary>
-    Manual
-}
-
 /// <summary>A one-tap named stopwatch on the Timers tool.</summary>
 public sealed class TimerPreset
 {
@@ -26,10 +17,11 @@ public sealed class TimerPreset
     public int RemindEveryMinutes { get; set; }
 }
 
-public sealed class ToolkitSettings
+public sealed class ToolkitSettings : ILocationSettings
 {
     public bool TouchMode { get; set; } = true;
     public bool DaylightTheme { get; set; }
+    public bool NightTheme { get; set; }
     public RestoreWindowsMode RestoreWindows { get; set; } = RestoreWindowsMode.Ask;
     public bool AlertSound { get; set; } = true;
 

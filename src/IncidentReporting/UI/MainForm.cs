@@ -172,13 +172,18 @@ public sealed class MainForm : Form
         touchMenu.Click += (_, _) => UiMode.SetTouch(!UiMode.Touch);
         var daylightMenu = new ToolStripMenuItem("&Daylight (High Contrast)") { ShortcutKeys = Keys.Control | Keys.D, Checked = UiMode.Daylight };
         daylightMenu.Click += (_, _) => UiMode.SetDaylight(!UiMode.Daylight);
+        // Ctrl+N is New Report here; Night has its shortcut in the report editor and the field apps.
+        var nightMenu = new ToolStripMenuItem("&Night (Dark)") { Checked = UiMode.Night };
+        nightMenu.Click += (_, _) => UiMode.SetNight(!UiMode.Night);
         UiMode.Changed += (_, _) =>
         {
             touchMenu.Checked = UiMode.Touch;
             daylightMenu.Checked = UiMode.Daylight;
+            nightMenu.Checked = UiMode.Night;
         };
         view.DropDownItems.Add(touchMenu);
         view.DropDownItems.Add(daylightMenu);
+        view.DropDownItems.Add(nightMenu);
 
         var reports = new ToolStripMenuItem("&Reports");
         foreach (var category in FormCatalog.Categories)

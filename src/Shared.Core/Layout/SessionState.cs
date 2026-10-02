@@ -1,4 +1,4 @@
-namespace FieldToolkit.Core.Windows;
+namespace Shared.Core.Layout;
 
 /// <summary>The tool windows that were open when the toolkit last closed, for optional restore.</summary>
 public sealed class SessionState

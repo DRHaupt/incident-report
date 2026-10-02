@@ -1,5 +1,6 @@
 using FieldToolkit.Core;
 using FieldToolkit.Core.Radio;
+using Shared.Core.Radio;
 
 namespace FieldToolkit.Tests;
 

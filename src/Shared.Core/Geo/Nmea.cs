@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace FieldToolkit.Core.Location;
+namespace Shared.Core.Geo;
 
 /// <summary>
 /// Minimal NMEA 0183 reader for GPS receivers exposed as a serial (COM) port, as on many rugged laptops. Combines GGA
