@@ -43,7 +43,6 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
 
     public MapWindow(string? state) : base(ToolRegistry.Find(ToolId)!)
     {
-        MinimumSize = new Size(480, 420);
         _voice = AppServices.Settings.Voice;
 
         // Toolbar
