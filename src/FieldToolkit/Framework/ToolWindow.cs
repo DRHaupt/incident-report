@@ -21,7 +21,7 @@ public abstract class ToolWindow : Form
         Icon = Branding.ToolIcon(tool.IconName);
         ShowInTaskbar = true;
         StartPosition = FormStartPosition.WindowsDefaultLocation;
-        MinimumSize = new Size(420, 360);
+        MinimumSize = new Size(320, 300); // small enough for a 3×2 grid on a 1024×768 screen
         ClientSize = tool.DefaultSize;
         KeyPreview = true;
 

@@ -18,13 +18,31 @@ jobs:
       - name: Build
         run: dotnet build IncidentReporting.sln -c Release
 
-      - name: Publish (self-contained, single file)
+      - name: Test (content, search, timers, layout, ERG parser)
+        run: dotnet test tests/FieldToolkit.Tests -c Release --no-build
+
+      - name: Test (UI smoke test – opens every window)
+        run: dotnet test tests/FieldToolkit.UiTests -c Release --no-build
+        timeout-minutes: 15
+
+      - name: Publish Incident Report Manager (self-contained, single file)
         run: >
           dotnet publish src/IncidentReporting/IncidentReporting.csproj -c Release -r win-x64
           --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
-          -o publish
+          -o publish/IncidentReportManager
+
+      - name: Publish Field Toolkit (self-contained, single file + Content folder)
+        run: >
+          dotnet publish src/FieldToolkit/FieldToolkit.csproj -c Release -r win-x64
+          --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -o publish/FieldToolkit
 
       - uses: actions/upload-artifact@v4
         with:
           name: IncidentReportManager-win-x64
-          path: publish/
+          path: publish/IncidentReportManager/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FieldToolkit-win-x64
+          path: publish/FieldToolkit/

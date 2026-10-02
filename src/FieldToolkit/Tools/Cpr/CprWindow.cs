@@ -123,6 +123,8 @@ public sealed class CprWindow : ToolWindow, IAcceptsState
 
     private DateTime Now => _clockBase + _clock.Elapsed;
 
+    internal CprMetronome Metronome => _metronome;
+
     public override string SaveState() => _preset?.Id ?? "adult";
 
     public void ApplyState(string state)
@@ -199,7 +201,7 @@ public sealed class CprWindow : ToolWindow, IAcceptsState
         _sound.Text = AppServices.Settings.CprSound ? "Click: ON" : "Click: OFF";
     }
 
-    private void StartStop()
+    internal void StartStop()
     {
         if (_metronome.Phase == CprPhase.Stopped)
         {

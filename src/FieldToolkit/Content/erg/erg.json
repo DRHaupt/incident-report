@@ -1,0 +1,391 @@
+{
+  "edition": "SAMPLE",
+  "isSample": true,
+  "source": "Synthetic placeholder data written for testing the app. Not taken from, and not a paraphrase of, the ERG.",
+  "sourceSha256": "",
+  "importedOn": "",
+  "importTool": "hand-written sample",
+  "notes": "SAMPLE DATA – NOT FOR OPERATIONAL USE. ID numbers 9901–9906, guide numbers 901–903 and all text and distances are fictitious. Replace this file by running tools/ErgImport on the official ERG PDF.",
+  "guides": [
+    {
+      "number": "901",
+      "title": "[SAMPLE – NOT ERG DATA] Placeholder guide A",
+      "pages": "sample",
+      "sections": [
+        {
+          "heading": "POTENTIAL HAZARDS",
+          "subsections": [
+            {
+              "heading": "FIRE OR EXPLOSION",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            },
+            {
+              "heading": "HEALTH",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "PUBLIC SAFETY",
+          "subsections": [
+            {
+              "heading": "",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text. Not real public safety guidance."
+              ]
+            },
+            {
+              "heading": "PROTECTIVE CLOTHING",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            },
+            {
+              "heading": "EVACUATION",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "EMERGENCY RESPONSE",
+          "subsections": [
+            {
+              "heading": "FIRE",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            },
+            {
+              "heading": "SPILL OR LEAK",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            },
+            {
+              "heading": "FIRST AID",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "902",
+      "title": "[SAMPLE – NOT ERG DATA] Placeholder guide B",
+      "pages": "sample",
+      "sections": [
+        {
+          "heading": "POTENTIAL HAZARDS",
+          "subsections": [
+            {
+              "heading": "FIRE OR EXPLOSION",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            },
+            {
+              "heading": "HEALTH",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "PUBLIC SAFETY",
+          "subsections": [
+            {
+              "heading": "",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text. Not real public safety guidance."
+              ]
+            },
+            {
+              "heading": "PROTECTIVE CLOTHING",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            },
+            {
+              "heading": "EVACUATION",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "EMERGENCY RESPONSE",
+          "subsections": [
+            {
+              "heading": "FIRE",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            },
+            {
+              "heading": "SPILL OR LEAK",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            },
+            {
+              "heading": "FIRST AID",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "903",
+      "title": "[SAMPLE – NOT ERG DATA] Placeholder guide C",
+      "pages": "sample",
+      "sections": [
+        {
+          "heading": "POTENTIAL HAZARDS",
+          "subsections": [
+            {
+              "heading": "FIRE OR EXPLOSION",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            },
+            {
+              "heading": "HEALTH",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "PUBLIC SAFETY",
+          "subsections": [
+            {
+              "heading": "",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text. Not real public safety guidance."
+              ]
+            },
+            {
+              "heading": "PROTECTIVE CLOTHING",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            },
+            {
+              "heading": "EVACUATION",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "EMERGENCY RESPONSE",
+          "subsections": [
+            {
+              "heading": "FIRE",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            },
+            {
+              "heading": "SPILL OR LEAK",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            },
+            {
+              "heading": "FIRST AID",
+              "items": [
+                "[SAMPLE – NOT ERG DATA] Placeholder text for layout testing only. Import the official ERG to see the real guidance for this section."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "id": "9901",
+      "name": "SAMPLE MATERIAL ALPHA (fictitious)",
+      "guide": "901",
+      "hazardClass": "3",
+      "page": "sample"
+    },
+    {
+      "id": "9902",
+      "name": "SAMPLE MATERIAL BRAVO (fictitious)",
+      "guide": "902",
+      "highlighted": true,
+      "hazardClass": "2.3",
+      "page": "sample"
+    },
+    {
+      "id": "9903",
+      "name": "SAMPLE MATERIAL CHARLIE (fictitious)",
+      "guide": "903",
+      "hazardClass": "8",
+      "page": "sample"
+    },
+    {
+      "id": "9904",
+      "name": "SAMPLE MATERIAL DELTA (fictitious)",
+      "guide": "902",
+      "highlighted": true,
+      "waterReactive": true,
+      "hazardClass": "6.1",
+      "page": "sample"
+    },
+    {
+      "id": "9905",
+      "name": "SAMPLE MATERIAL ECHO (fictitious)",
+      "guide": "901",
+      "polymerizable": true,
+      "hazardClass": "2.1",
+      "page": "sample"
+    },
+    {
+      "id": "9906",
+      "name": "SAMPLE MATERIAL FOXTROT (fictitious)",
+      "guide": "903",
+      "hazardClass": "9",
+      "page": "sample"
+    }
+  ],
+  "isolationTable": [
+    {
+      "id": "9902",
+      "guide": "902",
+      "name": "SAMPLE MATERIAL BRAVO (fictitious)",
+      "small": {
+        "isolate": "SAMPLE",
+        "protectDay": "SAMPLE",
+        "protectNight": "SAMPLE"
+      },
+      "large": {
+        "isolate": "SAMPLE",
+        "protectDay": "SAMPLE",
+        "protectNight": "SAMPLE"
+      },
+      "note": "Fictitious entry for layout testing.",
+      "page": "sample"
+    },
+    {
+      "id": "9904",
+      "guide": "902",
+      "name": "SAMPLE MATERIAL DELTA (fictitious)",
+      "small": {
+        "isolate": "SAMPLE",
+        "protectDay": "SAMPLE",
+        "protectNight": "SAMPLE"
+      },
+      "large": {
+        "isolate": "Refer to Table 3",
+        "protectDay": "Refer to Table 3",
+        "protectNight": "Refer to Table 3"
+      },
+      "note": "Fictitious entry for layout testing.",
+      "page": "sample"
+    }
+  ],
+  "placards": [
+    {
+      "code": "1",
+      "label": "EXPLOSIVES",
+      "className": "Class 1 – Explosives",
+      "guide": ""
+    },
+    {
+      "code": "2.1",
+      "label": "FLAMMABLE GAS",
+      "className": "Division 2.1 – Flammable gas",
+      "guide": ""
+    },
+    {
+      "code": "2.2",
+      "label": "NON-FLAMMABLE GAS",
+      "className": "Division 2.2 – Non-flammable, non-poisonous gas",
+      "guide": ""
+    },
+    {
+      "code": "2.3",
+      "label": "INHALATION HAZARD",
+      "className": "Division 2.3 – Poison gas",
+      "guide": ""
+    },
+    {
+      "code": "3",
+      "label": "FLAMMABLE",
+      "className": "Class 3 – Flammable liquid",
+      "guide": ""
+    },
+    {
+      "code": "4.1",
+      "label": "FLAMMABLE SOLID",
+      "className": "Division 4.1 – Flammable solid",
+      "guide": ""
+    },
+    {
+      "code": "4.2",
+      "label": "SPONTANEOUSLY COMBUSTIBLE",
+      "className": "Division 4.2 – Spontaneously combustible",
+      "guide": ""
+    },
+    {
+      "code": "4.3",
+      "label": "DANGEROUS WHEN WET",
+      "className": "Division 4.3 – Dangerous when wet",
+      "guide": ""
+    },
+    {
+      "code": "5.1",
+      "label": "OXIDIZER",
+      "className": "Division 5.1 – Oxidizer",
+      "guide": ""
+    },
+    {
+      "code": "5.2",
+      "label": "ORGANIC PEROXIDE",
+      "className": "Division 5.2 – Organic peroxide",
+      "guide": ""
+    },
+    {
+      "code": "6.1",
+      "label": "POISON",
+      "className": "Division 6.1 – Poison (toxic)",
+      "guide": ""
+    },
+    {
+      "code": "7",
+      "label": "RADIOACTIVE",
+      "className": "Class 7 – Radioactive",
+      "guide": ""
+    },
+    {
+      "code": "8",
+      "label": "CORROSIVE",
+      "className": "Class 8 – Corrosive",
+      "guide": ""
+    },
+    {
+      "code": "9",
+      "label": "CLASS 9",
+      "className": "Class 9 – Miscellaneous",
+      "guide": ""
+    }
+  ]
+}

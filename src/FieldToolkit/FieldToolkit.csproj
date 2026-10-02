@@ -27,6 +27,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="FieldToolkit.UiTests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />
     <ProjectReference Include="..\FieldToolkit.Core\FieldToolkit.Core.csproj" />
   </ItemGroup>

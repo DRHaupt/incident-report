@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>ErgImport</AssemblyName>
+    <RootNamespace>ErgImport</RootNamespace>
+    <Description>Converts the official U.S. DOT Emergency Response Guidebook PDF into the Field Toolkit's erg.json and verifies the result.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PdfPig" Version="0.1.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="placards.csv" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="README.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FieldToolkit.Core\FieldToolkit.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,5 @@
+# Initial response guide for each placard, from the ERG's "Table of Placards and Initial Response Guide
+# to Use On-Scene". Fill in the guide numbers from the printed guidebook – they are deliberately left blank
+# here so that nothing is entered from memory. Format: code,guide[,label]
+# Rows without a guide are ignored. Example of the format only:  3,999
+code,guide
