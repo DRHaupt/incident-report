@@ -1,6 +1,7 @@
 using FieldToolkit.Tools.Cpr;
 using FieldToolkit.Tools.FirstAid;
 using FieldToolkit.Tools.Hazmat;
+using FieldToolkit.Tools.Location;
 using FieldToolkit.Tools.Timers;
 
 namespace FieldToolkit.Framework;
@@ -38,6 +39,15 @@ public static class ToolRegistry
             Description = "UN/NA number, placard and ERG guide",
             IconName = "hazmat",
             Create = state => new HazmatWindow(state)
+        },
+        new ToolDescriptor
+        {
+            Id = LocationWindow.ToolId,
+            Title = "Location",
+            Description = "GPS position, grid reference, saved points",
+            IconName = "location",
+            Create = state => new LocationWindow(state),
+            DefaultSize = new Size(620, 700)
         },
         new ToolDescriptor
         {

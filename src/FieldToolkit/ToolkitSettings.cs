@@ -9,6 +9,16 @@ public enum RestoreWindowsMode
     Never
 }
 
+public enum LocationSourceKind
+{
+    /// <summary>Windows location service (built-in GNSS, Wi-Fi positioning).</summary>
+    Windows,
+    /// <summary>GPS receiver on a COM port sending NMEA sentences.</summary>
+    Serial,
+    /// <summary>Position typed in by the user.</summary>
+    Manual
+}
+
 public sealed class ToolkitSettings
 {
     public bool TouchMode { get; set; } = true;
@@ -24,6 +34,15 @@ public sealed class ToolkitSettings
     public int LauncherWidth { get; set; }
     public int LauncherHeight { get; set; }
     public bool LauncherMaximized { get; set; }
+
+    public LocationSourceKind LocationSource { get; set; } = LocationSourceKind.Windows;
+    public string SerialPortName { get; set; } = "";
+    public int SerialBaud { get; set; } = 4800;
+    public double? ManualLatitude { get; set; }
+    public double? ManualLongitude { get; set; }
+
+    /// <summary>Format read out on the radio: "mgrs" or "decimal".</summary>
+    public string ReadoutFormat { get; set; } = "mgrs";
 
     public int CprRate { get; set; } = 110;
     public bool CprSound { get; set; } = true;

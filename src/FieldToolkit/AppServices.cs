@@ -1,9 +1,12 @@
 using System.Media;
 using System.Runtime.InteropServices;
 using FieldToolkit.Core.FirstAid;
+using FieldToolkit.Core;
 using FieldToolkit.Core.Hazmat;
+using FieldToolkit.Core.Location;
 using FieldToolkit.Core.Timers;
 using FieldToolkit.Framework;
+using FieldToolkit.Tools.Location;
 using Shared.UI;
 
 namespace FieldToolkit;
@@ -19,6 +22,14 @@ public static class AppServices
     public static ToolkitSettings Settings { get; private set; } = new();
     public static TimerService Timers { get; private set; } = null!;
     public static WindowManager Windows { get; private set; } = null!;
+
+    private static LocationService? _location;
+
+    /// <summary>Current position (started on first use, on the UI thread).</summary>
+    public static LocationService Location => _location ??= new LocationService();
+
+    /// <summary>Saved locations (incident site, rendezvous points…).</summary>
+    public static JsonListStore<SavedPoint> Points { get; private set; } = null!;
 
     /// <summary>Raised four times a second for live read-outs (timers). Handlers must be cheap.</summary>
     public static event EventHandler? ClockTick;
@@ -56,6 +67,7 @@ public static class AppServices
         Timers = new TimerService(Path.Combine(ToolkitSettings.DataFolder, "timers.json"));
         Timers.Alert += OnTimerAlert;
         Windows = new WindowManager(Path.Combine(ToolkitSettings.DataFolder, "session.json"));
+        Points = new JsonListStore<SavedPoint>(Path.Combine(ToolkitSettings.DataFolder, "points.json"));
 
         Clock.Tick += (_, _) =>
         {
