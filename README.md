@@ -7,7 +7,8 @@ offline and store all their data locally:
 
 * **[Incident Report Manager](#incident-report-manager)** records, tracks and prints incident reports.
 * **[Field Toolkit](#field-toolkit)** is a multi-window toolkit for rugged in-vehicle laptops: first aid
-  guide, CPR helper, hazmat lookup and timers.
+  guide, CPR helper, hazmat lookup, GPS location, timers, checklists, kit expiry tracker, and a radio &
+  comms reference.
 
 Both apps share branding, the switchable **Touch Mode** (Ctrl+T) and the high-contrast **Daylight** theme
 (Ctrl+D) through the `src/Shared` library. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design.
@@ -16,14 +17,14 @@ Both apps share branding, the switchable **Touch Mode** (Ctrl+T) and the high-co
 
 # Field Toolkit
 
-<p><img src="src/FieldToolkit/Resources/firstaid-128.png" width="48" alt=""> <img src="src/FieldToolkit/Resources/cpr-128.png" width="48" alt=""> <img src="src/FieldToolkit/Resources/hazmat-128.png" width="48" alt=""> <img src="src/FieldToolkit/Resources/timers-128.png" width="48" alt=""></p>
+<p><img src="src/FieldToolkit/Resources/firstaid-128.png" width="48" alt=""> <img src="src/FieldToolkit/Resources/cpr-128.png" width="48" alt=""> <img src="src/FieldToolkit/Resources/hazmat-128.png" width="48" alt=""> <img src="src/FieldToolkit/Resources/location-128.png" width="48" alt=""> <img src="src/FieldToolkit/Resources/timers-128.png" width="48" alt=""> <img src="src/FieldToolkit/Resources/checklists-128.png" width="48" alt=""> <img src="src/FieldToolkit/Resources/kit-128.png" width="48" alt=""> <img src="src/FieldToolkit/Resources/radio-128.png" width="48" alt=""></p>
 
 The Field Toolkit is built for touchscreen Toughbook-class laptops. It is designed for gloves, direct
 sunlight and no network connection, for use at events and in general emergency response work.
 
 ## Windows and layout
 
-* **Launcher** with large tiles for each tool, the list of active timers, the open windows (tap to jump to
+* **Launcher** with large tiles for each tool (eight tools), the list of active timers, the open windows (tap to jump to
   one), and the Touch Mode, Daylight and Settings buttons.
 * Every tool opens in its **own top-level window**, with its own taskbar entry, resizable and movable.
   You can open several windows of the same tool: **+ Window** in a First Aid or Hazmat window opens
@@ -85,10 +86,72 @@ timers. Press Space to start or stop.
   guides 901–903, all marked SAMPLE), and the app shows a red banner while it is loaded. Build the real
   dataset from the official PHMSA ERG PDF with [`tools/ErgImport`](tools/ErgImport/README.md).
 
+### Location
+
+* Shows the current position as **latitude/longitude**, **degrees-minutes-seconds**, **degrees and decimal
+  minutes**, **MGRS grid reference** and **UTM** (WGS84). Tap any line to copy it.
+* **Read out on the radio**: the grid reference (or lat/long) spelled out in radio figures and the
+  phonetic alphabet, e.g. "TREE ZE-RO UNIFORM / X-RAY CHARLIE / NIN-ER NIN-ER TREE WUN NIN-ER / …".
+* **Copy for dispatch** puts a plain-ASCII block on the clipboard: time, lat/long, DMS, MGRS, source and
+  accuracy.
+* **Saved points** such as the incident site or the ambulance meeting point. Save the current position or
+  type coordinates in any of the formats above. Each point shows its **live distance and bearing** (degrees
+  true and compass point) with an arrow.
+* **Position sources** (choose under *Position source…*):
+  * the **Windows location service**, which uses the built-in GNSS on most Toughbooks;
+  * a GPS receiver on a **COM port** sending NMEA (common on Panasonic and Getac models; usually 4800 or
+    9600 baud);
+  * a **manually entered** position, clearly labelled as not from GPS.
+
+  The status bar shows the source, accuracy, satellites, time of fix and a warning when the fix is old.
+* Windows has to allow location access: *Settings → Privacy & security → Location*, turn on *Location
+  services* and *Let desktop apps access your location*. The app explains this if access is off.
+
 ### Timers
 
-Start stopwatches and countdowns (presets from 1 to 30 min, or a custom length). You can pause, restart,
-rename, delete and acknowledge them. All timers from all tools are listed here.
+* **Named stopwatches**: tap *Tourniquet*, *CPR*, *Road closure* or *Crew on duty* to start one. Each preset
+  has its own reminder interval, and you can edit the list. *Named stopwatch…* lets you type any name, so
+  you can run several at once, e.g. "Tourniquet – casualty 2".
+* Countdowns: presets from 1 to 30 min, or a custom length.
+* You can pause, restart, rename, delete and acknowledge timers. All timers from all tools are listed
+  here.
+
+### Checklists
+
+* Write your own checklists: one item per line, with `#` for section headings and an optional question at
+  the start, such as "Vehicle / call sign". The toolkit starts with editable examples: **vehicle pre-trip
+  check**, **medical kit check** and **shift handover**.
+* Each run records **OK / Fault / N/A** for every item, with the time. A fault asks for a note. Runs in
+  progress survive closing the window or the app.
+* **Copy report** gives a text summary listing faults and unchecked items. Completed checks stay in a
+  history until you delete them.
+
+### Kit Tracker
+
+* Record each item with its **expiry or service date**: medical kits, medication, AED pads and
+  batteries, oxygen, extinguishers, PPE. Each item also has where it's kept, a serial or lot number, and
+  its own warning period (30 days by default).
+* Items are red when expired and amber when due soon. The **launcher shows a warning** ("KIT: 2 expired,
+  1 due soon"), and it updates at midnight.
+* The buttons on each item:
+  * *Checked today* records today's check.
+  * *Replaced…* asks for the new expiry date.
+  * *Copy list* gives a status report.
+* There are quick buttons for +6 months, +1, +2 and +5 years.
+
+### Radio & Comms
+
+* **Phonetic**: the ICAO/NATO alphabet and radio figures, with pronunciation. A live speller turns
+  "XK21 ABC" into "X-ray Kilo Two One / Alfa Bravo Charlie".
+* **Phrases**: standard voice-procedure words grouped by use (procedure, accuracy, signal reports,
+  emergency), the **METHANE** major-incident report format, and radio practice tips. All of it comes from
+  the editable file `Content\radio\reference.json`.
+* **Channels** and **Call signs**: your own channel plan (channel, name, RX/TX frequency, CTCSS/DCS, use,
+  notes) and call-sign list. Edit them in place; changes save as you go. You can also copy them or
+  import/export CSV.
+* **Log**: a quick **time-stamped notepad / radio log**. Pick From and To from your call signs, type, and
+  press Enter. *+ My location* adds your current grid reference. Copy or save the log as text.
+  *Start new log* archives the current log to the data folder.
 
 ## Content: editing and review
 
@@ -100,6 +163,8 @@ Content lives in editable data files next to the executable, not in the code:
 | `Content\firstaid\<topic>.json` | One topic: when to call, steps (with optional timer/CPR/topic actions), warning signs, do-NOT items, related topics, **sources**, review record |
 | `Content\firstaid\_cpr.json` | CPR helper rate range, ratios, depths and hand positions per age group, with sources |
 | `Content\erg\erg.json` | Hazmat dataset produced by `tools/ErgImport` |
+| `Content\checklists\templates.json` | Example checklists copied to your data folder on first run (then edited in the app) |
+| `Content\radio\reference.json` | Radio phrases, report formats (METHANE) and practice tips |
 
 A medical reviewer can change these files in any text editor; no recompiling is needed. The app checks
 the files on start (missing sources, broken links between topics, invalid timers…) and lists any problems
@@ -119,12 +184,12 @@ folder somewhere else and select it under **Settings → Content folder**.
 | Item | Path |
 |---|---|
 | Settings, running timers, last session | `%LOCALAPPDATA%\FieldToolkit\` (`settings.json`, `timers.json`, `session.json`) |
+| Saved points, checklists and check records, kit, channel plan, call signs, radio log | `%LOCALAPPDATA%\FieldToolkit\` (`points.json`, `checklist-templates.json`, `checklist-runs.json`, `kit.json`, `radio-channels.json`, `radio-callsigns.json`, `radio-log.json`; archived logs in `radio-logs\`) |
 | Content | `Content\` next to `FieldToolkit.exe`, or the folder chosen under Settings |
 
 ## Adding a tool
 
-The planned tools (location/GPS, checklists, kit/expiry tracker, radio & comms reference) fit into the same
-framework:
+Every tool above is built on the same framework, and new ones slot in the same way:
 
 1. Create `src/FieldToolkit/Tools/<Name>/<Name>Window.cs` deriving from `ToolWindow`. Put the UI in
    `Body`, and override `SaveState()` and read the state in the constructor so session restore works.
@@ -230,9 +295,11 @@ This produces `publish\IncidentReporting.exe`, which runs without .NET installed
 ```
 src/Shared/               Brand palette, BrandAssets, UiMode (Touch + Daylight), JSON settings (both apps)
 src/FieldToolkit.Core/    UI-free Field Toolkit logic: first-aid content/search, CPR metronome, timers,
-                          window layout, ERG model/parser/search
+                          window layout, ERG model/parser/search, UTM/MGRS/DMS, NMEA, checklists,
+                          kit rules, phonetic alphabet, CSV
 src/FieldToolkit/         Field Toolkit app: Launcher/, Framework/ (ToolWindow, WindowManager, registry),
-                          Tools/ (FirstAid, Cpr, Hazmat, Timers), UI/, Content/, Resources/
+                          Tools/ (FirstAid, Cpr, Hazmat, Location, Timers,
+                          Checklists, Kit, Radio), UI/, Content/, Resources/
 tools/ErgImport/          ERG PDF → erg.json converter and verifier
 tools/render-logos.py     Renders assets/fieldtoolkit/*.svg into the app's PNG/ICO resources
 tests/FieldToolkit.Tests/ xUnit tests (net8.0)
@@ -271,7 +338,9 @@ Use `.Related()` to add a "Related Report" section that links the form to an ear
 **Field Toolkit:** the source artwork is in `assets/fieldtoolkit/`. `toolkit.svg` is the app icon: the
 same navy shield as the incident app, with a grid of tool tiles and an amber "+" badge. There is one icon
 per tool: `firstaid.svg` (white cross on safety green), `cpr.svg` (heart with pulse line), `hazmat.svg`
-(placard diamond with UN plate) and `timers.svg` (stopwatch). Each tool window and taskbar entry uses its
+(placard diamond with UN plate), `location.svg` (map pin on a crosshair), `timers.svg` (stopwatch),
+`checklists.svg` (clipboard with ticks), `kit.svg` (first aid bag with an expiry clock) and `radio.svg`
+(handheld radio). Each tool window and taskbar entry uses its
 tool's icon. Run `python tools/render-logos.py` to regenerate the embedded PNG/ICO files.
 
 **Incident Report Manager:** the source artwork is `assets/logo.svg`. After you edit it, regenerate `Resources/app.ico` (16 to 256 px) and `Resources/logo-48.png` / `logo-128.png` from the SVG. The app embeds these files, and they are used for the window and taskbar icon, the report header, the About box, the preview pane, printouts and HTML exports.

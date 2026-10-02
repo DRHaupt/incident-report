@@ -16,8 +16,11 @@ IncidentReporting.sln
 │    Settings/JsonSettings.cs  Load/save JSON settings in %LOCALAPPDATA%\<app>
 ├─ src/IncidentReporting       net8.0-windows  Incident Report Manager (unchanged features)
 ├─ src/FieldToolkit.Core       net8.0          UI-free logic: content models, loaders, search,
-│                                              timer service, window layout maths, ERG data model
-├─ src/FieldToolkit            net8.0-windows  The Field Toolkit app: launcher, window manager, tools
+│                                              timer service, window layout maths, ERG data model,
+│                                              geo formats (UTM/MGRS/DMS), NMEA, checklists, kit,
+│                                              radio reference, CSV, JSON list store
+├─ src/FieldToolkit            net8.0-windows10.0.19041.0  The Field Toolkit app (Windows SDK target for the
+│                                              Windows location API): launcher, window manager, tools
 │    Content/firstaid/*.json   First-aid topics (editable data, copied next to the exe)
 │    Content/erg/erg.json      Hazmat dataset (sample until the official ERG is imported)
 ├─ tools/ErgImport             net8.0          Converts the official ERG PDF into erg.json + verifies it
@@ -119,3 +122,26 @@ form. Text is set to black or white to contrast with the result. Tool code there
 controls use `UiMode.Map`.
 The Field Toolkit's tool windows use large buttons in both modes. Touch Mode makes them larger still
 for use with gloves.
+
+## User data
+
+Tool data the user creates is kept in `%LOCALAPPDATA%\FieldToolkit\` as one JSON file per list:
+saved points, checklist templates and runs, kit items, channel plan, call signs and the radio log. Each file
+is a `JsonListStore<T>` (Core), written atomically after every change. If a file can't be read, it is copied
+aside as `*.bad` rather than overwritten. Reference content that an organisation may review or adapt lives
+in `Content\` next to the program, like the first-aid and hazmat data: `checklists\templates.json`
+(starter checklists, copied once into the user's data) and `radio\reference.json`.
+
+## Location sources
+
+`LocationService` (app) gives one current `GeoFix` to every Location window and to the radio log's
+"+ My location" button. It runs only while a Location window is open. The source is chosen in settings:
+
+* **Windows** – `Windows.Devices.Geolocation.Geolocator` (built-in GNSS, Wi-Fi). It asks for access and
+  explains how to enable location for desktop apps if access is off.
+* **Serial** – a background reader on a COM port. It feeds `NmeaReader` (Core), which takes GGA and RMC
+  sentences from any talker and checks their checksums.
+* **Manual** – a typed position, always labelled as manual.
+
+Coordinate formatting, parsing (decimal, DMS, DDM, MGRS), UTM/MGRS conversion, and distance and bearing are
+all in Core and unit tested against reference values.

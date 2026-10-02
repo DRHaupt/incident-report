@@ -1,9 +1,18 @@
+using FieldToolkit.Core.Checklists;
+using CheckState = FieldToolkit.Core.Checklists.CheckState;
+using FieldToolkit.Core.Kit;
+using FieldToolkit.Core.Location;
+using FieldToolkit.Core.Radio;
 using FieldToolkit.Core.Windows;
 using FieldToolkit.Framework;
 using FieldToolkit.Launcher;
 using FieldToolkit.Tools.Cpr;
 using FieldToolkit.Tools.FirstAid;
+using FieldToolkit.Tools.Checklists;
 using FieldToolkit.Tools.Hazmat;
+using FieldToolkit.Tools.Kit;
+using FieldToolkit.Tools.Location;
+using FieldToolkit.Tools.Radio;
 using FieldToolkit.Tools.Timers;
 using Shared.UI;
 
@@ -153,9 +162,87 @@ public class ToolkitSmokeTests
         Assert.True(AppServices.Windows.Windows.Single(w => w.SaveState() == "severe-bleeding|2|Steps").Pinned);
 
         AppServices.Windows.CloseAll();
+        Pump();
+
+        OpenLaterTools();
+
+        AppServices.Windows.CloseAll();
         AppServices.Timers.Clear();
         Pump();
         launcher.Close();
         Pump();
     });
+
+    /// <summary>Location, checklists, kit tracker and radio, with data in every list, in both themes.</summary>
+    private static void OpenLaterTools()
+    {
+        // Location: a manual position (CI has no GPS), saved points with distance/bearing.
+        AppServices.Settings.LocationSource = LocationSourceKind.Manual;
+        AppServices.Settings.ManualLatitude = 51.50735;
+        AppServices.Settings.ManualLongitude = -0.12776;
+        AppServices.Location.Restart();
+        AppServices.Points.Items.Clear();
+        AppServices.Points.Items.Add(new SavedPoint { Name = "Ambulance RVP", Latitude = 51.51, Longitude = -0.10, Note = "UI test" });
+        AppServices.Points.Save();
+        var location = AppServices.Windows.Open(LocationWindow.ToolId)!;
+        Pump(300);
+        Assert.NotNull(AppServices.Location.Fix);
+        Assert.Contains("51.50735", LocationWindow.DispatchText(AppServices.Location.Fix!));
+
+        // Checklists: home, an in-progress run with every state, and a completed run.
+        var template = AppServices.ChecklistTemplates.Items.First();
+        var run = ChecklistRun.Start(template, "UI test", "Unit 1", DateTime.UtcNow);
+        var items = run.Items.ToList();
+        run.Set(items[0], CheckState.Ok, DateTime.UtcNow);
+        run.Set(items[1], CheckState.Fault, DateTime.UtcNow, "Test fault");
+        run.Set(items[2], CheckState.NotApplicable, DateTime.UtcNow);
+        AppServices.ChecklistRuns.Items.Add(run);
+        AppServices.ChecklistRuns.Save();
+        var checklists = AppServices.Windows.Open(ChecklistsWindow.ToolId)!;
+        var runWindow = AppServices.Windows.Open(ChecklistsWindow.ToolId, "run:" + run.Id)!;
+        Pump(200);
+        Assert.Equal("run:" + run.Id, runWindow.SaveState());
+
+        // Kit: expired, due-soon and in-date items; the launcher shows the warning.
+        AppServices.Kit.Items.Clear();
+        AppServices.Kit.Items.Add(new KitItem { Name = "AED pads", Category = "AED / defibrillator", Expires = AppServices.Today.AddDays(-2) });
+        AppServices.Kit.Items.Add(new KitItem { Name = "Trauma kit", Expires = AppServices.Today.AddDays(10) });
+        AppServices.Kit.Items.Add(new KitItem { Name = "Extinguisher", Expires = AppServices.Today.AddYears(1) });
+        AppServices.Kit.Save();
+        var kit = AppServices.Windows.Open(KitWindow.ToolId, "attention")!;
+        Pump(200);
+
+        // Radio: every tab, with channels, call signs and log entries.
+        AppServices.Channels.Items.Clear();
+        AppServices.Channels.Items.Add(new RadioChannel { Channel = "1", Name = "Control", RxFrequency = "456.000" });
+        AppServices.Channels.Save();
+        AppServices.CallSigns.Items.Clear();
+        AppServices.CallSigns.Items.Add(new CallSign { Sign = "Control", Who = "Event control" });
+        AppServices.CallSigns.Save();
+        AppServices.RadioLog.Items.Add(new LogEntry { TimeUtc = DateTime.UtcNow, From = "Unit 1", To = "Control", Text = "UI test entry" });
+        AppServices.RadioLog.Save();
+        foreach (var tab in new[] { "Phonetic", "Phrases", "Channels", "CallSigns", "Log" })
+        {
+            var radio = AppServices.Windows.Open(RadioWindow.ToolId, tab)!;
+            Pump(100);
+            Assert.Equal(tab, radio.SaveState());
+        }
+
+        foreach (var (touch, daylight) in new[] { (true, true), (false, false) })
+        {
+            UiMode.SetTouch(touch);
+            UiMode.SetDaylight(daylight);
+            Pump(150);
+        }
+        AppServices.Windows.Arrange(ArrangeMode.Grid);
+        Pump(100);
+        Assert.Equal(9, AppServices.Windows.Windows.Count);
+
+        // Leave the runner's data folder tidy.
+        AppServices.ChecklistRuns.Items.Remove(run);
+        AppServices.ChecklistRuns.Save();
+        AppServices.RadioLog.Items.Clear();
+        AppServices.RadioLog.Save();
+        GC.KeepAlive(new object[] { location, checklists, kit });
+    }
 }
