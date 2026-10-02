@@ -1,31 +1,39 @@
-# Field Toolkit – Architecture
+# Architecture
 
 This document describes how the solution is split up and how the Field Toolkit's shared services work.
-The Incident Report Manager and the Field Toolkit live in the same solution and share branding and
-UI infrastructure.
+The Incident Report Manager, the Field Toolkit and Field Map live in the same solution and share branding and
+UI infrastructure. Field Map's design (rendering, tiles, routing, search, updates) is described in
+[FIELDMAP-ARCHITECTURE.md](FIELDMAP-ARCHITECTURE.md), its data sources in [FIELDMAP-DATA-SOURCES.md](FIELDMAP-DATA-SOURCES.md).
 
 ## Projects
 
 ```
 IncidentReporting.sln
-├─ src/Shared                  net8.0-windows  Shared WinForms infrastructure (both apps)
+├─ src/Shared                  net8.0-windows  Shared WinForms infrastructure (all apps)
 │    Branding.cs               Brand palette + per-app logo/icon loading (BrandAssets)
-│    UI/UiMode.cs              Standard/Touch scaling + Standard/Daylight theme, applied live
-│    UI/UiModeButtons.cs       Toolbar toggles and Ctrl+T / Ctrl+D handling
-│    UI/WrapLabel.cs           Self-sizing word-wrapping label for reflowing instructions
+│    UI/UiMode.cs              Standard/Touch scaling + Standard/Daylight/Night theme, applied live
+│    UI/UiModeButtons.cs       Toolbar toggles and Ctrl+T / Ctrl+D / Ctrl+N handling
+│    UI/Ui.cs, VStack, InputDialog, WrapLabel   Glove-friendly buttons, stacks and prompts
 │    Settings/JsonSettings.cs  Load/save JSON settings in %LOCALAPPDATA%\<app>
-├─ src/IncidentReporting       net8.0-windows  Incident Report Manager (unchanged features)
-├─ src/FieldToolkit.Core       net8.0          UI-free logic: content models, loaders, search,
-│                                              timer service, window layout maths, ERG data model,
-│                                              geo formats (UTM/MGRS/DMS), NMEA, checklists, kit,
-│                                              radio reference, CSV, JSON list store
-├─ src/FieldToolkit            net8.0-windows10.0.19041.0  The Field Toolkit app (Windows SDK target for the
-│                                              Windows location API): launcher, window manager, tools
-│    Content/firstaid/*.json   First-aid topics (editable data, copied next to the exe)
-│    Content/erg/erg.json      Hazmat dataset (sample until the official ERG is imported)
+├─ src/Shared.Core             net8.0          UI-free shared code: coordinates (decimal/DMS/DDM/UTM/MGRS),
+│                                              distance & bearing, NMEA, phonetic read-out, dispatch text block,
+│                                              JSON/CSV helpers, JsonListStore, window layout, session state,
+│                                              Field Toolkit ↔ Field Map exchange folder
+├─ src/Shared.Location         net8.0-windows10.0.19041.0  LocationService (Windows location / serial NMEA / manual)
+│                                              and the position-source dialog
+├─ src/IncidentReporting       net8.0-windows  Incident Report Manager
+├─ src/FieldToolkit.Core       net8.0          Toolkit logic: content models, loaders, search, timers, ERG,
+│                                              checklists, kit, radio reference
+├─ src/FieldToolkit            net8.0-windows10.0.19041.0  The Field Toolkit app
+├─ src/FieldMap.Core           net8.0          Field Map logic (see FIELDMAP-ARCHITECTURE.md)
+├─ src/FieldMap.Rendering      net8.0          Skia map renderer (shared by the app and Linux render tests)
+├─ src/FieldMap                net8.0-windows10.0.19041.0  The Field Map app
 ├─ tools/ErgImport             net8.0          Converts the official ERG PDF into erg.json + verifies it
-└─ tests/FieldToolkit.Tests    net8.0          xUnit: content loading/validation, search, timers,
-                                               window layout, ERG parsing/search
+├─ tools/MapBuilder            net8.0          Builds/updates/exports Field Map region data from the command line
+├─ tests/FieldToolkit.Tests    net8.0          xUnit (Linux and Windows)
+├─ tests/FieldMap.Tests        net8.0          xUnit (Linux and Windows): import, tiles, search, routing,
+│                                              navigation, updates/rollback, packages, formats, rendering
+└─ tests/*.UiTests             Windows         Smoke tests that open every window of each field app
 ```
 
 `FieldToolkit.Core` has no Windows dependencies, so its tests run on any OS (including CI on Linux),
@@ -112,9 +120,9 @@ DATA** banner on every screen while `isSample` is true.
 | Switch | Values | Effect |
 |---|---|---|
 | Scale  | Standard / **Touch** (Ctrl+T) | Fonts, rows, buttons, menus, docked chrome grow ×1.3 |
-| Theme  | Standard / **Daylight** (Ctrl+D) | High-contrast palette: pure white surfaces, black text, black headers with white/amber text, heavy borders, semibold body text |
+| Theme  | Standard / **Daylight** (Ctrl+D) / **Night** (Ctrl+N) | Daylight: pure white surfaces, black text, heavy borders, semibold text. Night: near-black surfaces, dim warm text, dimmed signal colours (keeps night vision) |
 
-Daylight works as a **colour transform**: every control keeps the colours it was given for the
+Daylight and Night work as **colour transforms**: every control keeps the colours it was given for the
 standard theme. In Daylight they are mapped as follows: dark colours become black, light and pastel
 colours become white, and strong signal colours (red, green, amber, blue) become their most saturated
 form. Text is set to black or white to contrast with the result. Tool code therefore uses one palette

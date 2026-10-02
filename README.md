@@ -1,17 +1,21 @@
-<p align="center"><img src="assets/logo-512.png" width="112" alt="Incident Report Manager logo">&nbsp;&nbsp;&nbsp;&nbsp;<img src="assets/fieldtoolkit/toolkit-512.png" width="112" alt="Field Toolkit logo"></p>
+<p align="center"><img src="assets/logo-512.png" width="112" alt="Incident Report Manager logo">&nbsp;&nbsp;&nbsp;&nbsp;<img src="assets/fieldtoolkit/toolkit-512.png" width="112" alt="Field Toolkit logo">&nbsp;&nbsp;&nbsp;&nbsp;<img src="assets/fieldmap/fieldmap-512.png" width="112" alt="Field Map logo"></p>
 
-# Incident Report Manager & Field Toolkit
+# Incident Report Manager, Field Toolkit & Field Map
 
-This repository holds two native Windows desktop applications (C# / WinForms, .NET 8). Both work fully
-offline and store all their data locally:
+This repository holds three native Windows desktop applications (C# / WinForms, .NET 8). All work fully
+offline and store their data locally:
 
 * **[Incident Report Manager](#incident-report-manager)** records, tracks and prints incident reports.
 * **[Field Toolkit](#field-toolkit)** is a multi-window toolkit for rugged in-vehicle laptops: first aid
   guide, CPR helper, hazmat lookup, GPS location, timers, checklists, kit expiry tracker, and a radio &
   comms reference.
+* **[Field Map](#field-map)** is an offline, CAD-style map for emergency response in British Columbia and
+  Alberta: search, "What's here?", nearest facilities by drive time, turn-by-turn directions, incident
+  drawing tools and offline-safe map updates.
 
-Both apps share branding, the switchable **Touch Mode** (Ctrl+T) and the high-contrast **Daylight** theme
-(Ctrl+D) through the `src/Shared` library. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design.
+The apps share branding, the switchable **Touch Mode** (Ctrl+T), the high-contrast **Daylight** theme
+(Ctrl+D) and the **Night** theme (Ctrl+N) through `src/Shared`, and coordinate/GPS code through
+`src/Shared.Core` and `src/Shared.Location`. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design.
 
 ---
 
@@ -204,11 +208,119 @@ styling all work without further code. Timers go through `AppServices.Timers`. P
 
 | Key | Action |
 |---|---|
-| Ctrl+T / Ctrl+D | Touch Mode / Daylight theme (any window) |
+| Ctrl+T / Ctrl+D / Ctrl+N | Touch Mode / Daylight theme / Night theme (any window) |
 | Ctrl+L | Bring the launcher forward |
 | ← / → (PgUp / PgDn) | Previous / next first-aid step |
 | Esc | Back to the topic list / search |
 | Space | Start/stop the CPR metronome |
+
+---
+
+# Field Map
+
+<p><img src="src/FieldMap/Resources/map-128.png" width="48" alt=""> <img src="src/FieldMap/Resources/incident-128.png" width="48" alt=""> <img src="src/FieldMap/Resources/drawings-128.png" width="48" alt=""> <img src="src/FieldMap/Resources/data-128.png" width="48" alt=""> <img src="src/FieldMap/Resources/about-128.png" width="48" alt=""></p>
+
+An offline map for in-vehicle Toughbooks in **British Columbia and Alberta**: glove-friendly, readable in
+sunlight (Daylight) and at night (Night), and fully usable with no network once map data is installed.
+
+> **Field Map supports, and does not replace, official CAD/dispatch. Map data may be incomplete or out of date.**
+
+Until real data is installed the app runs on a fictitious **Sample County** (red *SAMPLE DATA* banner on
+every screen). Design: [docs/FIELDMAP-ARCHITECTURE.md](docs/FIELDMAP-ARCHITECTURE.md). Sources, licences and
+how to install real data: [docs/FIELDMAP-DATA-SOURCES.md](docs/FIELDMAP-DATA-SOURCES.md).
+
+## Map
+
+* Vector map drawn with SkiaSharp from MBTiles built from OpenStreetMap: labelled roads, highway shields,
+  place names, water, parks, glaciers, rail, boundaries. **Standard** is a dark high-contrast CAD style;
+  **Daylight** and **Night** restyle the map and every window live.
+* Pinch to zoom, two-finger rotate, drag (with inertia), two-finger tap to zoom out, press-and-hold for the
+  context menu. Big **+ / − / Me / N↑-H↑** buttons, scale bar, north arrow (tap = north up).
+* GPS (Windows location, serial NMEA or manual, shared with Field Toolkit): position with accuracy circle and
+  heading, **follow** mode with **heading-up** or north-up, 24-hour **breadcrumb trail** (export as GPX).
+* Status bar: GPS state, coordinates in decimal, DMS, MGRS and UTM (tap to copy), data date, theme.
+* Several map windows at once (e.g. one following the GPS, one on the incident), with arrange, pin on top
+  and session restore.
+
+## Layers
+
+Big toggles, each showing its data source and date: AEDs (with source, last-verified date and an
+out-of-date warning), hospitals (emergency departments marked), schools, fire/police/ambulance stations,
+helipads and airports, pharmacies, fuel, hydrants and water sources, shelters and reception centres, rest
+areas/washrooms/pull-outs, bridges (clearance/weight) / rail crossings / tunnels, gates and seasonal or
+forest-service roads, avalanche/rockfall areas, highway km markers and exits. Optional live layers (only when
+connected; cached, labelled "LIVE DATA – fetched hh:mm"): DriveBC and Alberta 511 events, BC Wildfire
+perimeters, BC evacuation orders/alerts, ECCC weather alerts.
+
+## Search and "What's here?"
+
+* Addresses (with interpolation), places, intersections ("Main St & 5th Ave", "main and 5th"), facility names
+  and categories ("AED", "fire hall"), highway + km ("Hwy 97 km 120"), and coordinates in decimal, DMS, DDM,
+  MGRS or UTM. Typos and abbreviations are tolerated ("Kamloosp", "Ft St John", "Lougheed Hwy").
+* Tap and hold → **What's here?**: nearest address/intersection/road, every coordinate format, radio read-out,
+  and **Copy for dispatch** (the same block as Field Toolkit's Location tool).
+
+## Nearest facilities and directions
+
+* **Nearest-N** from your position or any point: AEDs, hospitals with ED, fire halls…, sorted by **drive time**
+  (one search, not straight-line), with walking time for AEDs. Copy the list for dispatch.
+* **Directions** offline: car, emergency vehicle, large truck/trailer (height/weight/length checked against
+  tagged limits), walking. Alternatives, route warnings (seasonal/FSR roads, gates, gravel, ferries), step
+  list, copy as text, GPX export. **Turn-by-turn** with a large next-turn banner, distance/ETA remaining,
+  optional spoken prompts (Windows voices, offline) and automatic re-routing. Drawn road closures are avoided.
+
+## Incident tools
+
+Incident pin, staging area, rendezvous point, landing zone, cordon, perimeter, road closure, range rings,
+distance/area measurement, hazmat isolation circle with downwind protective-action zone (sector or ERG square
+from distance and wind direction), units and notes. Every drawing is time-stamped, stored locally, copyable for
+dispatch and exportable/importable as KML, GeoJSON or GPX. Map snapshots export to PNG/PDF or print, with
+scale, north arrow, date and source footer.
+
+## Map data and updates
+
+*Data & updates* shows each installed region (version, data date, sources per layer) and:
+
+* **Install** British Columbia, Alberta, or the combined **BC + Alberta** package (routes across the border);
+  sizes are shown first. Data lives in a folder you choose (second drive or SD card is fine).
+* **Update map data**: resumable, checksum-verified downloads → rebuild tiles, routing and search → validate →
+  atomic switch. A failed or interrupted update never touches the map in use; the previous version is kept
+  for one-tap **Roll back**.
+* **Vehicles without internet**: *Export USB package* on a connected PC, *Install from USB* on the vehicle.
+* **AED registries**: import CSV or GeoJSON (merged by location, both sources kept, re-applied after updates).
+
+The same pipeline runs from the command line (`publish/MapBuilder`):
+
+```
+MapBuilder build --region bc --data E:\FieldMapData --pbf british-columbia-latest.osm.pbf --addresses ODA_BC_v1.zip
+MapBuilder update --region ab --data E:\FieldMapData
+MapBuilder export --region bc --data E:\FieldMapData --out F:\
+MapBuilder install --package F:\FieldMap-bc-2026-10-02_1.fmupdate --data E:\FieldMapData
+```
+
+## Field Toolkit hand-over
+
+*Open in map* (Field Toolkit → Location, current position or a saved point) shows the point in Field Map;
+*Send to Field Toolkit* (Field Map) adds a saved point to the toolkit. Both use small JSON files in
+`%LOCALAPPDATA%\FieldSuite\exchange\` (described in the architecture notes).
+
+## Data location
+
+| Item | Path |
+|---|---|
+| Settings, drawings, breadcrumbs, last session | `%LOCALAPPDATA%\FieldMap\` (`settings.json`, `drawings.json`, `breadcrumbs.json`, `session.json`) |
+| Map data (versions, downloads, imports, live cache) | the folder chosen under *Data & updates* (default `%LOCALAPPDATA%\FieldMap\MapData`) |
+| Region sources and live feeds (editable) | `Content\regions.json`, `Content\live-feeds.json` next to `FieldMap.exe` |
+
+## Keyboard
+
+| Key | Action |
+|---|---|
+| Ctrl+T / Ctrl+D / Ctrl+N | Touch Mode / Daylight / Night |
+| Ctrl+F | Search |
+| Ctrl+H | Home (launcher) |
+| + / − / arrows | Zoom / pan the map; Ctrl+drag rotates, right-click = press-and-hold |
+| Esc | Close the side panel |
 
 ---
 

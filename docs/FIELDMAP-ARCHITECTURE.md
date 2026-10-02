@@ -96,6 +96,8 @@ Considered and **not** chosen (licences checked on NuGet / upstream):
   keep routes that differ ≥ 30 %); **re-routing** when the GPS is > 50 m off the route for 3 fixes.
 * Turn-by-turn instructions from bearing changes and name/ref changes ("Turn right onto Hwy 97 N", roundabout
   exits), with distances and ETA; the route can be copied as text.
+* Turn-by-turn tracking (`NavigationTracker`): progress along the route, next maneuver, prompts at 600/200/40 m
+  (2000/800/250/40 m at highway speed), off-route after 3 fixes beyond max(45 m, 1.5 × GPS accuracy).
 * Not in v1: turn restrictions (`type=restriction` relations) and time-dependent traffic. Documented as known gaps.
 
 ### 2.4 Geocoding and search → **SQLite FTS5 (trigram) + R*Tree index per region** (recommended)
@@ -174,14 +176,17 @@ from USB is quicker.
 ```
 src/Shared.Core          net8.0                 Moved out of FieldToolkit.Core: coordinates (decimal/DMS/DDM/UTM/MGRS),
                                                 distance & bearing, NMEA, phonetic read-out, dispatch text block,
-                                                JSON helpers, JsonListStore, CSV, window layout maths, session state
+                                                JSON helpers, JsonListStore, CSV, window layout maths, session state,
+                                                and the Field Toolkit ↔ Field Map exchange folder
 src/Shared.Location      net8.0-windows10.0.19041.0  LocationService (Windows location, serial NMEA, manual) and the
                                                 source dialog, used by Field Toolkit and Field Map
 src/Shared               net8.0-windows         Branding, UiMode (Touch, Daylight, **Night**), glove-friendly Ui helpers
 src/FieldMap.Core        net8.0                 UI-free: OSM PBF/XML reader, tile builder, MVT, MBTiles, layer catalogue,
                                                 search index, geocoder, road graph & router, instructions, drawings &
                                                 KML/GeoJSON/GPX, hazmat geometry, AED import, region store, updater,
-                                                package export/install, live-feed parsers, Field Toolkit exchange
+                                                package export/install, live-feed parsers, navigation tracker
+src/FieldMap.Rendering   net8.0                 Skia renderer (map styles, viewport, tile cache, labels, symbols); also
+                                                used by the Linux tests that render the sample region to PNG
 src/FieldMap             net8.0-windows10.0.19041.0  The app: launcher, map windows, panels, data manager
 tools/MapBuilder         net8.0                 Command line: build a region, build the sample, export a package
 tests/FieldMap.Tests     net8.0                 xUnit (runs on Linux): import/validation, search accuracy, routing,
