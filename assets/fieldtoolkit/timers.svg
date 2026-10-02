@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>Field Timers</title>
+  <rect x="8" y="8" width="240" height="240" rx="44" fill="#2B3A4F"/>
+  <rect x="112" y="34" width="32" height="20" rx="5" fill="#FFFFFF"/>
+  <path d="M182 66 L198 50" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="128" cy="140" r="80" fill="#FFFFFF"/>
+  <circle cx="128" cy="140" r="64" fill="none" stroke="#2B3A4F" stroke-width="6"/>
+  <path d="M128 140 L128 76 A64 64 0 0 1 183.4 108 Z" fill="#F2A900"/>
+  <path d="M128 140 L128 92" stroke="#2B3A4F" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="128" cy="140" r="10" fill="#2B3A4F"/>
+</svg>

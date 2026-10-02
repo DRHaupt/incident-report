@@ -1,0 +1,128 @@
+{
+  "id": "severe-bleeding",
+  "title": "Severe Bleeding & Tourniquet",
+  "category": "Life-threatening",
+  "order": 30,
+  "summary": "Apply firm direct pressure. For life-threatening bleeding from an arm or leg that pressure does not control, apply a tourniquet and note the time.",
+  "keywords": [
+    "bleeding",
+    "bleeding a lot",
+    "heavy bleeding",
+    "blood everywhere",
+    "spurting blood",
+    "cut",
+    "deep cut",
+    "amputation",
+    "stab wound",
+    "wound",
+    "haemorrhage",
+    "hemorrhage",
+    "tourniquet",
+    "gushing blood"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for any severe bleeding",
+    "when": [
+      "Blood is spurting, pooling or soaking through dressings",
+      "A tourniquet has been applied",
+      "Signs of shock: pale, cold, clammy, fast breathing, confused",
+      "Wound to the head, neck, chest, abdomen or groin"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Protect yourself and call for help",
+      "text": "Wear gloves if available. Call {EMERGENCY} or get someone else to call. Get a bleeding control kit or first aid kit."
+    },
+    {
+      "title": "Apply firm direct pressure",
+      "text": "Press firmly directly on the wound with a dressing, clean cloth or your gloved hand. Keep pressing hard and do not lift to check.",
+      "points": [
+        "Use a haemostatic (blood-clotting) dressing if you have one and are trained",
+        "If blood soaks through, add more dressings on top and keep pressing"
+      ]
+    },
+    {
+      "title": "Tourniquet for life-threatening limb bleeding",
+      "text": "If bleeding from an arm or leg is life-threatening and direct pressure does not control it (or you cannot keep pressure on, e.g. several casualties), apply a manufactured tourniquet.",
+      "points": [
+        "Place it 5–7 cm (2–3 in) above the wound, not over a joint",
+        "If the wound location is unclear, place it high on the limb",
+        "Tighten until the bleeding stops",
+        "Note the time it was applied"
+      ],
+      "caution": "Applying a tourniquet properly hurts. Keep tightening until the bleeding stops.",
+      "action": {
+        "type": "timer",
+        "label": "Start tourniquet timer",
+        "timerLabel": "Tourniquet applied",
+        "mode": "stopwatch",
+        "remindEveryMinutes": 30
+      }
+    },
+    {
+      "title": "If bleeding continues",
+      "text": "If one tourniquet does not stop the bleeding, apply a second one above the first. If you have no tourniquet, keep up firm direct pressure.",
+      "caution": "Improvised tourniquets often fail. Use a manufactured tourniquet if available."
+    },
+    {
+      "title": "Wounds to the body, neck or groin",
+      "text": "Tourniquets cannot be used here. Pack deep wounds with gauze (haemostatic gauze if available) if trained, then press firmly and keep pressing."
+    },
+    {
+      "title": "Treat for shock and monitor",
+      "text": "Lay them down, keep them warm and reassure them. Watch breathing and response. Tell the responders the time the tourniquet was applied; write it on the casualty or tourniquet if you can.",
+      "action": {
+        "type": "topic",
+        "label": "Shock",
+        "target": "shock"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Pale, cold, clammy skin",
+    "Fast, weak pulse or fast breathing",
+    "Restless, confused or drowsy",
+    "Bleeding that won't stop with pressure"
+  ],
+  "doNot": [
+    "Do not remove a tourniquet once applied – leave it for medical staff",
+    "Do not loosen a tourniquet to 'check' or to relieve pain",
+    "Do not remove objects embedded in a wound – pad around them",
+    "Do not lift dressings to check whether bleeding has stopped"
+  ],
+  "related": [
+    "shock",
+    "fractures-sprains",
+    "scene-safety"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Bleeding control and tourniquets",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Life-threatening bleeding",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

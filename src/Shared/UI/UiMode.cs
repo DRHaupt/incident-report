@@ -59,11 +59,15 @@ public static class UiMode
 
     public static float Scale => Touch ? TouchScale : 1f;
 
+    /// <summary>Body text size in points in the standard scale. Every other text style is sized relative to it.</summary>
+    public static float BaseFontSize { get; private set; } = 9f;
+
     /// <summary>Raised after the scale or theme changes (and the change has been applied to tracked windows).</summary>
     public static event EventHandler? Changed;
 
-    public static void Initialize(bool touch, bool daylight = false)
+    public static void Initialize(bool touch, bool daylight = false, float baseFontSize = 9f)
     {
+        BaseFontSize = baseFontSize;
         Touch = touch;
         Daylight = daylight;
     }
@@ -93,14 +97,16 @@ public static class UiMode
                 return f;
             var (size, style) = role switch
             {
-                FontRole.Bold => (Touch ? 12f : 9f, FontStyle.Bold),
-                FontRole.Heading => (Touch ? 14f : 11f, FontStyle.Bold),
-                FontRole.Title => (Touch ? 15f : 12f, FontStyle.Bold),
-                FontRole.Signature => (Touch ? 13f : 10f, FontStyle.Italic),
-                FontRole.Large => (Touch ? 17f : 14f, FontStyle.Regular),
-                FontRole.Display => (Touch ? 40f : 32f, FontStyle.Bold),
-                _ => (Touch ? 12f : 9f, FontStyle.Regular)
+                FontRole.Bold => (9f, FontStyle.Bold),
+                FontRole.Heading => (11f, FontStyle.Bold),
+                FontRole.Title => (12f, FontStyle.Bold),
+                FontRole.Signature => (10f, FontStyle.Italic),
+                FontRole.Large => (14f, FontStyle.Regular),
+                FontRole.Display => (32f, FontStyle.Bold),
+                _ => (9f, FontStyle.Regular)
             };
+            // Sizes above are for a 9 pt base font; touch mode adds 3 pt (8 pt for the display digits).
+            size += BaseFontSize - 9f + (Touch ? (role == FontRole.Display ? 8f : 3f) : 0f);
             // Daylight uses the semibold face for regular text: thin strokes wash out in sunlight.
             var family = Daylight && style == FontStyle.Regular ? "Segoe UI Semibold" : "Segoe UI";
             return _fonts[key] = new Font(family, size, style);

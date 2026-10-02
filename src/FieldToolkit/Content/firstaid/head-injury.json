@@ -1,0 +1,120 @@
+{
+  "id": "head-injury",
+  "title": "Head Injury & Concussion",
+  "category": "Injuries",
+  "order": 42,
+  "summary": "Anyone with a head injury needs watching closely for worsening signs. Assume a neck injury too if the mechanism is significant.",
+  "keywords": [
+    "head injury",
+    "hit head",
+    "bang on the head",
+    "concussion",
+    "knocked out",
+    "head wound",
+    "blow to the head",
+    "confused after fall",
+    "vomiting after head injury",
+    "dazed"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for any of these after a head injury",
+    "when": [
+      "Any loss of consciousness, even briefly",
+      "Drowsiness, confusion, or getting worse",
+      "Repeated vomiting",
+      "Seizure",
+      "Severe or worsening headache",
+      "Unequal pupils, weakness, numbness, slurred speech or vision problems",
+      "Clear fluid or blood from the nose or ears",
+      "Taking blood thinners, or a high-speed / high-fall mechanism"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Check DRABC",
+      "text": "If unresponsive and not breathing normally, start CPR.",
+      "action": {
+        "type": "topic",
+        "label": "Scene safety & primary survey",
+        "target": "scene-safety"
+      }
+    },
+    {
+      "title": "Suspect a neck injury",
+      "text": "If the mechanism could have injured the neck (vehicle crash, fall from height, diving), ask them to keep still.",
+      "action": {
+        "type": "topic",
+        "label": "Suspected spinal injury",
+        "target": "spinal-injury"
+      }
+    },
+    {
+      "title": "Control bleeding",
+      "text": "Scalp wounds bleed a lot. Apply firm pressure with a clean dressing – but use gentle pressure around any depressed area of the skull."
+    },
+    {
+      "title": "Monitor closely",
+      "text": "Record the time of the injury and check their level of response, breathing and behaviour regularly.",
+      "action": {
+        "type": "timer",
+        "label": "Start head injury observation timer",
+        "timerLabel": "Head injury",
+        "mode": "stopwatch",
+        "remindEveryMinutes": 10
+      }
+    },
+    {
+      "title": "Concussion",
+      "text": "Anyone with a suspected concussion should stop activity (sport, driving, competition) and not return the same day. They should be assessed by a healthcare professional and should not be left alone."
+    }
+  ],
+  "warningSigns": [
+    "Becoming drowsy, confused or agitated",
+    "Repeated vomiting",
+    "Worsening headache",
+    "Seizure",
+    "Unequal pupils",
+    "Clear fluid from nose or ears"
+  ],
+  "doNot": [
+    "Do not let them return to activity or drive",
+    "Do not leave them alone",
+    "Do not give alcohol or sedating medicines",
+    "Do not apply firm pressure to a depressed skull fracture"
+  ],
+  "related": [
+    "spinal-injury",
+    "scene-safety",
+    "seizures",
+    "unconscious-recovery"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Concussion",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Concussion",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid – Concussion",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

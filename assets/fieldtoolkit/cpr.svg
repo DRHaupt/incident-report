@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>CPR Helper</title>
+  <rect x="8" y="8" width="240" height="240" rx="44" fill="#2B3A4F"/>
+  <path d="M128 214 C116 203 44 156 44 102 C44 72 66 50 94 50 C110 50 122 58 128 70 C134 58 146 50 162 50 C190 50 212 72 212 102 C212 156 140 203 128 214 Z" fill="#D32F2F"/>
+  <path d="M40 128 H92 L106 98 L124 166 L142 112 L152 128 H216" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

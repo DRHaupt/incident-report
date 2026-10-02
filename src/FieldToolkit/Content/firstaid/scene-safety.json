@@ -1,0 +1,164 @@
+{
+  "id": "scene-safety",
+  "title": "Scene Safety & Primary Survey (DRABC / ABCDE)",
+  "category": "Start here",
+  "order": 0,
+  "pinnedFirst": true,
+  "summary": "Make the scene safe, check for a response, get help on the way, then check Airway, Breathing and Circulation. Use this first for every casualty.",
+  "keywords": [
+    "primary survey",
+    "scene safety",
+    "danger",
+    "drabc",
+    "drsabcd",
+    "abcde",
+    "what do i do",
+    "first steps",
+    "accident",
+    "crash",
+    "collapsed",
+    "found someone",
+    "casualty",
+    "multiple casualties",
+    "check casualty"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} as soon as you know someone is seriously hurt or ill",
+    "when": [
+      "The person does not respond to your voice or a gentle shake",
+      "They are not breathing, or breathing is not normal (gasping)",
+      "There is severe bleeding",
+      "There is more than one casualty, or the scene is not safe (traffic, fire, fuel, electricity, water, chemicals)",
+      "You are unsure – it is better to call"
+    ]
+  },
+  "steps": [
+    {
+      "title": "D – Danger",
+      "text": "Stop and look before you approach. Do not become a second casualty.",
+      "points": [
+        "Traffic: park safely, hazard lights on, wear high-visibility clothing, warn oncoming traffic if you can do so safely",
+        "Fire, fuel, smoke, chemicals, electricity, water, unstable vehicles or structures",
+        "Use gloves if available",
+        "If it is not safe, stay back and call {EMERGENCY}"
+      ]
+    },
+    {
+      "title": "R – Response",
+      "text": "Kneel beside them, gently shake their shoulders and ask loudly: \"Are you all right? Open your eyes.\"",
+      "points": [
+        "Responds: leave them as found if safe, find out what is wrong, get help, reassess regularly",
+        "No response: shout for help and go to the next step"
+      ]
+    },
+    {
+      "title": "S – Send for help",
+      "text": "Call {EMERGENCY}, or get someone else to call. Use speakerphone so you keep your hands free and can follow the dispatcher's instructions.",
+      "points": [
+        "Send someone to fetch an AED (defibrillator) if one may be nearby",
+        "Give your exact location – use the Location tool or nearby landmarks"
+      ]
+    },
+    {
+      "title": "A – Airway",
+      "text": "Open the airway: one hand on the forehead, tilt the head back gently, lift the chin with two fingertips.",
+      "points": [
+        "Look in the mouth only if you can see something blocking it – do not do blind finger sweeps"
+      ]
+    },
+    {
+      "title": "B – Breathing",
+      "text": "Look, listen and feel for normal breathing for no more than 10 seconds.",
+      "points": [
+        "Occasional gasps are NOT normal breathing – treat as not breathing",
+        "Not breathing normally: start CPR now",
+        "Breathing normally: check for bleeding and injuries, then place in the recovery position if unresponsive"
+      ],
+      "action": {
+        "type": "topic",
+        "label": "Not breathing – go to Adult CPR",
+        "target": "cpr-adult"
+      }
+    },
+    {
+      "title": "C – Circulation / catastrophic bleeding",
+      "text": "Look quickly from head to toe for severe bleeding and control it with firm direct pressure. In an obvious catastrophic limb bleed, control bleeding first – even before airway and breathing.",
+      "action": {
+        "type": "topic",
+        "label": "Severe bleeding",
+        "target": "severe-bleeding"
+      }
+    },
+    {
+      "title": "Trained responders: ABCDE",
+      "text": "If you are trained, continue a structured assessment, treating problems as you find them:",
+      "points": [
+        "A – Airway: open and clear?",
+        "B – Breathing: rate, effort, colour",
+        "C – Circulation: bleeding, pulse, skin colour and temperature, capillary refill",
+        "D – Disability: level of response (AVPU – Alert, Voice, Pain, Unresponsive), pupils, blood glucose",
+        "E – Exposure: look for other injuries, keep them warm"
+      ]
+    },
+    {
+      "title": "Keep reassessing",
+      "text": "Stay with the casualty. Check breathing and response regularly until help arrives, and note times and changes to hand over to responders.",
+      "action": {
+        "type": "timer",
+        "label": "Start casualty timer",
+        "timerLabel": "Casualty found",
+        "mode": "stopwatch",
+        "remindEveryMinutes": 5
+      }
+    }
+  ],
+  "warningSigns": [
+    "Not breathing normally or gasping",
+    "Unresponsive or getting less responsive",
+    "Severe bleeding",
+    "Pale, cold, clammy skin (possible shock)",
+    "Noisy, gurgling or obstructed breathing"
+  ],
+  "doNot": [
+    "Do not rush in to a dangerous scene",
+    "Do not move a casualty unless they are in immediate danger or you need to (for example to start CPR)",
+    "Do not give anything to eat or drink",
+    "Do not leave an unresponsive casualty alone unless you must to call for help"
+  ],
+  "related": [
+    "cpr-adult",
+    "severe-bleeding",
+    "unconscious-recovery",
+    "spinal-injury",
+    "shock"
+  ],
+  "sources": [
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "Basic Life Support",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "American Heart Association",
+      "title": "2025 American Heart Association Guidelines for Cardiopulmonary Resuscitation and Emergency Cardiovascular Care",
+      "section": "Adult Basic Life Support",
+      "year": 2025,
+      "url": "https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines"
+    },
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Scope of first aid / assessment",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

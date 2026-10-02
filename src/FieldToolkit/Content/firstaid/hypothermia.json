@@ -1,0 +1,104 @@
+{
+  "id": "hypothermia",
+  "title": "Hypothermia",
+  "category": "Environmental",
+  "order": 61,
+  "summary": "Get them out of the cold, replace wet clothing, insulate them (including head and from the ground) and warm them gradually. Handle gently.",
+  "keywords": [
+    "hypothermia",
+    "too cold",
+    "freezing",
+    "shivering",
+    "cold and confused",
+    "cold exposure",
+    "fell in cold water",
+    "exposure",
+    "frostbite",
+    "numb with cold"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for moderate or severe hypothermia",
+    "when": [
+      "Confused, drowsy, slurred speech or clumsy",
+      "Shivering has stopped while still cold",
+      "Unresponsive",
+      "After immersion in cold water"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Get them out of the cold",
+      "text": "Move them into shelter, out of wind and rain. Handle them gently and keep them horizontal if severely cold."
+    },
+    {
+      "title": "Replace wet clothing",
+      "text": "Remove wet clothing (cut it off if needed to avoid excessive movement) and replace with dry clothing."
+    },
+    {
+      "title": "Insulate",
+      "text": "Wrap them in blankets, sleeping bags or a survival bag, covering the head and neck. Insulate them from the ground."
+    },
+    {
+      "title": "Warm gradually",
+      "text": "Use warm (not hot) packs wrapped in cloth on the chest, armpits and neck if available. A warm room or vehicle helps.",
+      "points": [
+        "If fully alert and able to swallow, give warm sweet drinks (not alcohol)"
+      ]
+    },
+    {
+      "title": "Monitor",
+      "text": "Check breathing for up to a minute in a severely cold person – breathing may be very slow. If not breathing, start CPR.",
+      "action": {
+        "type": "topic",
+        "label": "CPR – Adult",
+        "target": "cpr-adult"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Shivering stops while still cold",
+    "Confusion, drowsiness, slurred speech",
+    "Slow, shallow breathing",
+    "Unresponsive"
+  ],
+  "doNot": [
+    "Do not rub or massage limbs",
+    "Do not use hot baths, hot water bottles directly on skin or direct heat",
+    "Do not give alcohol",
+    "Do not let a severely cold person walk or exert themselves"
+  ],
+  "related": [
+    "drowning",
+    "cpr-adult",
+    "shock"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Hypothermia",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "Special circumstances – Accidental hypothermia",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

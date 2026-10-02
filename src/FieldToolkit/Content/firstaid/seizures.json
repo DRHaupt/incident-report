@@ -1,0 +1,119 @@
+{
+  "id": "seizures",
+  "title": "Seizures (Fits)",
+  "category": "Medical",
+  "order": 50,
+  "summary": "Protect them from injury, time the seizure, and do not hold them down or put anything in their mouth. Recovery position once the jerking stops.",
+  "keywords": [
+    "seizure",
+    "fit",
+    "fitting",
+    "convulsion",
+    "convulsing",
+    "epilepsy",
+    "shaking",
+    "jerking",
+    "shaking uncontrollably",
+    "febrile convulsion",
+    "foaming at mouth"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} if any of these apply",
+    "when": [
+      "The seizure lasts more than 5 minutes, or another starts soon after",
+      "It is their first seizure, or you don't know their history",
+      "They are injured, in water, pregnant or diabetic",
+      "They have trouble breathing or don't wake up after the seizure"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Note the time it started",
+      "text": "Timing helps decide when to call for help and helps doctors.",
+      "action": {
+        "type": "timer",
+        "label": "Start seizure timer",
+        "timerLabel": "Seizure started",
+        "mode": "stopwatch",
+        "alertAfterMinutes": 5
+      }
+    },
+    {
+      "title": "Protect them",
+      "text": "Move hard or sharp objects away. Cushion their head with something soft. Loosen tight clothing around the neck. Remove glasses."
+    },
+    {
+      "title": "Let the seizure run its course",
+      "text": "Stay with them and observe. Note what happens so you can tell responders."
+    },
+    {
+      "title": "When the jerking stops",
+      "text": "Check breathing and place them in the recovery position. Stay with them until they are fully awake. Talk calmly – they may be confused.",
+      "action": {
+        "type": "topic",
+        "label": "Recovery position",
+        "target": "unconscious-recovery"
+      }
+    },
+    {
+      "title": "If they are not breathing normally",
+      "text": "Start CPR.",
+      "action": {
+        "type": "topic",
+        "label": "CPR – Adult",
+        "target": "cpr-adult"
+      }
+    },
+    {
+      "title": "Emergency seizure medicine",
+      "text": "If they have a prescribed emergency seizure medicine and a care plan, help them use it as directed by the plan."
+    }
+  ],
+  "warningSigns": [
+    "Seizure longer than 5 minutes",
+    "Repeated seizures without waking",
+    "Breathing difficulty after the seizure",
+    "Injury during the seizure"
+  ],
+  "doNot": [
+    "Do not restrain or hold them down",
+    "Do not put anything in their mouth",
+    "Do not move them unless they are in danger",
+    "Do not give food or drink until they are fully alert"
+  ],
+  "related": [
+    "unconscious-recovery",
+    "head-injury",
+    "diabetic-emergency",
+    "cpr-adult"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Seizures",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Seizures",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

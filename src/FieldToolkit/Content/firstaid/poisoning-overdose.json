@@ -1,0 +1,129 @@
+{
+  "id": "poisoning-overdose",
+  "title": "Poisoning, Chemicals & Overdose",
+  "category": "Medical",
+  "order": 64,
+  "summary": "Get them away from the poison, call for advice, and keep any container or label. For suspected opioid overdose, give naloxone if available.",
+  "keywords": [
+    "poisoning",
+    "poisoned",
+    "overdose",
+    "od",
+    "took too many pills",
+    "swallowed",
+    "drank chemical",
+    "bleach",
+    "fumes",
+    "gas",
+    "carbon monoxide",
+    "opioid",
+    "heroin",
+    "fentanyl",
+    "naloxone",
+    "narcan",
+    "chemical in eye",
+    "chemical on skin",
+    "hazmat exposure",
+    "drugs"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} if they are unresponsive, drowsy, fitting or struggling to breathe",
+    "when": [
+      "Unresponsive, very drowsy, or not breathing normally",
+      "Seizures or chest pain",
+      "Swallowed a corrosive, fuel or button battery",
+      "Gas, smoke or fumes affecting several people",
+      "Otherwise call {POISON} for advice"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Protect yourself",
+      "text": "Do not enter a space with gas, smoke or fumes. Avoid contact with chemicals – wear gloves. Use the Hazmat lookup for placarded loads."
+    },
+    {
+      "title": "Remove from the poison",
+      "text": "Move them to fresh air if it is safe. Remove contaminated clothing."
+    },
+    {
+      "title": "Skin or eye contact",
+      "text": "Flush with large amounts of running water. For eyes, rinse with lukewarm water for at least 15–20 minutes, holding the eye open.",
+      "action": {
+        "type": "timer",
+        "label": "Start 20-minute rinse timer",
+        "timerLabel": "Chemical rinse",
+        "mode": "countdown",
+        "minutes": 20
+      }
+    },
+    {
+      "title": "Suspected opioid overdose",
+      "text": "If they are unresponsive with slow or no breathing (pinpoint pupils, drug use), call {EMERGENCY}, give naloxone if available as directed on the device, and start CPR if not breathing normally. Naloxone may need repeating.",
+      "action": {
+        "type": "topic",
+        "label": "CPR – Adult",
+        "target": "cpr-adult"
+      }
+    },
+    {
+      "title": "Get advice",
+      "text": "Call {POISON} or {EMERGENCY}. Keep the container, label, plant or tablets to show responders. Note what, how much and when."
+    },
+    {
+      "title": "Monitor",
+      "text": "Recovery position if unresponsive and breathing.",
+      "action": {
+        "type": "topic",
+        "label": "Recovery position",
+        "target": "unconscious-recovery"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Drowsiness or unresponsiveness",
+    "Slow or noisy breathing",
+    "Burns around the mouth",
+    "Seizures"
+  ],
+  "doNot": [
+    "Do not make them vomit",
+    "Do not give anything to eat or drink unless told to by poison control",
+    "Do not give mouth-to-mouth if the poison is on their lips – use a barrier",
+    "Do not enter a fume-filled area"
+  ],
+  "related": [
+    "unconscious-recovery",
+    "cpr-adult",
+    "burns",
+    "seizures"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Poisoning / opioid overdose",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "American Heart Association",
+      "title": "2025 American Heart Association Guidelines for Cardiopulmonary Resuscitation and Emergency Cardiovascular Care",
+      "section": "Opioid-associated emergencies",
+      "year": 2025,
+      "url": "https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Poisoning",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

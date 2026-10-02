@@ -1,0 +1,110 @@
+{
+  "id": "shock",
+  "title": "Shock",
+  "category": "Life-threatening",
+  "order": 31,
+  "summary": "Shock is a life-threatening failure of the circulation, often from blood loss, severe burns, infection or a severe allergic reaction. Treat the cause, lay them down and keep them warm.",
+  "keywords": [
+    "shock",
+    "pale and clammy",
+    "cold sweat",
+    "faint",
+    "fainting",
+    "feeling faint",
+    "weak pulse",
+    "grey skin",
+    "dizzy after injury",
+    "blood loss"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} – shock is a medical emergency",
+    "when": [
+      "Any signs of shock after injury, bleeding, burns, allergy or illness",
+      "They become confused, drowsy or unresponsive"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Treat the cause",
+      "text": "Control any bleeding first.",
+      "action": {
+        "type": "topic",
+        "label": "Severe bleeding",
+        "target": "severe-bleeding"
+      }
+    },
+    {
+      "title": "Call {EMERGENCY}",
+      "text": ""
+    },
+    {
+      "title": "Lay them down",
+      "text": "Help them lie flat on their back. If there is no suspected injury to the legs, hips or spine, raising the legs may be considered.",
+      "points": [
+        "Someone with breathing difficulty may be more comfortable sitting up"
+      ]
+    },
+    {
+      "title": "Keep them warm",
+      "text": "Cover them with a blanket or coat, and insulate them from the cold ground. Loosen tight clothing."
+    },
+    {
+      "title": "Reassure and monitor",
+      "text": "Stay with them. Check breathing and response regularly and be ready to start CPR.",
+      "action": {
+        "type": "timer",
+        "label": "Start casualty timer",
+        "timerLabel": "Shock – first observed",
+        "mode": "stopwatch",
+        "remindEveryMinutes": 5
+      }
+    }
+  ],
+  "warningSigns": [
+    "Pale or grey, cold, clammy skin",
+    "Fast, shallow breathing",
+    "Fast, weak pulse",
+    "Thirst, nausea",
+    "Restlessness, confusion, drowsiness"
+  ],
+  "doNot": [
+    "Do not give food or drink",
+    "Do not leave them alone",
+    "Do not let them walk around"
+  ],
+  "related": [
+    "severe-bleeding",
+    "anaphylaxis",
+    "burns",
+    "cpr-adult"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Shock",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Shock",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

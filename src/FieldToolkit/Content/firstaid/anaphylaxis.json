@@ -1,0 +1,113 @@
+{
+  "id": "anaphylaxis",
+  "title": "Anaphylaxis (Severe Allergic Reaction)",
+  "category": "Medical",
+  "order": 53,
+  "summary": "A severe allergic reaction can kill within minutes. Use an adrenaline (epinephrine) auto-injector immediately and call for help.",
+  "keywords": [
+    "allergic reaction",
+    "anaphylaxis",
+    "swollen face",
+    "swollen tongue",
+    "swollen lips",
+    "throat closing",
+    "hives",
+    "rash and breathing",
+    "bee sting allergy",
+    "nut allergy",
+    "epipen",
+    "adrenaline",
+    "epinephrine",
+    "wheezing after eating"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for any suspected anaphylaxis",
+    "when": [
+      "Breathing difficulty, wheeze, hoarse voice or throat tightness",
+      "Swelling of the tongue, lips or throat",
+      "Pale, floppy, dizzy, faint or collapse",
+      "After any use of an adrenaline auto-injector"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Use the adrenaline auto-injector now",
+      "text": "If they have one, help them use it, or give it yourself, into the outer thigh (through clothing if needed). Follow the instructions on the device.",
+      "action": {
+        "type": "timer",
+        "label": "Start adrenaline timer",
+        "timerLabel": "Adrenaline dose 1",
+        "mode": "stopwatch",
+        "alertAfterMinutes": 5
+      }
+    },
+    {
+      "title": "Call {EMERGENCY}",
+      "text": "Say \"anaphylaxis\"."
+    },
+    {
+      "title": "Position",
+      "text": "Lay them flat. If breathing is difficult, let them sit up. If they are pregnant, lay them on their left side. Do not let them stand or walk, even if they feel better.",
+      "caution": "Sudden standing up can cause collapse."
+    },
+    {
+      "title": "Second dose",
+      "text": "If symptoms do not improve after 5 minutes and another auto-injector is available, give a second dose."
+    },
+    {
+      "title": "Monitor and be ready for CPR",
+      "text": "Stay with them. If they become unresponsive and are not breathing normally, start CPR.",
+      "action": {
+        "type": "topic",
+        "label": "CPR – Adult",
+        "target": "cpr-adult"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Noisy breathing, wheeze, persistent cough",
+    "Swelling of tongue or throat",
+    "Difficulty talking or hoarse voice",
+    "Pale, floppy, collapse"
+  ],
+  "doNot": [
+    "Do not wait to see whether symptoms get worse before giving adrenaline",
+    "Do not let them stand or walk",
+    "Do not rely on antihistamines to treat anaphylaxis"
+  ],
+  "related": [
+    "asthma",
+    "bites-stings",
+    "shock",
+    "cpr-adult"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Anaphylaxis",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Anaphylaxis",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid – Second dose of epinephrine for anaphylaxis",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

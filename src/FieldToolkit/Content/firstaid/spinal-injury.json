@@ -1,0 +1,111 @@
+{
+  "id": "spinal-injury",
+  "title": "Suspected Spinal Injury",
+  "category": "Injuries",
+  "order": 43,
+  "summary": "If a neck or back injury is possible, ask the person to keep still and support their head in line. Only move them if they are in danger or you need to open the airway.",
+  "keywords": [
+    "neck injury",
+    "back injury",
+    "spinal injury",
+    "spine",
+    "broken neck",
+    "broken back",
+    "cant feel legs",
+    "tingling in arms",
+    "fall from height",
+    "rollover",
+    "car crash",
+    "diving accident",
+    "whiplash"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} if a spinal injury is possible",
+    "when": [
+      "Neck or back pain after a fall, crash, diving or high-energy impact",
+      "Numbness, tingling or weakness in arms or legs",
+      "Head injury with reduced response",
+      "Unable to assess because of alcohol, drugs or distracting injuries"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Make the scene safe",
+      "text": "If the area is safe, do not move them. Move them only if they are in immediate danger."
+    },
+    {
+      "title": "Ask them to keep still",
+      "text": "If they are responsive, tell them not to move their head or neck. Encouraging the person to stay still is often the best support."
+    },
+    {
+      "title": "Support the head",
+      "text": "If you are trained, kneel behind or beside them and hold their head steady in the position found, in line with the body. Do not pull on the head."
+    },
+    {
+      "title": "Check breathing",
+      "text": "If they are unresponsive, check breathing. Opening the airway takes priority over a possible neck injury. If they are breathing but you must leave them or they may vomit, roll them into the recovery position keeping the head, neck and body in line (ideally with helpers).",
+      "action": {
+        "type": "topic",
+        "label": "Recovery position",
+        "target": "unconscious-recovery"
+      }
+    },
+    {
+      "title": "Keep warm and monitor",
+      "text": "Cover them, reassure them and keep checking breathing until help arrives.",
+      "action": {
+        "type": "timer",
+        "label": "Start casualty timer",
+        "timerLabel": "Spinal injury – found",
+        "mode": "stopwatch",
+        "remindEveryMinutes": 5
+      }
+    }
+  ],
+  "warningSigns": [
+    "Loss of feeling or movement in limbs",
+    "Breathing difficulty",
+    "Loss of bladder or bowel control",
+    "Reduced level of response"
+  ],
+  "doNot": [
+    "Do not routinely apply a cervical collar as a first aider",
+    "Do not move them unless necessary",
+    "Do not let them sit up or walk around",
+    "Do not remove a crash or motorcycle helmet unless you need to manage the airway or they are not breathing"
+  ],
+  "related": [
+    "head-injury",
+    "scene-safety",
+    "unconscious-recovery"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Spinal motion restriction",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Spinal motion restriction",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid – Cervical spinal motion restriction",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

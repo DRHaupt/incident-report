@@ -1,0 +1,107 @@
+{
+  "id": "drowning",
+  "title": "Drowning",
+  "category": "Environmental",
+  "order": 62,
+  "summary": "Rescue without entering the water if you can. For a drowned person who is not breathing, breaths are especially important: give rescue breaths and start CPR.",
+  "keywords": [
+    "drowning",
+    "drowned",
+    "pulled from water",
+    "nearly drowned",
+    "in the water",
+    "underwater",
+    "river",
+    "flood water",
+    "swimming accident"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for every drowning incident",
+    "when": [
+      "Anyone pulled from the water who is unresponsive, not breathing normally, coughing persistently or confused",
+      "Anyone who needed rescue breaths or CPR, even if they recover"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Stay safe – reach, throw, don't go",
+      "text": "Do not enter the water unless trained and equipped. Reach with a pole or branch, or throw a buoyant object or rope. Floodwater and moving water are extremely dangerous."
+    },
+    {
+      "title": "Call {EMERGENCY}",
+      "text": ""
+    },
+    {
+      "title": "Check breathing",
+      "text": "Once on dry land, check response and open the airway and check for normal breathing."
+    },
+    {
+      "title": "Give rescue breaths",
+      "text": "If not breathing normally, give 5 initial rescue breaths if trained (ERC), then start CPR at 30 compressions to 2 breaths.",
+      "caution": "Drowning is a lack of oxygen – rescue breaths matter. If you cannot give breaths, do compressions only."
+    },
+    {
+      "title": "Start CPR and use an AED",
+      "text": "Dry the chest before attaching AED pads.",
+      "action": {
+        "type": "cpr",
+        "label": "Open CPR helper (metronome)",
+        "target": "adult"
+      }
+    },
+    {
+      "title": "If breathing",
+      "text": "Place in the recovery position, keep warm, and watch closely – people who have nearly drowned can deteriorate later.",
+      "action": {
+        "type": "topic",
+        "label": "Hypothermia",
+        "target": "hypothermia"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Persistent cough, frothy sputum",
+    "Confusion or drowsiness",
+    "Breathing difficulty – even hours later"
+  ],
+  "doNot": [
+    "Do not enter the water yourself unless trained",
+    "Do not try to drain water from the lungs or use abdominal thrusts",
+    "Do not let them go home without medical assessment"
+  ],
+  "related": [
+    "cpr-adult",
+    "cpr-child",
+    "hypothermia",
+    "spinal-injury"
+  ],
+  "sources": [
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "Special circumstances – Drowning",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "American Heart Association",
+      "title": "2025 American Heart Association Guidelines for Cardiopulmonary Resuscitation and Emergency Cardiovascular Care",
+      "section": "Resuscitation in special circumstances – Drowning",
+      "year": 2025,
+      "url": "https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "Basic Life Support – Drowning",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

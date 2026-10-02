@@ -1,0 +1,106 @@
+{
+  "id": "heart-attack",
+  "title": "Heart Attack (Chest Pain)",
+  "category": "Medical",
+  "order": 52,
+  "summary": "Call immediately for chest pain that could be a heart attack. Keep them resting and, if appropriate, give aspirin to chew. Be ready for CPR.",
+  "keywords": [
+    "chest pain",
+    "heart attack",
+    "crushing chest",
+    "tight chest",
+    "pain in arm",
+    "jaw pain",
+    "angina",
+    "cardiac",
+    "pressure in chest",
+    "short of breath and sweating"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} now for possible heart attack",
+    "when": [
+      "Chest pain, pressure or tightness lasting more than a few minutes or coming and going",
+      "Pain spreading to the arm, neck, jaw, back or stomach",
+      "Chest discomfort with breathlessness, sweating, nausea or light-headedness",
+      "Women, older adults and people with diabetes may have less typical symptoms – call if in doubt"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Call {EMERGENCY}",
+      "text": "Do not let them drive themselves. Send for an AED."
+    },
+    {
+      "title": "Rest",
+      "text": "Help them into a comfortable position – often sitting, leaning against a support with knees bent. Loosen tight clothing and reassure them."
+    },
+    {
+      "title": "Aspirin",
+      "text": "If they are an adult, conscious, able to swallow and not allergic to aspirin, and have not been told not to take it, give aspirin to chew.",
+      "points": [
+        "AHA: 1 adult (325 mg) or 2–4 low-dose (81 mg) tablets",
+        "ERC: 150–300 mg chewable",
+        "Follow dispatcher advice"
+      ],
+      "caution": "Do not give aspirin for chest pain caused by injury, or if they are allergic, have a bleeding disorder or have been told not to take it."
+    },
+    {
+      "title": "Their own medication",
+      "text": "If they have prescribed angina medication (e.g. nitroglycerin/GTN spray), help them take it as directed."
+    },
+    {
+      "title": "Monitor",
+      "text": "Stay with them and watch breathing. If they become unresponsive and stop breathing normally, start CPR and use an AED.",
+      "action": {
+        "type": "topic",
+        "label": "CPR – Adult",
+        "target": "cpr-adult"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Becoming unresponsive",
+    "Breathing stops or becomes abnormal",
+    "Pain getting worse",
+    "Pale, grey, sweaty skin"
+  ],
+  "doNot": [
+    "Do not let them walk around or exert themselves",
+    "Do not give aspirin to children or teenagers, or for chest pain after an injury",
+    "Do not delay calling to see if the pain passes"
+  ],
+  "related": [
+    "cpr-adult",
+    "shock",
+    "stroke"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Chest pain / aspirin",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Chest pain",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid – Aspirin for chest pain",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

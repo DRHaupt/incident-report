@@ -1,0 +1,109 @@
+{
+  "id": "cpr-infant",
+  "title": "CPR – Infant (under 1 year)",
+  "category": "Life-threatening",
+  "order": 12,
+  "summary": "For a baby under 1 year old who is unresponsive and not breathing normally. Cover the mouth and nose for breaths; compress about 4 cm.",
+  "keywords": [
+    "baby not breathing",
+    "infant not breathing",
+    "newborn not breathing",
+    "baby blue",
+    "baby floppy",
+    "baby unresponsive",
+    "infant cpr",
+    "baby cpr"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} now",
+    "when": [
+      "Baby unresponsive and not breathing normally – shout for help and call, phone on speaker",
+      "If alone with no phone, give about 2 minutes of CPR then call, carrying the baby with you if you can"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Check response",
+      "text": "Tap the sole of the foot and call out. Do not shake the baby. Shout for help."
+    },
+    {
+      "title": "Open the airway and check breathing",
+      "text": "Lay the baby on its back on a firm surface. Keep the head in a neutral position (do not over-tilt) and lift the chin. Check for normal breathing for no more than 10 seconds.",
+      "caution": "The European Resuscitation Council teaches 5 initial rescue breaths for infants before compressions. Follow the method you were trained in."
+    },
+    {
+      "title": "Call {EMERGENCY}",
+      "text": "Phone on speaker."
+    },
+    {
+      "title": "Start chest compressions",
+      "text": "Compress the lower half of the breastbone, just below the nipple line.",
+      "points": [
+        "Preferred: two thumbs side by side on the breastbone with your hands encircling the chest",
+        "Alternatively, use the heel of one hand if you cannot encircle the chest",
+        "Push down one-third of the chest depth – about 4 cm (1.5 in)",
+        "Rate 100–120 per minute; let the chest fully recoil"
+      ],
+      "action": {
+        "type": "cpr",
+        "label": "Open CPR helper (metronome)",
+        "target": "infant"
+      }
+    },
+    {
+      "title": "Give rescue breaths",
+      "text": "If trained, after 30 compressions give 2 gentle breaths: seal your mouth over the baby's mouth AND nose, and breathe just enough to make the chest rise.",
+      "points": [
+        "Two trained rescuers use 15 compressions to 2 breaths"
+      ]
+    },
+    {
+      "title": "Continue",
+      "text": "Keep going until help arrives or the baby starts breathing normally. Hold a breathing baby on its side with the head slightly lower, and keep checking breathing."
+    }
+  ],
+  "warningSigns": [
+    "Blue, grey or very pale colour",
+    "Floppy and unresponsive",
+    "Pauses in breathing"
+  ],
+  "doNot": [
+    "Do not shake the baby",
+    "Do not over-extend the neck",
+    "Do not blow forcefully – use small puffs"
+  ],
+  "related": [
+    "cpr-child",
+    "choking-infant",
+    "childbirth"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association",
+      "title": "2025 American Heart Association Guidelines for Cardiopulmonary Resuscitation and Emergency Cardiovascular Care",
+      "section": "Pediatric Basic Life Support",
+      "year": 2025,
+      "url": "https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "Paediatric Life Support",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "Pediatric Life Support",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

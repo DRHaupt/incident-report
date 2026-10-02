@@ -1,0 +1,118 @@
+{
+  "id": "unconscious-recovery",
+  "title": "Unconscious Casualty & Recovery Position",
+  "category": "Life-threatening",
+  "order": 13,
+  "summary": "Someone unresponsive but breathing normally should be rolled onto their side to keep the airway open. Keep checking their breathing.",
+  "keywords": [
+    "unconscious",
+    "unresponsive",
+    "passed out",
+    "fainted",
+    "wont wake up",
+    "recovery position",
+    "breathing but not responding",
+    "knocked out",
+    "collapsed but breathing",
+    "drunk unconscious"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for anyone who is unresponsive",
+    "when": [
+      "Unresponsive, even if breathing",
+      "Breathing becomes abnormal or stops – start CPR"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Check breathing",
+      "text": "Open the airway and check for normal breathing (up to 10 seconds). If not breathing normally, start CPR.",
+      "action": {
+        "type": "topic",
+        "label": "CPR – Adult",
+        "target": "cpr-adult"
+      }
+    },
+    {
+      "title": "Call {EMERGENCY}",
+      "text": ""
+    },
+    {
+      "title": "Roll them onto their side",
+      "text": "Kneel beside them.",
+      "points": [
+        "Place the arm nearest you at a right angle to the body",
+        "Bring the far arm across the chest and hold the back of their hand against the cheek nearest you",
+        "Bend the far knee up",
+        "Pull on the far knee to roll them towards you onto their side",
+        "Tilt the head back slightly to keep the airway open; adjust the hand under the cheek",
+        "Adjust the upper leg so hip and knee are at right angles"
+      ]
+    },
+    {
+      "title": "Monitor",
+      "text": "Check breathing regularly. If they stop breathing normally, roll them onto their back and start CPR.",
+      "action": {
+        "type": "timer",
+        "label": "Start casualty timer",
+        "timerLabel": "Unresponsive casualty",
+        "mode": "stopwatch",
+        "remindEveryMinutes": 2
+      }
+    },
+    {
+      "title": "If a spinal injury is suspected",
+      "text": "Only roll them if you need to keep the airway clear (vomiting, or you must leave them). Keep the head, neck and body in line, with helpers if possible.",
+      "action": {
+        "type": "topic",
+        "label": "Suspected spinal injury",
+        "target": "spinal-injury"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Breathing becomes noisy, irregular or stops",
+    "Vomiting",
+    "Becoming cold"
+  ],
+  "doNot": [
+    "Do not leave them on their back if breathing and unresponsive",
+    "Do not give anything by mouth",
+    "Do not leave them alone"
+  ],
+  "related": [
+    "cpr-adult",
+    "scene-safety",
+    "seizures",
+    "diabetic-emergency"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Recovery position",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Recovery position",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid – Recovery position",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

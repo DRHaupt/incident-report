@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>Field Toolkit</title>
+  <rect x="8" y="8" width="240" height="240" rx="44" fill="#2B3A4F"/>
+  <path d="M128 36 L206 62 V118 C206 168 174 204 128 224 C82 204 50 168 50 118 V62 Z" fill="#FFFFFF"/>
+  <rect x="82" y="80" width="40" height="40" rx="8" fill="#2B3A4F"/>
+  <rect x="134" y="80" width="40" height="40" rx="8" fill="#F2A900"/>
+  <rect x="82" y="132" width="40" height="40" rx="8" fill="#2B3A4F"/>
+  
+  <circle cx="186" cy="186" r="46" fill="#F2A900" stroke="#2B3A4F" stroke-width="10"/>
+  <path d="M186 162 V210 M162 186 H210" fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round"/>
+</svg>

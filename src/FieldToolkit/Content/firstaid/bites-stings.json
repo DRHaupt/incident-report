@@ -1,0 +1,118 @@
+{
+  "id": "bites-stings",
+  "title": "Bites & Stings",
+  "category": "Environmental",
+  "order": 65,
+  "summary": "Watch every bite or sting for a severe allergic reaction. Snakebite: keep still and get help. Animal bites: wash well and get medical advice.",
+  "keywords": [
+    "bite",
+    "bitten",
+    "sting",
+    "stung",
+    "bee sting",
+    "wasp sting",
+    "snake bite",
+    "snakebite",
+    "dog bite",
+    "animal bite",
+    "human bite",
+    "tick",
+    "spider bite",
+    "insect bite"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for these bites and stings",
+    "when": [
+      "Signs of anaphylaxis: breathing difficulty, swelling of face or throat, collapse",
+      "Snakebite",
+      "Stings inside the mouth or throat, or many stings",
+      "Serious animal bites with heavy bleeding"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Watch for anaphylaxis",
+      "text": "If they have breathing difficulty, swelling of face or throat, or feel faint, treat as anaphylaxis now.",
+      "action": {
+        "type": "topic",
+        "label": "Anaphylaxis",
+        "target": "anaphylaxis"
+      }
+    },
+    {
+      "title": "Bee and wasp stings",
+      "text": "Remove a bee sting quickly by any means (scrape or pull). Apply a cold pack. Watch for allergic reactions for at least 30 minutes."
+    },
+    {
+      "title": "Snakebite",
+      "text": "Call {EMERGENCY}. Keep them calm and still, with the bitten limb still. Remove rings and tight items from the limb. Note the time and, if safe, the snake's appearance – do not try to catch it.",
+      "points": [
+        "Pressure immobilisation bandaging is only recommended for certain snakes and regions – follow local protocol"
+      ],
+      "action": {
+        "type": "timer",
+        "label": "Start snakebite timer",
+        "timerLabel": "Snakebite",
+        "mode": "stopwatch",
+        "remindEveryMinutes": 15
+      }
+    },
+    {
+      "title": "Animal and human bites",
+      "text": "Control bleeding, then wash the wound well with soap and plenty of running water. Cover it. Seek medical advice – infection, tetanus and rabies risk need assessing.",
+      "action": {
+        "type": "topic",
+        "label": "Severe bleeding",
+        "target": "severe-bleeding"
+      }
+    },
+    {
+      "title": "Ticks",
+      "text": "Grasp the tick close to the skin with fine-tipped tweezers and pull steadily straight out. Clean the area. Note the date and watch for rash or fever."
+    }
+  ],
+  "warningSigns": [
+    "Breathing difficulty or swelling of face/throat",
+    "Spreading redness, swelling or fever (infection)",
+    "Rash after a tick bite"
+  ],
+  "doNot": [
+    "Snakebite: do not cut, suck, apply ice, apply a tourniquet, or try to catch the snake",
+    "Do not squeeze a tick's body or burn it",
+    "Do not ignore animal bites – rabies risk needs assessing"
+  ],
+  "related": [
+    "anaphylaxis",
+    "severe-bleeding",
+    "shock"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Snakebites / insect stings",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

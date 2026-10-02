@@ -1,0 +1,107 @@
+{
+  "id": "diabetic-emergency",
+  "title": "Diabetic Emergency (Low Blood Sugar)",
+  "category": "Medical",
+  "order": 55,
+  "summary": "Low blood sugar can cause confusion, sweating and odd behaviour. If they can sit up and swallow safely, give sugar. If not, call for help.",
+  "keywords": [
+    "diabetic",
+    "diabetes",
+    "low blood sugar",
+    "hypo",
+    "hypoglycaemia",
+    "hypoglycemia",
+    "sugar",
+    "insulin",
+    "shaky and sweaty",
+    "confused diabetic",
+    "acting drunk"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} if they cannot swallow safely or do not improve",
+    "when": [
+      "Unresponsive, drowsy or unable to swallow safely",
+      "Seizure",
+      "Not improving 10–15 minutes after taking sugar",
+      "You are unsure whether it is diabetes-related"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Recognise low blood sugar",
+      "text": "Signs include sweating, shaking, pale skin, hunger, confusion, irritability or behaviour that looks like drunkenness. Ask if they have diabetes; look for a medical ID."
+    },
+    {
+      "title": "Give sugar if they can swallow",
+      "text": "If they are responsive and able to sit up and swallow, give glucose tablets (15–20 g), or alternatives such as fruit juice, regular (non-diet) soft drink, or sweets.",
+      "action": {
+        "type": "timer",
+        "label": "Start 15-minute recheck timer",
+        "timerLabel": "Recheck blood sugar",
+        "mode": "countdown",
+        "minutes": 15
+      }
+    },
+    {
+      "title": "Recheck",
+      "text": "If they are not improving after 10–15 minutes, give more sugar and call {EMERGENCY}. If they have a glucose meter, help them check their level."
+    },
+    {
+      "title": "Once improving",
+      "text": "Give a snack with longer-acting carbohydrate (sandwich, biscuits) and stay with them until fully recovered."
+    },
+    {
+      "title": "If they become unresponsive",
+      "text": "Do not give anything by mouth. Place them in the recovery position if breathing and call {EMERGENCY}. Start CPR if not breathing normally.",
+      "action": {
+        "type": "topic",
+        "label": "Recovery position",
+        "target": "unconscious-recovery"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Becoming drowsy or unresponsive",
+    "Seizure",
+    "Unable to swallow"
+  ],
+  "doNot": [
+    "Do not give food or drink to someone who cannot swallow safely or is drowsy",
+    "Do not give insulin",
+    "Do not leave them alone until fully recovered"
+  ],
+  "related": [
+    "unconscious-recovery",
+    "seizures",
+    "stroke"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Hypoglycemia",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Hypoglycaemia",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid – Hypoglycemia treatment",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>First Aid Guide</title>
+  <rect x="8" y="8" width="240" height="240" rx="44" fill="#1E7B3C"/>
+  <path d="M102 44 H154 V102 H212 V154 H154 V212 H102 V154 H44 V102 H102 Z" fill="#FFFFFF"/>
+</svg>

@@ -1,0 +1,127 @@
+{
+  "id": "fractures-sprains",
+  "title": "Fractures, Sprains & Dislocations",
+  "category": "Injuries",
+  "order": 41,
+  "summary": "Support the injured part in the position found, stop any bleeding, and apply a wrapped cold pack. Do not try to straighten it.",
+  "keywords": [
+    "broken bone",
+    "fracture",
+    "broken arm",
+    "broken leg",
+    "sprain",
+    "sprained ankle",
+    "twisted ankle",
+    "dislocation",
+    "dislocated shoulder",
+    "deformed limb",
+    "bone sticking out",
+    "swollen joint",
+    "cant walk"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for serious limb injuries",
+    "when": [
+      "Bone visible or wound over the fracture (open fracture)",
+      "Limb is deformed, cold, pale or blue, or has no feeling beyond the injury",
+      "Suspected fracture of the thigh, hip or pelvis, or several injuries",
+      "Suspected head, neck or back injury",
+      "Signs of shock"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Check for danger and other injuries",
+      "text": "Do not move them unless necessary. Check for head, neck or back injuries and for severe bleeding first.",
+      "action": {
+        "type": "topic",
+        "label": "Suspected spinal injury",
+        "target": "spinal-injury"
+      }
+    },
+    {
+      "title": "Control bleeding from open fractures",
+      "text": "Cover the wound with a clean dressing. Apply pressure around – not on – any protruding bone.",
+      "action": {
+        "type": "topic",
+        "label": "Severe bleeding",
+        "target": "severe-bleeding"
+      }
+    },
+    {
+      "title": "Support the injury",
+      "text": "Keep the limb still in the position you found it. Support it with padding, cushions or the person's own hands. Splint only if you are trained and need to move them."
+    },
+    {
+      "title": "Cold pack for sprains and closed injuries",
+      "text": "Apply a cold pack or ice wrapped in a cloth for up to 20 minutes at a time.",
+      "action": {
+        "type": "timer",
+        "label": "Start 20-minute cold pack timer",
+        "timerLabel": "Cold pack",
+        "mode": "countdown",
+        "minutes": 20
+      }
+    },
+    {
+      "title": "Check circulation",
+      "text": "Check beyond the injury for colour, warmth and feeling. Loosen bandages if fingers or toes become cold, pale, blue or numb."
+    },
+    {
+      "title": "Get medical help",
+      "text": "Arrange transport to hospital or call {EMERGENCY}. Watch for signs of shock.",
+      "action": {
+        "type": "topic",
+        "label": "Shock",
+        "target": "shock"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Cold, pale or blue skin beyond the injury",
+    "Numbness or tingling",
+    "Increasing pain or swelling",
+    "Signs of shock"
+  ],
+  "doNot": [
+    "Do not try to straighten a deformed limb or push bone back in",
+    "Do not put ice directly on the skin",
+    "Do not let them eat or drink if they may need surgery",
+    "Do not move them unnecessarily"
+  ],
+  "related": [
+    "severe-bleeding",
+    "spinal-injury",
+    "head-injury",
+    "shock"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Musculoskeletal injuries",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Fractures",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

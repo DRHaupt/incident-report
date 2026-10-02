@@ -1,0 +1,125 @@
+{
+  "id": "burns",
+  "title": "Burns & Scalds",
+  "category": "Injuries",
+  "order": 40,
+  "summary": "Cool the burn with cool running water as soon as possible, remove jewellery, then cover loosely with cling film or a clean non-fluffy dressing.",
+  "keywords": [
+    "burn",
+    "burnt",
+    "burned",
+    "scald",
+    "scalded",
+    "fire",
+    "flames",
+    "hot water",
+    "chemical burn",
+    "blister",
+    "sunburn"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for serious burns",
+    "when": [
+      "Large burns, or burns to the face, hands, feet, genitals or across joints",
+      "Deep burns (white, leathery or charred) or burns that go all the way round a limb",
+      "Chemical or electrical burns",
+      "Breathing difficulty, or burns from smoke/fire in an enclosed space (airway burns)",
+      "Burns in babies, young children, older adults or anyone who seems unwell"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Stop the burning",
+      "text": "Get them away from the heat source. Stop, drop and roll if clothing is on fire. Make sure you are safe."
+    },
+    {
+      "title": "Cool the burn",
+      "text": "Cool with cool or lukewarm running water as soon as possible.",
+      "points": [
+        "European Resuscitation Council: cool for at least 20 minutes",
+        "AHA / Red Cross: cool for at least 10 minutes",
+        "Keep the rest of the person warm to avoid hypothermia, especially children"
+      ],
+      "action": {
+        "type": "timer",
+        "label": "Start 20-minute cooling timer",
+        "timerLabel": "Burn cooling",
+        "mode": "countdown",
+        "minutes": 20
+      }
+    },
+    {
+      "title": "Remove jewellery and clothing near the burn",
+      "text": "Gently remove rings, watches and clothing near the burn before swelling starts, unless they are stuck to the skin."
+    },
+    {
+      "title": "Chemical burns",
+      "text": "Brush off dry chemicals (wearing gloves), then flush with large amounts of running water. Remove contaminated clothing. Note the chemical name for responders.",
+      "action": {
+        "type": "topic",
+        "label": "Poisoning & chemical exposure",
+        "target": "poisoning-overdose"
+      }
+    },
+    {
+      "title": "Cover the burn",
+      "text": "After cooling, cover loosely with cling film (laid on, not wrapped tightly) or a clean, non-fluffy dressing."
+    },
+    {
+      "title": "Monitor",
+      "text": "Watch for signs of shock and breathing problems. Seek medical advice for anything other than a small, superficial burn.",
+      "action": {
+        "type": "topic",
+        "label": "Shock",
+        "target": "shock"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Hoarse voice, soot around the mouth or nose, singed nasal hair, coughing – possible airway burn",
+    "Signs of shock",
+    "Burn larger than the casualty's palm (in a child, any blistering burn)"
+  ],
+  "doNot": [
+    "Do not use ice, iced water, butter, creams, ointments or toothpaste",
+    "Do not burst blisters",
+    "Do not remove anything stuck to the burn",
+    "Do not use fluffy dressings or adhesive plasters on the burn",
+    "Do not wrap cling film tightly around a limb"
+  ],
+  "related": [
+    "shock",
+    "electric-shock",
+    "poisoning-overdose",
+    "hypothermia"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Thermal burns",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Burns",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid – Cooling of burns",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "id": "choking-adult",
+  "title": "Choking – Adult & Child over 1",
+  "category": "Life-threatening",
+  "order": 20,
+  "summary": "Encourage coughing if they can cough. If they cannot breathe, speak or cough, give back blows and abdominal thrusts.",
+  "keywords": [
+    "choking",
+    "cant breathe",
+    "cannot breathe",
+    "something stuck in throat",
+    "food stuck",
+    "clutching throat",
+    "cant speak",
+    "cannot talk",
+    "airway blocked",
+    "obstruction"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} if they cannot breathe, speak or cough",
+    "when": [
+      "Severe choking: cannot breathe, speak or cough effectively",
+      "They become unresponsive",
+      "After abdominal thrusts – everyone who has had abdominal thrusts should be checked by a medical professional"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Ask: \"Are you choking?\"",
+      "text": "If they can speak, cough and breathe (mild obstruction), encourage them to keep coughing and stay with them.",
+      "points": [
+        "Severe choking: cannot speak, silent or ineffective cough, cannot breathe, may clutch the throat"
+      ]
+    },
+    {
+      "title": "Give up to 5 back blows",
+      "text": "Stand to the side and slightly behind. Support the chest with one hand and lean them well forward. Give up to 5 sharp blows between the shoulder blades with the heel of your hand. Check after each blow whether the obstruction has cleared."
+    },
+    {
+      "title": "Give up to 5 abdominal thrusts",
+      "text": "Stand behind them, arms around the upper abdomen. Make a fist, place it between the navel and the bottom of the breastbone, grasp it with your other hand and pull sharply inwards and upwards. Check after each thrust.",
+      "points": [
+        "Pregnant or very large casualty, or you cannot reach around: use chest thrusts instead (hands on the lower breastbone, pull sharply backwards)"
+      ]
+    },
+    {
+      "title": "Keep alternating",
+      "text": "Continue alternating 5 back blows and 5 abdominal thrusts until the object comes out or they become unresponsive. Call {EMERGENCY} if not already done."
+    },
+    {
+      "title": "If they become unresponsive",
+      "text": "Lower them carefully to the ground, call {EMERGENCY} and start CPR. Each time you open the airway to give breaths, look in the mouth and remove any object you can see.",
+      "action": {
+        "type": "topic",
+        "label": "Start CPR – Adult",
+        "target": "cpr-adult"
+      }
+    },
+    {
+      "title": "Afterwards",
+      "text": "Anyone who has had abdominal thrusts, or who has a persistent cough, difficulty swallowing or the feeling something is still stuck, must be checked by a medical professional."
+    }
+  ],
+  "warningSigns": [
+    "Cannot speak, cough or breathe",
+    "Blue lips or face",
+    "Becoming drowsy or unresponsive"
+  ],
+  "doNot": [
+    "Do not slap the back of someone who is coughing effectively",
+    "Do not do blind finger sweeps of the mouth",
+    "Do not give abdominal thrusts to infants under 1 year"
+  ],
+  "related": [
+    "choking-infant",
+    "cpr-adult",
+    "cpr-child"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association",
+      "title": "2025 American Heart Association Guidelines for Cardiopulmonary Resuscitation and Emergency Cardiovascular Care",
+      "section": "Adult Basic Life Support – Foreign-body airway obstruction",
+      "year": 2025,
+      "url": "https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "Adult Basic Life Support – Foreign-body airway obstruction",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Choking",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "id": "electric-shock",
+  "title": "Electric Shock",
+  "category": "Environmental",
+  "order": 63,
+  "summary": "Do not touch the person until the power is off. Once safe, check breathing, start CPR if needed and treat burns.",
+  "keywords": [
+    "electric shock",
+    "electrocuted",
+    "electrocution",
+    "electricity",
+    "power line",
+    "downed wires",
+    "live wire",
+    "lightning",
+    "struck by lightning",
+    "electrical burn"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for every electric shock injury",
+    "when": [
+      "High-voltage or lightning injury",
+      "Any loss of consciousness or breathing problem",
+      "Electrical burns",
+      "Any significant shock – heart rhythm problems can follow"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Make it safe first",
+      "text": "Do not touch the person while they may be in contact with electricity. Switch off the power at the mains or unplug if you safely can."
+    },
+    {
+      "title": "High voltage (power lines, rail, industrial)",
+      "text": "Stay well clear and keep others away. Call {EMERGENCY} and wait until the electricity supplier or emergency services confirm the power is off. Do not try to move wires.",
+      "caution": "Electricity can arc and travel through the ground. Do not approach."
+    },
+    {
+      "title": "Check response and breathing",
+      "text": "When safe, check DRABC. If not breathing normally, start CPR and use an AED.",
+      "action": {
+        "type": "topic",
+        "label": "CPR – Adult",
+        "target": "cpr-adult"
+      }
+    },
+    {
+      "title": "Treat burns",
+      "text": "Look for entry and exit burns. Cool and cover them.",
+      "action": {
+        "type": "topic",
+        "label": "Burns",
+        "target": "burns"
+      }
+    },
+    {
+      "title": "Get them checked",
+      "text": "Everyone who has had a significant electric shock should be medically assessed."
+    }
+  ],
+  "warningSigns": [
+    "Unresponsive or not breathing",
+    "Burns at contact points",
+    "Irregular pulse, chest pain",
+    "Muscle pain or dark urine later"
+  ],
+  "doNot": [
+    "Do not touch the casualty until the power is confirmed off",
+    "Do not use metal objects to move cables",
+    "Do not approach downed power lines"
+  ],
+  "related": [
+    "cpr-adult",
+    "burns",
+    "scene-safety"
+  ],
+  "sources": [
+    {
+      "body": "American Red Cross",
+      "title": "American Red Cross First Aid/CPR/AED Participant's Manual",
+      "section": "Electrical burns",
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "American Heart Association",
+      "title": "2025 American Heart Association Guidelines for Cardiopulmonary Resuscitation and Emergency Cardiovascular Care",
+      "section": "Resuscitation in special circumstances – Electrocution and lightning",
+      "year": 2025,
+      "url": "https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "Special circumstances – Electrocution",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

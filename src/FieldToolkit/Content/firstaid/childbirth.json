@@ -1,0 +1,119 @@
+{
+  "id": "childbirth",
+  "title": "Emergency Childbirth",
+  "category": "Medical",
+  "order": 70,
+  "summary": "Call for help and follow the dispatcher's instructions. Birth is usually natural: support the baby, keep mother and baby warm, and never pull on the baby or cord.",
+  "keywords": [
+    "childbirth",
+    "giving birth",
+    "baby coming",
+    "labour",
+    "labor",
+    "contractions",
+    "waters broken",
+    "delivering a baby",
+    "pregnant",
+    "newborn",
+    "birth"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} – the dispatcher will talk you through the birth",
+    "when": [
+      "Labour has started and birth is imminent (urge to push, baby's head visible)",
+      "Heavy bleeding, cord comes out first, baby's bottom or feet come first",
+      "Baby is not breathing or crying after birth"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Call {EMERGENCY} and prepare",
+      "text": "Put the phone on speaker. Wash your hands and wear gloves. Get clean towels, blankets and a warm place. Help the mother into a comfortable position – usually half-sitting, knees bent."
+    },
+    {
+      "title": "As the baby is born",
+      "text": "Let the birth happen naturally. As the head appears, support it gently – do not pull. The shoulders and body usually follow quickly with the next contraction. Support the baby as it is born.",
+      "caution": "Never pull on the baby's head, body or the umbilical cord."
+    },
+    {
+      "title": "Note the time of birth",
+      "text": "",
+      "action": {
+        "type": "timer",
+        "label": "Record time of birth",
+        "timerLabel": "Time of birth",
+        "mode": "stopwatch"
+      }
+    },
+    {
+      "title": "Dry and warm the baby",
+      "text": "Dry the baby with a towel and place it skin-to-skin on the mother's chest. Cover both, including the baby's head. Wipe fluid from the baby's mouth and nose.",
+      "points": [
+        "If the baby is not breathing or crying, rub its back firmly. If still not breathing normally, start infant CPR"
+      ],
+      "action": {
+        "type": "topic",
+        "label": "Infant CPR",
+        "target": "cpr-infant"
+      }
+    },
+    {
+      "title": "Umbilical cord and placenta",
+      "text": "Do not cut or pull the cord – leave it for the responders. The placenta usually delivers within 30 minutes; let it come naturally and keep it with the baby."
+    },
+    {
+      "title": "Care for the mother",
+      "text": "Keep her warm and comfortable. Watch for heavy bleeding. Gently rubbing the lower abdomen and breastfeeding can help the womb contract.",
+      "action": {
+        "type": "topic",
+        "label": "Shock",
+        "target": "shock"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Heavy bleeding from the mother",
+    "Cord visible before the baby",
+    "Baby not breathing, blue or floppy",
+    "Mother faint, pale or confused"
+  ],
+  "doNot": [
+    "Do not pull on the baby or the cord",
+    "Do not try to delay the birth",
+    "Do not cut the cord unless the dispatcher tells you to",
+    "Do not let the baby get cold"
+  ],
+  "related": [
+    "cpr-infant",
+    "shock",
+    "severe-bleeding"
+  ],
+  "sources": [
+    {
+      "body": "American Red Cross",
+      "title": "American Red Cross First Aid/CPR/AED Participant's Manual",
+      "section": "Emergency childbirth",
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "American Heart Association",
+      "title": "2025 American Heart Association Guidelines for Cardiopulmonary Resuscitation and Emergency Cardiovascular Care",
+      "section": "Neonatal Resuscitation",
+      "year": 2025,
+      "url": "https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "Newborn resuscitation and support of transition",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

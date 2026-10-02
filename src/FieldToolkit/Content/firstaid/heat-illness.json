@@ -1,0 +1,108 @@
+{
+  "id": "heat-illness",
+  "title": "Heat Exhaustion & Heat Stroke",
+  "category": "Environmental",
+  "order": 60,
+  "summary": "Heat exhaustion: rest somewhere cool and drink. Heat stroke (confused, very hot) is life-threatening: call for help and cool them aggressively and immediately.",
+  "keywords": [
+    "heat stroke",
+    "heatstroke",
+    "heat exhaustion",
+    "overheated",
+    "too hot",
+    "hot and confused",
+    "dehydrated",
+    "dehydration",
+    "sunstroke",
+    "heat cramps",
+    "collapsed in heat",
+    "not sweating"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for possible heat stroke",
+    "when": [
+      "Confusion, strange behaviour, slurred speech, seizure or collapse in the heat",
+      "Very high body temperature with hot skin (may be dry or sweaty)",
+      "Heat exhaustion that does not improve within 30 minutes, or vomiting so they cannot drink"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Move them somewhere cool",
+      "text": "Into shade or air conditioning. Remove excess clothing and protective equipment."
+    },
+    {
+      "title": "Heat exhaustion (alert, sweating, tired, headache, nausea)",
+      "text": "Have them lie down and drink cool fluids – an electrolyte or sports drink is ideal, water if not. Cool the skin with water and fanning."
+    },
+    {
+      "title": "Heat stroke: cool immediately",
+      "text": "If they are confused or collapsed, call {EMERGENCY} and start cooling at once. The best method is immersing the body up to the neck in cold water.",
+      "points": [
+        "If immersion is not possible: soak them with cold water, fan continuously, and apply cold packs or ice wrapped in cloth to the neck, armpits and groin",
+        "Keep cooling until help arrives or they become fully alert"
+      ],
+      "action": {
+        "type": "timer",
+        "label": "Start cooling timer",
+        "timerLabel": "Heat stroke cooling",
+        "mode": "stopwatch",
+        "remindEveryMinutes": 5
+      }
+    },
+    {
+      "title": "Monitor",
+      "text": "Check breathing and response. Recovery position if unresponsive and breathing; CPR if not breathing normally.",
+      "action": {
+        "type": "topic",
+        "label": "Recovery position",
+        "target": "unconscious-recovery"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Confusion or strange behaviour",
+    "Hot skin with very high temperature",
+    "Seizure or collapse",
+    "Vomiting and unable to drink"
+  ],
+  "doNot": [
+    "Do not give fluids to someone who is confused or cannot swallow safely",
+    "Do not delay cooling to transport them – start cooling first",
+    "Do not give medicines such as paracetamol/acetaminophen or aspirin for heat stroke"
+  ],
+  "related": [
+    "hypothermia",
+    "seizures",
+    "unconscious-recovery"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Heat-related illness",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Exertional heat stroke",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid – Cooling techniques for exertional hyperthermia",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

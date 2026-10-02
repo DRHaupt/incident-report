@@ -1,0 +1,109 @@
+{
+  "id": "stroke",
+  "title": "Stroke (FAST)",
+  "category": "Medical",
+  "order": 51,
+  "summary": "Use FAST to recognise a stroke. Call immediately and record the time symptoms started – treatment depends on it.",
+  "keywords": [
+    "stroke",
+    "face drooping",
+    "drooping face",
+    "slurred speech",
+    "cant talk properly",
+    "arm weakness",
+    "one side weak",
+    "numb on one side",
+    "confused speech",
+    "sudden confusion",
+    "sudden severe headache",
+    "loss of vision",
+    "tia",
+    "mini stroke"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} immediately – time is critical",
+    "when": [
+      "Any one of the FAST signs, even if it goes away",
+      "Sudden confusion, loss of balance, loss of vision or severe headache with no known cause"
+    ]
+  },
+  "steps": [
+    {
+      "title": "F – Face",
+      "text": "Ask them to smile. Does one side of the face droop?"
+    },
+    {
+      "title": "A – Arms",
+      "text": "Ask them to raise both arms. Does one arm drift down or can they not lift it?"
+    },
+    {
+      "title": "S – Speech",
+      "text": "Ask them to repeat a simple phrase. Is their speech slurred or strange, or can they not speak?"
+    },
+    {
+      "title": "T – Time to call {EMERGENCY}",
+      "text": "If you see any of these signs, call immediately. Note the time symptoms started or when they were last seen well.",
+      "action": {
+        "type": "timer",
+        "label": "Record symptom onset time",
+        "timerLabel": "Stroke – symptom onset",
+        "mode": "stopwatch",
+        "askStartTime": true
+      }
+    },
+    {
+      "title": "While you wait",
+      "text": "Keep them comfortable and reassured. If they become unresponsive and are breathing, place them in the recovery position. Be ready to start CPR.",
+      "action": {
+        "type": "topic",
+        "label": "Recovery position",
+        "target": "unconscious-recovery"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Becoming drowsy or unresponsive",
+    "Vomiting",
+    "Seizure",
+    "Worsening symptoms"
+  ],
+  "doNot": [
+    "Do not give food, drink or medicines (including aspirin) – swallowing may be affected",
+    "Do not let them drive or wait to 'see if it passes'"
+  ],
+  "related": [
+    "unconscious-recovery",
+    "diabetic-emergency",
+    "heart-attack",
+    "cpr-adult"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Stroke",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Stroke recognition",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid – Stroke recognition",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

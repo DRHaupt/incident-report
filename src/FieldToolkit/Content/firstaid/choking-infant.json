@@ -1,0 +1,92 @@
+{
+  "id": "choking-infant",
+  "title": "Choking – Infant (under 1 year)",
+  "category": "Life-threatening",
+  "order": 21,
+  "summary": "For a baby who cannot cry, cough or breathe: back blows with the head lower than the chest, then chest thrusts. Never abdominal thrusts.",
+  "keywords": [
+    "baby choking",
+    "infant choking",
+    "baby cant breathe",
+    "baby gagging",
+    "baby turning blue"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} if the baby cannot cry, cough or breathe",
+    "when": [
+      "Silent or ineffective cough, cannot cry or breathe",
+      "The baby becomes unresponsive",
+      "After the obstruction clears – the baby should still be checked"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Recognise severe choking",
+      "text": "Effective cough or crying: let the baby cough and watch closely. Cannot cry, cough or breathe: act now and get someone to call {EMERGENCY}."
+    },
+    {
+      "title": "Up to 5 back blows",
+      "text": "Lay the baby face down along your forearm, head lower than the chest, supporting the head and jaw with your hand. Rest your arm on your thigh. Give up to 5 firm blows between the shoulder blades with the heel of your other hand."
+    },
+    {
+      "title": "Up to 5 chest thrusts",
+      "text": "Turn the baby face up along your other forearm, head lower than the chest. Using two fingers or two thumbs on the lower half of the breastbone (as for infant CPR), give up to 5 chest thrusts, sharper and slower than CPR compressions."
+    },
+    {
+      "title": "Keep alternating",
+      "text": "Repeat 5 back blows and 5 chest thrusts until the object comes out or the baby becomes unresponsive."
+    },
+    {
+      "title": "If the baby becomes unresponsive",
+      "text": "Call {EMERGENCY} if not already done and start infant CPR. Look in the mouth before giving breaths and remove any object you can see.",
+      "action": {
+        "type": "topic",
+        "label": "Start CPR – Infant",
+        "target": "cpr-infant"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Unable to cry or make sounds",
+    "Blue or grey colour",
+    "Floppy"
+  ],
+  "doNot": [
+    "Do not give abdominal thrusts to a baby",
+    "Do not hold the baby upside down by the legs",
+    "Do not do blind finger sweeps"
+  ],
+  "related": [
+    "cpr-infant",
+    "choking-adult"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association",
+      "title": "2025 American Heart Association Guidelines for Cardiopulmonary Resuscitation and Emergency Cardiovascular Care",
+      "section": "Pediatric Basic Life Support – Foreign-body airway obstruction",
+      "year": 2025,
+      "url": "https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "Paediatric Life Support – Foreign-body airway obstruction",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Choking",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

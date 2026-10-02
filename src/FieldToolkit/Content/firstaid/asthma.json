@@ -1,0 +1,105 @@
+{
+  "id": "asthma",
+  "title": "Asthma Attack",
+  "category": "Medical",
+  "order": 54,
+  "summary": "Sit them upright, help them use their reliever (usually blue) inhaler with a spacer if they have one, and call if it does not help quickly.",
+  "keywords": [
+    "asthma",
+    "asthma attack",
+    "wheezing",
+    "wheeze",
+    "short of breath",
+    "shortness of breath",
+    "cant breathe",
+    "tight chest",
+    "inhaler",
+    "puffer",
+    "breathless"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} if the attack is severe or not improving",
+    "when": [
+      "Too breathless to speak, eat or sleep",
+      "Lips or face blue or grey",
+      "Reliever inhaler not helping, or no inhaler available",
+      "Exhausted, confused or drowsy",
+      "Symptoms getting worse"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Sit them upright",
+      "text": "Help them sit up, leaning slightly forward. Keep calm and reassure them. Loosen tight clothing."
+    },
+    {
+      "title": "Reliever inhaler",
+      "text": "Help them use their reliever inhaler, with a spacer if available, following their asthma action plan or the dose instructions for their inhaler.",
+      "action": {
+        "type": "timer",
+        "label": "Start inhaler timer",
+        "timerLabel": "Asthma – inhaler given",
+        "mode": "stopwatch",
+        "remindEveryMinutes": 5
+      }
+    },
+    {
+      "title": "If not improving",
+      "text": "Call {EMERGENCY}. Keep giving the reliever as their action plan or the dispatcher advises while you wait."
+    },
+    {
+      "title": "If they become unresponsive",
+      "text": "Check breathing. If not breathing normally, start CPR.",
+      "action": {
+        "type": "topic",
+        "label": "CPR – Adult",
+        "target": "cpr-adult"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Unable to complete sentences",
+    "Blue lips",
+    "Silent chest / very little air movement",
+    "Drowsiness or exhaustion"
+  ],
+  "doNot": [
+    "Do not lie them down",
+    "Do not leave them alone",
+    "Do not assume a mild attack will settle without treatment"
+  ],
+  "related": [
+    "anaphylaxis",
+    "choking-adult",
+    "cpr-adult"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Asthma – bronchodilators",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Asthma",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid – Bronchodilator use for asthma",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

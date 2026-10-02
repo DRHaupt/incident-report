@@ -1,0 +1,41 @@
+{
+  // Guide-wide settings for the First Aid & Emergency Guide. Comments are allowed in these files.
+  "title": "First Aid & Emergency Guide",
+  "contentVersion": "0.1-draft",
+  "disclaimer": "This guide supports first aid training. It does not replace it. Get trained in first aid and CPR, follow the instructions of emergency dispatchers and your organisation's protocols, and always call for professional help in an emergency. The content is based on published guidelines from recognised bodies (sources are listed on every topic) and must be reviewed by a qualified clinician before operational use.",
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Fill in reviewedBy and reviewedOn (YYYY-MM-DD) once a qualified clinician has reviewed every topic against the current guideline editions and local protocols. Each topic also has its own review record."
+  },
+  "emergencyNumber": "911 / 112",
+  "poisonCentre": "Poison Control (US: 1-800-222-1222) or your local poison centre",
+  "synonyms": [
+    { "phrases": ["not breathing", "stopped breathing", "no breathing", "isnt breathing", "not breathing properly", "gasping", "no pulse", "heart stopped", "dead", "lifeless"], "topics": ["cpr-adult", "scene-safety", "cpr-child", "cpr-infant"] },
+    { "phrases": ["baby not breathing", "infant not breathing", "newborn not breathing", "baby blue", "baby floppy"], "topics": ["cpr-infant"] },
+    { "phrases": ["child not breathing", "kid not breathing", "toddler not breathing"], "topics": ["cpr-child"] },
+    { "phrases": ["bleeding a lot", "lots of blood", "losing blood", "blood everywhere", "wont stop bleeding", "spurting", "gushing", "pumping blood", "bleeding badly", "heavy bleeding", "bleed out", "cut off", "amputated", "stabbed"], "topics": ["severe-bleeding", "shock"] },
+    { "phrases": ["fitting", "fit", "fits", "having a fit", "convulsing", "convulsions", "shaking uncontrollably", "jerking", "epileptic", "epilepsy", "seizing"], "topics": ["seizures"] },
+    { "phrases": ["choking", "choke", "something stuck", "food stuck", "swallowed something", "cant swallow", "clutching throat"], "topics": ["choking-adult", "choking-infant"] },
+    { "phrases": ["cant breathe", "cannot breathe", "struggling to breathe", "difficulty breathing", "breathless", "short of breath", "wheezing", "wheezy"], "topics": ["asthma", "anaphylaxis", "choking-adult"] },
+    { "phrases": ["chest pain", "chest pains", "pain in chest", "tight chest", "crushing pain", "heart attack", "heart pain"], "topics": ["heart-attack"] },
+    { "phrases": ["face drooping", "drooping face", "droopy face", "slurred speech", "slurring", "one side weak", "cant lift arm", "cant speak properly", "stroke"], "topics": ["stroke"] },
+    { "phrases": ["swollen face", "swollen lips", "swollen tongue", "throat swelling", "throat closing", "allergic", "allergy", "epipen", "epi pen", "hives"], "topics": ["anaphylaxis"] },
+    { "phrases": ["sugar", "diabetic", "diabetes", "hypo", "low sugar", "insulin"], "topics": ["diabetic-emergency"] },
+    { "phrases": ["burnt", "burned", "scalded", "on fire", "caught fire"], "topics": ["burns"] },
+    { "phrases": ["broken", "snapped", "twisted", "out of place", "bone sticking out", "deformed"], "topics": ["fractures-sprains"] },
+    { "phrases": ["hit head", "hit their head", "banged head", "knocked out", "concussed", "concussion"], "topics": ["head-injury"] },
+    { "phrases": ["neck pain", "back pain after fall", "cant feel legs", "cant move legs", "rolled car", "rollover", "car off", "crash", "fell from height"], "topics": ["spinal-injury", "scene-safety"] },
+    { "phrases": ["passed out", "fainted", "unconscious", "wont wake", "not waking", "out cold", "unresponsive"], "topics": ["unconscious-recovery", "scene-safety", "cpr-adult"] },
+    { "phrases": ["too hot", "overheated", "heat", "sunstroke"], "topics": ["heat-illness"] },
+    { "phrases": ["too cold", "freezing", "shivering", "frozen"], "topics": ["hypothermia"] },
+    { "phrases": ["drowning", "drowned", "pulled from water", "pulled out of water", "under water"], "topics": ["drowning"] },
+    { "phrases": ["electrocuted", "electric", "power line", "lightning", "shocked by electricity"], "topics": ["electric-shock"] },
+    { "phrases": ["overdose", "od", "pills", "tablets", "drugs", "poison", "poisoned", "swallowed chemical", "fumes", "gas", "naloxone", "narcan"], "topics": ["poisoning-overdose"] },
+    { "phrases": ["bitten", "stung", "snake", "dog bite", "bee", "wasp", "tick", "spider"], "topics": ["bites-stings"] },
+    { "phrases": ["pale and clammy", "cold and clammy", "clammy", "grey skin", "going grey"], "topics": ["shock"] },
+    { "phrases": ["baby coming", "giving birth", "in labour", "in labor", "waters broke", "contractions"], "topics": ["childbirth"] },
+    { "phrases": ["what do i do", "where do i start", "accident", "help", "multiple casualties"], "topics": ["scene-safety"] }
+  ]
+}
