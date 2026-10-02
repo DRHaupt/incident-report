@@ -92,7 +92,7 @@ public sealed class RadioWindow : ToolWindow
             grid.Controls.Add(LetterTile(e));
         _content.Controls.Add(grid);
         _content.Controls.Add(top);
-        BeginInvoke(() => input.Focus());
+        FocusLater(input);
     }
 
     private static Control LetterTile(PhoneticEntry e)
@@ -334,7 +334,7 @@ public sealed class RadioWindow : ToolWindow
         _content.Controls.Add(entry);
         AppServices.RadioLog.Changed += OnLogChanged;
         FillLog();
-        BeginInvoke(() => text.Focus());
+        FocusLater(text);
     }
 
     private void OnLogChanged(object? s, EventArgs e) => FillLog();
@@ -390,6 +390,15 @@ public sealed class RadioWindow : ToolWindow
         AppServices.RadioLog.Items.Clear();
         AppServices.RadioLog.Save();
         MessageBox.Show(this, "Previous log archived to:\n" + archive, Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+
+    /// <summary>Focuses a control once the window is on screen (tabs are also built from the constructor).</summary>
+    private void FocusLater(Control c)
+    {
+        if (IsHandleCreated)
+            BeginInvoke(() => { if (!c.IsDisposed) c.Focus(); });
+        else
+            Shown += (_, _) => { if (!c.IsDisposed) c.Focus(); };
     }
 
     private void CopyText(string text, string confirmation)
