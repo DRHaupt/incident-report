@@ -1,0 +1,93 @@
+{
+  "feeds": [
+    {
+      "id": "drivebc",
+      "name": "DriveBC road events",
+      "kind": "roadEvent",
+      "format": "open511",
+      "url": "https://api.open511.gov.bc.ca/events?format=json&status=ACTIVE&limit=500",
+      "licence": "Open Government Licence – British Columbia (data); BC API Terms of Use",
+      "terms": "https://api.open511.gov.bc.ca/help",
+      "enabled": true,
+      "refreshMinutes": 5,
+      "verified": "2026-10 – endpoint and licence confirmed by web search"
+    },
+    {
+      "id": "ab511",
+      "name": "Alberta 511 events",
+      "kind": "roadEvent",
+      "format": "ab511",
+      "url": "https://511.alberta.ca/api/v2/get/event?key={key}&format=json",
+      "licence": "511 Alberta developer terms",
+      "terms": "https://511.alberta.ca/developers/doc – free developer key, 10 calls per 60 s",
+      "enabled": true,
+      "needsKey": true,
+      "refreshMinutes": 5,
+      "verified": "2026-10 – endpoint and key requirement confirmed; read the terms before release"
+    },
+    {
+      "id": "bcws-fires",
+      "name": "BC Wildfire Service – current fire perimeters",
+      "kind": "firePerimeter",
+      "format": "geojson",
+      "url": "https://openmaps.gov.bc.ca/geo/pub/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=pub:WHSE_LAND_AND_NATURAL_RESOURCE.PROT_CURRENT_FIRE_POLYS_SP&outputFormat=application%2Fjson&srsName=EPSG:4326",
+      "licence": "Open Government Licence – British Columbia",
+      "terms": "https://catalogue.data.gov.bc.ca/dataset/bc-wildfire-fire-perimeters-current",
+      "enabled": true,
+      "refreshMinutes": 15,
+      "titleFields": [ "FIRE_NUMBER", "FIRE_LABEL" ],
+      "descriptionFields": [ "FIRE_STATUS", "FIRE_SIZE_HECTARES" ],
+      "severityFields": [ "FIRE_STATUS" ],
+      "updatedFields": [ "TRACK_DATE", "LOAD_DATE" ],
+      "verified": "2026-10 – layer and licence confirmed; field names to confirm on first connection"
+    },
+    {
+      "id": "bc-evac",
+      "name": "BC evacuation orders and alerts",
+      "kind": "evacuation",
+      "format": "geojson",
+      "url": "https://services6.arcgis.com/ubm4tcTYICKBpist/arcgis/rest/services/Evacuation_Orders_and_Alerts/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson",
+      "licence": "Open Government Licence – British Columbia",
+      "terms": "https://open.canada.ca/data/en/dataset/7efd46d0-b5d3-4dff-af80-d376c42aec33",
+      "enabled": true,
+      "refreshMinutes": 10,
+      "titleFields": [ "EVENT_NAME", "ORDER_ALERT_NAME" ],
+      "descriptionFields": [ "ISSUING_AGENCY", "EVENT_TYPE" ],
+      "severityFields": [ "ORDER_ALERT_STATUS" ],
+      "updatedFields": [ "DATE_MODIFIED", "LAST_UPDATE" ],
+      "verified": "2026-10 – service and licence confirmed; field names to confirm on first connection"
+    },
+    {
+      "id": "ab-wildfire",
+      "name": "Alberta Wildfire – current perimeters",
+      "kind": "firePerimeter",
+      "format": "geojson",
+      "url": "",
+      "licence": "Open Government Licence – Alberta",
+      "terms": "https://www.alberta.ca/wildfire-maps-and-data (Alberta Geospatial Services Platform)",
+      "enabled": false,
+      "refreshMinutes": 15,
+      "titleFields": [ "FIRE_NUMBER", "fire_number", "LABEL" ],
+      "descriptionFields": [ "FIRE_STATUS", "AREA_ESTIMATE" ],
+      "severityFields": [ "FIRE_STATUS" ],
+      "updatedFields": [ "UPDATE_DATE", "LAST_UPDATED" ],
+      "verified": "unverified – set the GeoJSON query URL of the current-perimeters service from AGSP, then enable"
+    },
+    {
+      "id": "eccc-alerts",
+      "name": "ECCC weather alerts",
+      "kind": "weatherAlert",
+      "format": "geojson",
+      "url": "https://api.weather.gc.ca/collections/weather-alerts/items?f=json&lang=en&bbox=-139.1,48.2,-109.9,60.1&limit=500",
+      "licence": "Open Government Licence – Canada (MSC open data)",
+      "terms": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+      "enabled": true,
+      "refreshMinutes": 10,
+      "titleFields": [ "alert_name_en", "alert_short_name_en", "headline", "name" ],
+      "descriptionFields": [ "feature_name_en", "alert_text_en", "description" ],
+      "severityFields": [ "risk_colour_en", "alert_type", "severity" ],
+      "updatedFields": [ "publication_datetime", "issued_datetime", "updated" ],
+      "verified": "2026-10 – collection confirmed; property names to confirm on first connection"
+    }
+  ]
+}
