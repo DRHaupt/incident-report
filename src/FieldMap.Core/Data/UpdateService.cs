@@ -43,7 +43,8 @@ public sealed class UpdateService
         return list;
     }
 
-    public string DownloadDir(string regionId) => Path.Combine(_store.DownloadsDir, regionId);
+    /// <summary>Downloads are shared by all regions (file names come from the URLs), so BC, Alberta and the combined package reuse them.</summary>
+    public string DownloadDir(string regionId) => _store.DownloadsDir;
 
     /// <summary>The full update for one region.</summary>
     public async Task<UpdateResult> UpdateAsync(RegionDefinition region, IProgress<(string Stage, double Fraction)>? progress = null, CancellationToken cancel = default)

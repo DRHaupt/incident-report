@@ -34,16 +34,19 @@ public static class RegionBuilder
     public static RegionManifest Build(BuildRequest req, IProgress<(string Stage, double Fraction)>? progress = null, CancellationToken cancel = default)
     {
         Directory.CreateDirectory(req.OutputDir);
-        var osm = req.Sources.FirstOrDefault(s => s.Definition.Kind == SourceKinds.OsmPbf)
-                  ?? throw new InvalidOperationException("An OpenStreetMap extract is required.");
+        var osmFiles = req.Sources.Where(s => s.Definition.Kind == SourceKinds.OsmPbf).ToList();
+        if (osmFiles.Count == 0)
+            throw new InvalidOperationException("An OpenStreetMap extract is required.");
+        var osm = osmFiles[0];
 
         void Report(string stage, double f) => progress?.Report((stage, f));
 
         // 1. OpenStreetMap
-        var data = OsmExtractor.Extract(osm.Path, new Progress<(string Stage, double Fraction)>(p => Report(p.Stage, p.Fraction)), cancel);
+        var data = OsmExtractor.Extract(osmFiles.Select(f => f.Path).ToList(), new Progress<(string Stage, double Fraction)>(p => Report(p.Stage, p.Fraction)), cancel);
         var layerSources = new Dictionary<string, HashSet<string>>();
         foreach (var p in data.Pois)
-            Source(layerSources, p.Layer, osm.Info.Name);
+            foreach (var f in osmFiles)
+                Source(layerSources, p.Layer, f.Info.Name);
 
         // 2. Address points
         foreach (var s in req.Sources.Where(s => s.Definition.Kind == SourceKinds.AddressCsv))
@@ -131,9 +134,9 @@ public static class RegionBuilder
             manifest.Layers[layer.Id] = new LayerInfo
             {
                 Count = layerCounts.GetValueOrDefault(layer.Id),
-                Sources = layerSources.TryGetValue(layer.Id, out var srcs) ? srcs.OrderBy(x => x).ToList() : new List<string> { osm.Info.Name }
+                Sources = layerSources.TryGetValue(layer.Id, out var srcs) ? srcs.OrderBy(x => x).ToList() : osmFiles.Select(f => f.Info.Name).ToList()
             };
-        manifest.Layers["basemap"] = new LayerInfo { Count = (int)tiles, Sources = new List<string> { osm.Info.Name } };
+        manifest.Layers["basemap"] = new LayerInfo { Count = (int)tiles, Sources = osmFiles.Select(f => f.Info.Name).ToList() };
         manifest.Layers["addresses"] = new LayerInfo
         {
             Count = data.Addresses.Count,

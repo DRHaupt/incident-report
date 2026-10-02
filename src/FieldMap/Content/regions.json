@@ -46,7 +46,15 @@
           "required": false,
           "enabled": false,
           "verified": "unverified – dataset exists; set 'url' to its CSV resource and confirm the column names before enabling",
-          "mapping": { "layer": "hospital", "kind": "ed", "nameColumn": "sv_name", "latColumn": "latitude", "lonColumn": "longitude", "addressColumn": "street_address", "mergeRadiusMeters": 300 }
+          "mapping": {
+            "layer": "hospital",
+            "kind": "ed",
+            "nameColumn": "sv_name",
+            "latColumn": "latitude",
+            "lonColumn": "longitude",
+            "addressColumn": "street_address",
+            "mergeRadiusMeters": 300
+          }
         },
         {
           "id": "bc-schools",
@@ -59,7 +67,16 @@
           "required": false,
           "enabled": false,
           "verified": "unverified – dataset exists (CSV bc_k12_schools_*.csv); set 'url' to the CSV resource and confirm column names",
-          "mapping": { "layer": "school", "kind": "school", "nameColumn": "school_name", "latColumn": "school_latitude", "lonColumn": "school_longitude", "addressColumn": "school_physical_address", "idColumn": "school_code", "mergeRadiusMeters": 250 }
+          "mapping": {
+            "layer": "school",
+            "kind": "school",
+            "nameColumn": "school_name",
+            "latColumn": "school_latitude",
+            "lonColumn": "school_longitude",
+            "addressColumn": "school_physical_address",
+            "idColumn": "school_code",
+            "mergeRadiusMeters": 250
+          }
         },
         {
           "id": "bc-first-responders",
@@ -72,7 +89,20 @@
           "required": false,
           "enabled": false,
           "verified": "unverified – dataset exists (custom download); export as CSV with lat/long and confirm columns",
-          "mapping": { "layer": "fire", "kind": "fire", "nameColumn": "facility_name", "latColumn": "latitude", "lonColumn": "longitude", "kindColumn": "facility_type", "kindMap": { "Fire": "fire", "Police": "police", "Ambulance": "ambulance" }, "mergeRadiusMeters": 200 }
+          "mapping": {
+            "layer": "fire",
+            "kind": "fire",
+            "nameColumn": "facility_name",
+            "latColumn": "latitude",
+            "lonColumn": "longitude",
+            "kindColumn": "facility_type",
+            "kindMap": {
+              "Fire": "fire",
+              "Police": "police",
+              "Ambulance": "ambulance"
+            },
+            "mergeRadiusMeters": 200
+          }
         },
         {
           "id": "bc-ess",
@@ -85,7 +115,14 @@
           "required": false,
           "enabled": false,
           "verified": "unverified – dataset exists; export as CSV with lat/long and confirm columns",
-          "mapping": { "layer": "shelter", "kind": "reception", "nameColumn": "facility_name", "latColumn": "latitude", "lonColumn": "longitude", "mergeRadiusMeters": 150 }
+          "mapping": {
+            "layer": "shelter",
+            "kind": "reception",
+            "nameColumn": "facility_name",
+            "latColumn": "latitude",
+            "lonColumn": "longitude",
+            "mergeRadiusMeters": 150
+          }
         }
       ]
     },
@@ -133,7 +170,15 @@
           "required": false,
           "enabled": false,
           "verified": "unverified – published as a list with addresses (no coordinates); geocode and save as CSV with latitude/longitude before enabling",
-          "mapping": { "layer": "hospital", "kind": "hospital", "nameColumn": "name", "latColumn": "latitude", "lonColumn": "longitude", "addressColumn": "address", "mergeRadiusMeters": 300 }
+          "mapping": {
+            "layer": "hospital",
+            "kind": "hospital",
+            "nameColumn": "name",
+            "latColumn": "latitude",
+            "lonColumn": "longitude",
+            "addressColumn": "address",
+            "mergeRadiusMeters": 300
+          }
         },
         {
           "id": "ab-schools",
@@ -146,7 +191,79 @@
           "required": false,
           "enabled": false,
           "verified": "unverified – monthly XLS with addresses; convert to CSV with latitude/longitude before enabling",
-          "mapping": { "layer": "school", "kind": "school", "nameColumn": "school name", "latColumn": "latitude", "lonColumn": "longitude", "mergeRadiusMeters": 250 }
+          "mapping": {
+            "layer": "school",
+            "kind": "school",
+            "nameColumn": "school name",
+            "latColumn": "latitude",
+            "lonColumn": "longitude",
+            "mergeRadiusMeters": 250
+          }
+        }
+      ]
+    },
+    {
+      "id": "bcab",
+      "name": "British Columbia + Alberta (combined)",
+      "notes": "One package built from both extracts, so routes, nearest-facility lists and search work across the BC–Alberta border. When installed it is used instead of the separate BC and Alberta packages.",
+      "sources": [
+        {
+          "id": "osm-bc",
+          "name": "OpenStreetMap – British Columbia (Geofabrik)",
+          "kind": "osm-pbf",
+          "url": "https://download.geofabrik.de/north-america/canada/british-columbia-latest.osm.pbf",
+          "checksumUrl": "https://download.geofabrik.de/north-america/canada/british-columbia-latest.osm.pbf.md5",
+          "checksumType": "md5",
+          "licence": "ODbL 1.0",
+          "licenceUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+          "attribution": "© OpenStreetMap contributors",
+          "required": true,
+          "enabled": true,
+          "approxBytes": 1200000000,
+          "verified": "2026-10 (size from Geofabrik listing)"
+        },
+        {
+          "id": "osm-ab",
+          "name": "OpenStreetMap – Alberta (Geofabrik)",
+          "kind": "osm-pbf",
+          "url": "https://download.geofabrik.de/north-america/canada/alberta-latest.osm.pbf",
+          "checksumUrl": "https://download.geofabrik.de/north-america/canada/alberta-latest.osm.pbf.md5",
+          "checksumType": "md5",
+          "licence": "ODbL 1.0",
+          "licenceUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+          "attribution": "© OpenStreetMap contributors",
+          "required": true,
+          "enabled": true,
+          "approxBytes": 330000000,
+          "verified": "2026-10 (size from Geofabrik listing)"
+        },
+        {
+          "id": "oda-bc",
+          "name": "Open Database of Addresses – BC (Statistics Canada)",
+          "kind": "address-csv",
+          "url": "https://www150.statcan.gc.ca/n1/pub/46-26-0001/2021001/ODA_BC_v1.zip",
+          "zipEntry": "ODA_BC*.csv",
+          "licence": "Open Government Licence – Canada",
+          "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada",
+          "attribution": "Contains information licensed under the Open Government Licence – Canada",
+          "required": false,
+          "enabled": true,
+          "approxBytes": 120000000,
+          "verified": "unverified – dataset and licence confirmed (statcan.gc.ca/en/lode/databases/oda), exact file URL to confirm"
+        },
+        {
+          "id": "oda-ab",
+          "name": "Open Database of Addresses – Alberta (Statistics Canada)",
+          "kind": "address-csv",
+          "url": "https://www150.statcan.gc.ca/n1/pub/46-26-0001/2021001/ODA_AB_v1.zip",
+          "zipEntry": "ODA_AB*.csv",
+          "licence": "Open Government Licence – Canada",
+          "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada",
+          "attribution": "Contains information licensed under the Open Government Licence – Canada",
+          "required": false,
+          "enabled": true,
+          "approxBytes": 80000000,
+          "verified": "unverified – dataset and licence confirmed, exact file URL to confirm"
         }
       ]
     }

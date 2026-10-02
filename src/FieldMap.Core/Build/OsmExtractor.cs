@@ -21,6 +21,8 @@ public sealed class OsmExtractor
 
     private readonly Dictionary<long, (OsmTags Tags, OsmMember[] Members)> _areaRelations = new();
     private readonly HashSet<long> _relationWays = new();
+    private readonly HashSet<long> _seenWays = new();
+    private readonly HashSet<long> _seenTaggedNodes = new();
     private readonly HashSet<long> _boundaryWays = new();
     private readonly Dictionary<long, MapWay> _memberWays = new();
     private readonly List<long> _needed = new();
@@ -30,11 +32,24 @@ public sealed class OsmExtractor
     private readonly List<(MapWay Way, LayerDef Layer, string Kind)> _pendingWayPois = new();
     private readonly List<MapWay> _addressWays = new();
 
-    public static MapData Extract(string path, IProgress<(string Stage, double Fraction)>? progress = null, CancellationToken cancel = default)
+    public static MapData Extract(string path, IProgress<(string Stage, double Fraction)>? progress = null, CancellationToken cancel = default) =>
+        Extract(new[] { path }, progress, cancel);
+
+    /// <summary>
+    /// Extracts one or more extracts into one map (e.g. BC and Alberta, so routes can cross the border). Elements present in
+    /// several files (along the shared boundary) are kept once.
+    /// </summary>
+    public static MapData Extract(IReadOnlyList<string> paths, IProgress<(string Stage, double Fraction)>? progress = null, CancellationToken cancel = default)
     {
         var x = new OsmExtractor();
-        void Pass(string stage, IOsmHandler h) =>
-            OsmFile.Read(path, h, cancel, progress == null ? null : new Progress<double>(f => progress.Report((stage, f))));
+        void Pass(string stage, IOsmHandler h)
+        {
+            for (var i = 0; i < paths.Count; i++)
+            {
+                var label = paths.Count > 1 ? $"{stage} ({i + 1}/{paths.Count})" : stage;
+                OsmFile.Read(paths[i], h, cancel, progress == null ? null : new Progress<double>(f => progress.Report((label, f))));
+            }
+        }
         Pass("Reading relations", new RelationPass(x));
         Pass("Reading ways", new WayPass(x));
         x._nodes = NodeStore.Build(x._needed);
@@ -65,7 +80,9 @@ public sealed class OsmExtractor
         return null;
     }
 
-    private static bool IsRoad(OsmTags t) => t["highway"] is { } h && (CarHighways.Contains(h) || WalkHighways.Contains(h)) && !t.Is("area", "yes");
+    private static bool IsRoad(OsmTags t) =>
+        (t["highway"] is { } h && (CarHighways.Contains(h) || WalkHighways.Contains(h)) && !t.Is("area", "yes")) ||
+        (t.Is("route", "ferry") && !t.Has("highway"));
 
     private static bool IsRail(OsmTags t) => t.IsAny("railway", "rail", "light_rail", "narrow_gauge") && !t.Has("abandoned");
 
@@ -118,7 +135,7 @@ public sealed class OsmExtractor
 
         public void Way(long id, IReadOnlyList<long> refs, OsmTags tags)
         {
-            if (refs.Count < 2)
+            if (refs.Count < 2 || !_x._seenWays.Add(id))
                 return;
             MapWay? way = null;
             MapWay W() => way ??= new MapWay { Id = id, NodeIds = refs.ToArray(), Tags = tags };
@@ -188,7 +205,7 @@ public sealed class OsmExtractor
         public void Node(long id, double lat, double lon, OsmTags tags)
         {
             _x._nodes.Set(id, lat, lon);
-            if (tags.Count == 0)
+            if (tags.Count == 0 || !_x._seenTaggedNodes.Add(id))
                 return;
             var d = _x._data;
             if (LayerCatalog.Classify(tags) is { } poi)

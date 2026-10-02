@@ -118,6 +118,12 @@ public sealed class LiveFeedService
         }
     }
 
+    /// <summary>"LIVE DATA – fetched 14:05" or "cached – fetched 09:12 (offline)".</summary>
+    public static string Label(LiveResult r) =>
+        r.FetchedUtc == DateTime.MinValue ? (r.Error != null ? $"not available ({r.Error})" : "not fetched yet")
+        : r.FromCache ? $"cached – fetched {r.FetchedUtc.ToLocalTime():HH:mm dd MMM}{(r.Error != null ? " (offline)" : "")}"
+        : $"LIVE DATA – fetched {r.FetchedUtc.ToLocalTime():HH:mm}";
+
     public LiveResult Cached(LiveFeedDefinition feed, string? error = null)
     {
         try

@@ -1,0 +1,85 @@
+using FieldMap.Core.Drawings;
+using FieldMap.Core.Layers;
+using Shared.Location;
+using Shared.Settings;
+
+namespace FieldMap;
+
+public enum RestoreWindowsMode
+{
+    Ask,
+    Always,
+    Never
+}
+
+public sealed class MapSettings : ILocationSettings
+{
+    public bool TouchMode { get; set; } = true;
+    public bool DaylightTheme { get; set; }
+    public bool NightTheme { get; set; }
+    public RestoreWindowsMode RestoreWindows { get; set; } = RestoreWindowsMode.Ask;
+
+    /// <summary>Where map data is kept (may be a second drive or SD card). Empty = %LOCALAPPDATA%\FieldMap\MapData.</summary>
+    public string DataFolder { get; set; } = "";
+
+    // Position source (shared settings shape with Field Toolkit)
+    public LocationSourceKind LocationSource { get; set; } = LocationSourceKind.Windows;
+    public string SerialPortName { get; set; } = "";
+    public int SerialBaud { get; set; } = 4800;
+    public double? ManualLatitude { get; set; }
+    public double? ManualLongitude { get; set; }
+
+    /// <summary>Layer id → shown. Missing ids use the layer's default.</summary>
+    public Dictionary<string, bool> Layers { get; set; } = new();
+    public bool ShowBreadcrumbs { get; set; } = true;
+    public bool ShowDrawings { get; set; } = true;
+    public bool ShowLiveData { get; set; } = true;
+    public Dictionary<string, bool> LiveFeeds { get; set; } = new();
+    public string Ab511Key { get; set; } = "";
+
+    // Routing
+    public string Profile { get; set; } = "Car";
+    public double TruckHeight { get; set; } = 4.15;
+    public double TruckWeight { get; set; } = 39.5;
+    public double TruckLength { get; set; } = 23;
+    public bool Voice { get; set; } = true;
+    public bool AvoidClosures { get; set; } = true;
+
+    // Drawing defaults
+    public List<double> DefaultRings { get; set; } = new() { 500, 1000, 2000, 5000 };
+    public ProtectiveShape HazmatShape { get; set; } = ProtectiveShape.Sector;
+    public string UserName { get; set; } = "";
+
+    /// <summary>"mgrs" or "decimal" for the radio read-out.</summary>
+    public string ReadoutFormat { get; set; } = "mgrs";
+
+    public int LauncherX { get; set; }
+    public int LauncherY { get; set; }
+    public int LauncherWidth { get; set; }
+    public int LauncherHeight { get; set; }
+    public bool LauncherMaximized { get; set; }
+
+    public bool LayerOn(string id) => Layers.TryGetValue(id, out var on) ? on : LayerCatalog.Find(id)?.DefaultOn ?? false;
+
+    public bool FeedOn(string id) => !LiveFeeds.TryGetValue(id, out var on) || on;
+
+    public static string AppFolder => JsonSettings.AppDataFolder("FieldMap");
+
+    public string EffectiveDataFolder => string.IsNullOrWhiteSpace(DataFolder) ? Path.Combine(AppFolder, "MapData") : DataFolder;
+
+    private static string SettingsFile => Path.Combine(AppFolder, "settings.json");
+
+    public static MapSettings Load() => JsonSettings.Load<MapSettings>(SettingsFile);
+
+    public void Save()
+    {
+        try
+        {
+            JsonSettings.Save(SettingsFile, this);
+        }
+        catch (IOException)
+        {
+            // Not persisted; settings still apply for this session.
+        }
+    }
+}

@@ -1,4 +1,4 @@
-namespace FieldMap.Core.Interop;
+namespace Shared.Core.Interop;
 
 /// <summary>A point passed between Field Toolkit and Field Map.</summary>
 public sealed class ExchangeMessage

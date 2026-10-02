@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- Windows SDK target for the Windows location API. -->
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>FieldMap</AssemblyName>
+    <RootNamespace>FieldMap</RootNamespace>
+    <Product>Field Map</Product>
+    <AssemblyTitle>Field Map</AssemblyTitle>
+    <Version>0.1.0</Version>
+    <Company>Field Map</Company>
+    <Copyright>Copyright © 2026</Copyright>
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\*.png;Resources\*.ico" LogicalName="FieldMap.Resources.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Region catalogue and live-feed list stay editable next to the executable. -->
+    <None Include="Content\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Map drawing and PNG/PDF export. MIT licence; native Skia (BSD-3) is bundled, works offline. -->
+    <PackageReference Include="SkiaSharp" Version="3.119.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.119.1" />
+    <PackageReference Include="SkiaSharp.Views.WindowsForms" Version="3.119.1" />
+    <!-- Spoken directions with the Windows (SAPI) voices installed locally. MIT licence. -->
+    <PackageReference Include="System.Speech" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="FieldMap.UiTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Shared.Core" />
+    <Using Include="Shared.Core.Geo" />
+    <Using Include="FieldMap.Core.Geo" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\Shared.csproj" />
+    <ProjectReference Include="..\Shared.Core\Shared.Core.csproj" />
+    <ProjectReference Include="..\Shared.Location\Shared.Location.csproj" />
+    <ProjectReference Include="..\FieldMap.Core\FieldMap.Core.csproj" />
+    <ProjectReference Include="..\FieldMap.Rendering\FieldMap.Rendering.csproj" />
+  </ItemGroup>
+
+</Project>

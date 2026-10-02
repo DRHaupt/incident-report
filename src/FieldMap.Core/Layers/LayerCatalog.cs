@@ -113,7 +113,7 @@ public static class LayerCatalog
         },
         new LayerDef
         {
-            Id = Air, Title = "Helipads and airports", Glyph = "✈", Color = 0xFF6C5CE7, MinZoom = 9,
+            Id = Air, Title = "Helipads and airports", Glyph = "Hp", Color = 0xFF6C5CE7, MinZoom = 9,
             SearchWords = new[] { "helipad", "heliport", "airport", "airstrip", "aerodrome", "landing zone" },
             TagsDescription = "aeroway=helipad / heliport / aerodrome",
             Classify = t => t["aeroway"] switch { "helipad" or "heliport" => "helipad", "aerodrome" => "airport", _ => null },
@@ -129,7 +129,7 @@ public static class LayerCatalog
         },
         new LayerDef
         {
-            Id = Fuel, Title = "Fuel", Glyph = "⛽", Color = 0xFFB8860B, MinZoom = 12,
+            Id = Fuel, Title = "Fuel", Glyph = "Gas", Color = 0xFFB8860B, MinZoom = 12,
             SearchWords = new[] { "fuel", "gas", "gas station", "petrol", "diesel" },
             TagsDescription = "amenity=fuel",
             Classify = t => t.Is("amenity", "fuel") ? "fuel" : null,
@@ -152,7 +152,7 @@ public static class LayerCatalog
         },
         new LayerDef
         {
-            Id = Shelter, Title = "Shelters and reception centres", Glyph = "⌂", Color = 0xFF9B59B6, MinZoom = 12,
+            Id = Shelter, Title = "Shelters and reception centres", Glyph = "Sh", Color = 0xFF9B59B6, MinZoom = 12,
             SearchWords = new[] { "shelter", "reception centre", "evacuation centre", "assembly point", "muster point" },
             TagsDescription = "social_facility=shelter, amenity=shelter, emergency=assembly_point, ESS facilities",
             Classify = t =>
@@ -175,7 +175,7 @@ public static class LayerCatalog
         },
         new LayerDef
         {
-            Id = Crossings, Title = "Bridges, rail crossings, tunnels", Glyph = "≡", Color = 0xFFF39C12, MinZoom = 13,
+            Id = Crossings, Title = "Bridges, rail crossings, tunnels", Glyph = "Br", Color = 0xFFF39C12, MinZoom = 13,
             SearchWords = new[] { "bridge", "bridges", "rail crossing", "level crossing", "tunnel" },
             TagsDescription = "road ways with bridge=* / tunnel=* (with maxheight, maxweight), railway=level_crossing / crossing",
             // Bridges and tunnels come from road ways in the builder; nodes are rail crossings.

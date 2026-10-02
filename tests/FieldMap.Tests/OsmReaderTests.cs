@@ -58,6 +58,15 @@ public class OsmReaderTests
     }
 
     [Fact]
+    public void Overlapping_extracts_are_merged_without_duplicates()
+    {
+        // The same area twice (as BC and Alberta overlap along the border): every element is kept once.
+        var once = OsmExtractor.Extract(Data("sample-county.osm"));
+        var twice = OsmExtractor.Extract(new[] { Data("sample-county.osm"), Data("sample-county.osm.pbf") });
+        Assert.Equal(once.Summary, twice.Summary);
+    }
+
+    [Fact]
     public void Truncated_pbf_is_reported()
     {
         var bytes = File.ReadAllBytes(Data("sample-county.osm.pbf"));

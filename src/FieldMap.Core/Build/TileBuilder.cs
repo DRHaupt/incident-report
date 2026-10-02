@@ -53,6 +53,7 @@ public static class TileSchema
         "minor" => 12,
         "track" => 12,
         "service" => 13,
+        "ferry" => 8,
         _ => 14
     };
 }
@@ -154,8 +155,8 @@ public sealed class TileBuilder
         foreach (var w in d.Roads)
         {
             var t = w.Tags;
-            var highway = t["highway"]!;
-            var cls = TileSchema.RoadClass(highway);
+            var highway = t["highway"] ?? "";
+            var cls = t.Is("route", "ferry") ? "ferry" : TileSchema.RoadClass(highway);
             var props = new Dictionary<string, object> { ["class"] = cls };
             if (t["name"] is { } name) props["name"] = name;
             if (t["ref"] is { } rf) props["ref"] = rf;

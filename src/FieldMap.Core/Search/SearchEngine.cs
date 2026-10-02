@@ -84,6 +84,14 @@ public sealed class SearchEngine : IDisposable
         _regions.Add(new Region { Db = db, Graph = graph });
     }
 
+    /// <summary>Gives a region its routing graph once loaded (used for road names in "What's here?").</summary>
+    public void AttachGraph(int regionIndex, RoadGraph graph)
+    {
+        if (regionIndex >= 0 && regionIndex < _regions.Count)
+            lock (_regions[regionIndex].Lock)
+                _regions[regionIndex].Graph = graph;
+    }
+
     public void Dispose()
     {
         foreach (var r in _regions)

@@ -1,6 +1,6 @@
 using FieldMap.Core.Drawings;
 using FieldMap.Core.Geo;
-using FieldMap.Core.Interop;
+using Shared.Core.Interop;
 
 namespace FieldMap.Tests;
 
