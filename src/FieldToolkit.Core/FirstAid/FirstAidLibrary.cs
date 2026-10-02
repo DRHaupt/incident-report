@@ -12,13 +12,15 @@ public sealed record ContentProblem(string File, string Message)
 public sealed class FirstAidLibrary
 {
     public const string GuideFileName = "_guide.json";
+    public const string CprFileName = "_cpr.json";
 
     private readonly Dictionary<string, FirstAidTopic> _byId;
 
-    private FirstAidLibrary(string folder, FirstAidGuide guide, List<FirstAidTopic> topics, List<ContentProblem> problems)
+    private FirstAidLibrary(string folder, FirstAidGuide guide, CprGuide cpr, List<FirstAidTopic> topics, List<ContentProblem> problems)
     {
         Folder = folder;
         Guide = guide;
+        Cpr = cpr;
         Topics = topics;
         Problems = problems;
         _byId = topics.GroupBy(t => t.Id, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
@@ -26,6 +28,9 @@ public sealed class FirstAidLibrary
 
     public string Folder { get; }
     public FirstAidGuide Guide { get; }
+
+    /// <summary>CPR helper settings (rates, ratios, depths) from _cpr.json.</summary>
+    public CprGuide Cpr { get; }
 
     /// <summary>Display order: pinned topics first, then by <c>order</c>, then title.</summary>
     public IReadOnlyList<FirstAidTopic> Topics { get; }
@@ -45,12 +50,13 @@ public sealed class FirstAidLibrary
     {
         var problems = new List<ContentProblem>();
         var guide = new FirstAidGuide();
+        var cpr = new CprGuide();
         var topics = new List<FirstAidTopic>();
 
         if (!Directory.Exists(folder))
         {
             problems.Add(new ContentProblem(folder, "Content folder not found."));
-            return new FirstAidLibrary(folder, guide, topics, problems);
+            return new FirstAidLibrary(folder, guide, cpr, topics, problems);
         }
 
         var guidePath = Path.Combine(folder, GuideFileName);
@@ -68,6 +74,23 @@ public sealed class FirstAidLibrary
         else
         {
             problems.Add(new ContentProblem(GuideFileName, "Missing. The disclaimer and review record can't be shown."));
+        }
+
+        var cprPath = Path.Combine(folder, CprFileName);
+        if (File.Exists(cprPath))
+        {
+            try
+            {
+                cpr = Json.Deserialize<CprGuide>(File.ReadAllText(cprPath));
+            }
+            catch (JsonException ex)
+            {
+                problems.Add(new ContentProblem(CprFileName, "Invalid JSON: " + ex.Message));
+            }
+        }
+        else
+        {
+            problems.Add(new ContentProblem(CprFileName, "Missing. The CPR helper uses built-in rate limits only."));
         }
 
         foreach (var path in Directory.GetFiles(folder, "*.json").Order(StringComparer.OrdinalIgnoreCase))
@@ -93,7 +116,25 @@ public sealed class FirstAidLibrary
             .ThenBy(t => t.Title, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
         problems.AddRange(Validate(guide, topics));
-        return new FirstAidLibrary(folder, guide, topics, problems);
+        problems.AddRange(ValidateCpr(cpr, topics));
+        return new FirstAidLibrary(folder, guide, cpr, topics, problems);
+    }
+
+    public static IEnumerable<ContentProblem> ValidateCpr(CprGuide cpr, IReadOnlyList<FirstAidTopic> topics)
+    {
+        if (cpr.MinRate <= 0 || cpr.MinRate > cpr.MaxRate || cpr.DefaultRate < cpr.MinRate || cpr.DefaultRate > cpr.MaxRate)
+            yield return new ContentProblem(CprFileName, "Rates must satisfy 0 < minRate <= defaultRate <= maxRate.");
+        if (cpr.Sources.Count == 0)
+            yield return new ContentProblem(CprFileName, "No sources recorded.");
+        foreach (var p in cpr.Presets)
+        {
+            if (p.Ratios.Count == 0 || !p.Ratios.Contains(p.DefaultRatio))
+                yield return new ContentProblem(CprFileName, $"Preset '{p.Id}': defaultRatio must be one of its ratios.");
+            foreach (var r in p.Ratios.Where(r => r != "continuous" && CprPreset.ParseRatio(r).Compressions == 0))
+                yield return new ContentProblem(CprFileName, $"Preset '{p.Id}': ratio '{r}' must look like '30:2' or be 'continuous'.");
+            if (p.Topic.Length > 0 && !topics.Any(t => string.Equals(t.Id, p.Topic, StringComparison.OrdinalIgnoreCase)))
+                yield return new ContentProblem(CprFileName, $"Preset '{p.Id}': topic '{p.Topic}' does not exist.");
+        }
     }
 
     /// <summary>Checks the rules every topic must meet (see docs/CONTENT-GUIDE.md).</summary>

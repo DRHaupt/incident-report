@@ -1,0 +1,55 @@
+using FieldToolkit.Tools.Cpr;
+using FieldToolkit.Tools.FirstAid;
+using FieldToolkit.Tools.Hazmat;
+using FieldToolkit.Tools.Timers;
+
+namespace FieldToolkit.Framework;
+
+/// <summary>
+/// The tools shown on the launcher, in tile order. To add a tool: write a <see cref="ToolWindow"/> subclass, add icon
+/// artwork under assets/fieldtoolkit, and register it here. Arrange, pin and session restore work automatically.
+/// </summary>
+public static class ToolRegistry
+{
+    public static readonly IReadOnlyList<ToolDescriptor> All = new[]
+    {
+        new ToolDescriptor
+        {
+            Id = FirstAidWindow.ToolId,
+            Title = "First Aid Guide",
+            Description = "Step-by-step emergency instructions",
+            IconName = "firstaid",
+            Create = state => new FirstAidWindow(state)
+        },
+        new ToolDescriptor
+        {
+            Id = CprWindow.ToolId,
+            Title = "CPR Helper",
+            Description = "Metronome, compression counter, 30:2 prompts",
+            IconName = "cpr",
+            Create = state => new CprWindow(state),
+            SingleInstance = true,
+            DefaultSize = new Size(560, 680)
+        },
+        new ToolDescriptor
+        {
+            Id = HazmatWindow.ToolId,
+            Title = "Hazmat Lookup",
+            Description = "UN/NA number, placard and ERG guide",
+            IconName = "hazmat",
+            Create = state => new HazmatWindow(state)
+        },
+        new ToolDescriptor
+        {
+            Id = TimersWindow.ToolId,
+            Title = "Timers",
+            Description = "Stopwatches and countdowns",
+            IconName = "timers",
+            Create = _ => new TimersWindow(),
+            SingleInstance = true,
+            DefaultSize = new Size(560, 640)
+        }
+    };
+
+    public static ToolDescriptor? Find(string id) => All.FirstOrDefault(t => t.Id == id);
+}

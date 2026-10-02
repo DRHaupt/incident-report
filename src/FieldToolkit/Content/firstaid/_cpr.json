@@ -1,0 +1,45 @@
+{
+  // CPR helper settings. Values come from the cited guidelines and must be clinically reviewed like the topics.
+  "minRate": 100,
+  "maxRate": 120,
+  "defaultRate": 110,
+  "breathPauseSeconds": 6,
+  "switchEveryMinutes": 2,
+  "presets": [
+    {
+      "id": "adult",
+      "label": "Adult",
+      "depth": "5–6 cm (2–2.4 in)",
+      "handPosition": "Heel of one hand in the centre of the chest (lower half of the breastbone), other hand on top, arms straight.",
+      "ratios": ["30:2", "continuous"],
+      "defaultRatio": "30:2",
+      "ratioNotes": { "30:2": "30 compressions, then 2 rescue breaths", "continuous": "Hands-only CPR – if you are untrained or unwilling to give breaths" },
+      "topic": "cpr-adult"
+    },
+    {
+      "id": "child",
+      "label": "Child",
+      "depth": "At least one-third of chest depth – about 5 cm (2 in)",
+      "handPosition": "Heel of one hand (or two hands for a larger child) on the lower half of the breastbone.",
+      "ratios": ["30:2", "15:2", "continuous"],
+      "defaultRatio": "30:2",
+      "ratioNotes": { "30:2": "Single rescuer", "15:2": "Two trained rescuers", "continuous": "Only if you cannot give breaths" },
+      "topic": "cpr-child"
+    },
+    {
+      "id": "infant",
+      "label": "Infant",
+      "depth": "One-third of chest depth – about 4 cm (1.5 in)",
+      "handPosition": "Two thumbs on the lower half of the breastbone with hands encircling the chest, or the heel of one hand.",
+      "ratios": ["30:2", "15:2", "continuous"],
+      "defaultRatio": "30:2",
+      "ratioNotes": { "30:2": "Single rescuer", "15:2": "Two trained rescuers", "continuous": "Only if you cannot give breaths" },
+      "topic": "cpr-infant"
+    }
+  ],
+  "sources": [
+    { "body": "American Heart Association", "title": "2025 American Heart Association Guidelines for Cardiopulmonary Resuscitation and Emergency Cardiovascular Care", "section": "Adult and Pediatric Basic Life Support", "year": 2025, "url": "https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines" },
+    { "body": "European Resuscitation Council", "title": "European Resuscitation Council Guidelines 2025", "section": "Adult Basic Life Support; Paediatric Life Support", "year": 2025, "url": "https://www.cprguidelines.eu" }
+  ],
+  "review": { "status": "Draft – awaiting clinical review", "reviewedBy": "", "reviewedOn": "", "notes": "" }
+}
