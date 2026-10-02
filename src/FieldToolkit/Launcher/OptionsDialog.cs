@@ -11,6 +11,7 @@ public sealed class OptionsDialog : Form
     private readonly CheckBox _sound = new() { Text = "Play a sound when a timer alerts", AutoSize = true };
     private readonly ComboBox _restore = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 260 };
     private readonly TextBox _content = new() { Width = 360 };
+    private readonly TextBox _user = new() { Width = 360 };
 
     public OptionsDialog()
     {
@@ -19,7 +20,7 @@ public sealed class OptionsDialog : Form
         MinimizeBox = MaximizeBox = false;
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.CenterParent;
-        ClientSize = new Size(620, 470);
+        ClientSize = new Size(620, 560);
         Padding = new Padding(16);
 
         var s = AppServices.Settings;
@@ -29,11 +30,14 @@ public sealed class OptionsDialog : Form
         _restore.Items.AddRange(new object[] { "Ask on start", "Always restore", "Never restore" });
         _restore.SelectedIndex = (int)s.RestoreWindows;
         _content.Text = s.ContentFolder;
+        _user.Text = s.UserName;
 
         var stack = Ui.Stack(new Padding(0));
         stack.Controls.Add(Ui.Text("Display", FontRole.Heading));
         stack.Controls.Add(_touch);
         stack.Controls.Add(_daylight);
+        stack.Controls.Add(Ui.Text("Your name or call sign (filled in on checklists and the radio log)", FontRole.Heading, padding: new Padding(0, 12, 0, 2)));
+        stack.Controls.Add(_user);
         stack.Controls.Add(Ui.Text("Windows and timers", FontRole.Heading, padding: new Padding(0, 12, 0, 2)));
         stack.Controls.Add(Ui.Text("Reopen the windows that were open when the toolkit last closed:"));
         stack.Controls.Add(_restore);
@@ -82,6 +86,7 @@ public sealed class OptionsDialog : Form
         var contentChanged = !string.Equals(s.ContentFolder, folder, StringComparison.OrdinalIgnoreCase);
         s.ContentFolder = folder;
         s.AlertSound = _sound.Checked;
+        s.UserName = _user.Text.Trim();
         s.RestoreWindows = (RestoreWindowsMode)_restore.SelectedIndex;
         s.Save();
         if (contentChanged)

@@ -12,22 +12,27 @@ public sealed class TimersWindow : ToolWindow
     public const string ToolId = "timers";
 
     private readonly FlowLayoutPanel _list;
+    private readonly TableLayoutPanel _top;
+    private Control? _namedRow;
     private readonly Dictionary<Guid, Label> _times = new();
 
     public TimersWindow() : base(ToolRegistry.Find(ToolId)!)
     {
-        var top = new TableLayoutPanel { Dock = DockStyle.Top, Height = 132, ColumnCount = 1, RowCount = 2, Padding = new Padding(8, 8, 8, 0) };
-        top.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-        top.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+        _top = new TableLayoutPanel { Dock = DockStyle.Top, Height = 196, ColumnCount = 1, RowCount = 3, Padding = new Padding(8, 8, 8, 0) };
+        for (var i = 0; i < 3; i++)
+            _top.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3f));
         var first = Ui.ButtonRow(
             Ui.Button("Start stopwatch", ButtonStyle.Primary, StartStopwatch),
+            Ui.Button("Named stopwatch…", ButtonStyle.Primary, StartNamedStopwatch),
             Ui.Button("Custom countdown…", ButtonStyle.Secondary, StartCustomCountdown));
         Button Preset(int minutes) => Ui.Button($"{minutes} min", ButtonStyle.Secondary,
             () => AppServices.Timers.StartCountdown($"{minutes}-minute countdown", TimeSpan.FromMinutes(minutes)));
         var presets = Ui.ButtonRow(Preset(1), Preset(2), Preset(5), Preset(10), Preset(15), Preset(20), Preset(30));
         first.Dock = presets.Dock = DockStyle.Fill;
-        top.Controls.Add(first, 0, 0);
-        top.Controls.Add(presets, 0, 1);
+        _top.Controls.Add(first, 0, 0);
+        _top.Controls.Add(presets, 0, 1);
+        BuildNamedRow();
+        var top = _top;
 
         _list = Ui.Stack(new Padding(8));
         Body.Controls.Add(_list);
@@ -49,6 +54,50 @@ public sealed class TimersWindow : ToolWindow
     {
         var n = AppServices.Timers.Timers.Count(t => t.Mode == TimerMode.Stopwatch) + 1;
         AppServices.Timers.StartStopwatch($"Stopwatch {n}");
+    }
+
+    /// <summary>One-tap named stopwatches (tourniquet, CPR, road closure, crew on duty…), editable under "Edit names".</summary>
+    private void BuildNamedRow()
+    {
+        _namedRow?.Dispose();
+        var buttons = AppServices.Settings.TimerPresets.Take(6)
+            .Select(p => Ui.Button(p.Name, ButtonStyle.Accent, () => AppServices.Timers.StartStopwatch(p.Name, "Timers", p.RemindEveryMinutes)))
+            .Append(Ui.Button("Edit names…", ButtonStyle.Secondary, EditPresets, FontRole.Normal))
+            .ToArray();
+        var row = Ui.ButtonRow(buttons);
+        row.Dock = DockStyle.Fill;
+        _top.Controls.Add(row, 0, 2);
+        _namedRow = row;
+        UiMode.Apply(row);
+    }
+
+    private void StartNamedStopwatch()
+    {
+        var name = InputDialog.Ask(this, "Named stopwatch", "Name (e.g. Tourniquet – casualty 2, Road closure A):");
+        if (!string.IsNullOrWhiteSpace(name))
+            AppServices.Timers.StartStopwatch(name, "Timers");
+    }
+
+    private void EditPresets()
+    {
+        var text = string.Join(Environment.NewLine, AppServices.Settings.TimerPresets.Select(p => p.RemindEveryMinutes > 0 ? $"{p.Name} | {p.RemindEveryMinutes}" : p.Name));
+        var edited = TextEditDialog.Ask(this, "Named stopwatches",
+            "One per line (up to 6). Add \"| minutes\" for a reminder, e.g. \"Tourniquet | 30\".", text);
+        if (edited == null)
+            return;
+        var presets = new List<TimerPreset>();
+        foreach (var line in edited.Replace("\r", "").Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0))
+        {
+            var parts = line.Split('|');
+            presets.Add(new TimerPreset
+            {
+                Name = parts[0].Trim(),
+                RemindEveryMinutes = parts.Length > 1 && int.TryParse(parts[1].Trim(), out var m) && m > 0 ? m : 0
+            });
+        }
+        AppServices.Settings.TimerPresets = presets.Where(p => p.Name.Length > 0).Take(6).ToList();
+        AppServices.Settings.Save();
+        BuildNamedRow();
     }
 
     private void StartCustomCountdown()

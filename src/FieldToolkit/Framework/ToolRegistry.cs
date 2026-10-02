@@ -1,6 +1,8 @@
+using FieldToolkit.Tools.Checklists;
 using FieldToolkit.Tools.Cpr;
 using FieldToolkit.Tools.FirstAid;
 using FieldToolkit.Tools.Hazmat;
+using FieldToolkit.Tools.Kit;
 using FieldToolkit.Tools.Location;
 using FieldToolkit.Tools.Timers;
 
@@ -58,6 +60,25 @@ public static class ToolRegistry
             Create = _ => new TimersWindow(),
             SingleInstance = true,
             DefaultSize = new Size(560, 640)
+        },
+        new ToolDescriptor
+        {
+            Id = ChecklistsWindow.ToolId,
+            Title = "Checklists",
+            Description = "Pre-trip, kit and handover checks",
+            IconName = "checklists",
+            Create = state => new ChecklistsWindow(state),
+            DefaultSize = new Size(640, 720)
+        },
+        new ToolDescriptor
+        {
+            Id = KitWindow.ToolId,
+            Title = "Kit Tracker",
+            Description = "Expiry dates for kit and extinguishers",
+            IconName = "kit",
+            Create = state => new KitWindow(state),
+            SingleInstance = true,
+            DefaultSize = new Size(680, 700)
         }
     };
 

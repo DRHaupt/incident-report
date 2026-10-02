@@ -1,6 +1,8 @@
+using FieldToolkit.Core.Kit;
 using FieldToolkit.Core.Timers;
 using FieldToolkit.Core.Windows;
 using FieldToolkit.Framework;
+using FieldToolkit.Tools.Kit;
 using FieldToolkit.Tools.Timers;
 using FieldToolkit.UI;
 using Shared;
@@ -55,6 +57,7 @@ public sealed class LauncherForm : Form
         AppServices.Windows.CurrentScreen = () => Screen.FromControl(this);
         AppServices.Windows.Changed += (_, _) => RebuildSide();
         AppServices.Timers.Changed += (_, _) => RebuildSide();
+        AppServices.Kit.Changed += (_, _) => RebuildSide();
         AppServices.ClockTick += (_, _) => UpdateTimes();
         UiMode.Changed += (_, _) => { LayoutTiles(); RebuildSide(); };
         Resize += (_, _) => AdaptToWidth();
@@ -196,6 +199,17 @@ public sealed class LauncherForm : Form
         _sideStack.Controls.Clear();
         _timerCards.Clear();
 
+        // Kit expiry warnings come first: they need action before the next job.
+        var (expired, due) = KitRules.Summary(AppServices.Kit.Items, AppServices.Today);
+        if (expired + due > 0)
+        {
+            var text = expired > 0 ? $"KIT: {expired} expired" + (due > 0 ? $", {due} due soon" : "") : $"Kit: {due} due soon";
+            var kit = Ui.Button(text + " – tap to view", expired > 0 ? ButtonStyle.Danger : ButtonStyle.Accent,
+                () => AppServices.Windows.Open(KitWindow.ToolId, "attention"));
+            kit.Margin = new Padding(0, 0, 0, 10);
+            _sideStack.Controls.Add(kit);
+        }
+
         var timers = AppServices.Timers.Timers;
         _sideStack.Controls.Add(Ui.Text($"Active timers ({timers.Count})", FontRole.Heading, Brand.Navy, new Padding(0, 0, 0, 4)));
         if (timers.Count == 0)
@@ -255,8 +269,16 @@ public sealed class LauncherForm : Form
         return card;
     }
 
+    private DateOnly _shownDay = AppServices.Today;
+
     private void UpdateTimes()
     {
+        if (AppServices.Today != _shownDay)
+        {
+            // New day: kit items may have become due or expired.
+            _shownDay = AppServices.Today;
+            RebuildSide();
+        }
         foreach (var t in AppServices.Timers.Timers)
             if (_timerCards.TryGetValue(t.Id, out var c))
             {

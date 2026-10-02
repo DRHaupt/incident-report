@@ -19,6 +19,13 @@ public enum LocationSourceKind
     Manual
 }
 
+/// <summary>A one-tap named stopwatch on the Timers tool.</summary>
+public sealed class TimerPreset
+{
+    public string Name { get; set; } = "";
+    public int RemindEveryMinutes { get; set; }
+}
+
 public sealed class ToolkitSettings
 {
     public bool TouchMode { get; set; } = true;
@@ -43,6 +50,17 @@ public sealed class ToolkitSettings
 
     /// <summary>Format read out on the radio: "mgrs" or "decimal".</summary>
     public string ReadoutFormat { get; set; } = "mgrs";
+
+    public List<TimerPreset> TimerPresets { get; set; } = new()
+    {
+        new() { Name = "Tourniquet", RemindEveryMinutes = 30 },
+        new() { Name = "CPR", RemindEveryMinutes = 2 },
+        new() { Name = "Road closure", RemindEveryMinutes = 15 },
+        new() { Name = "Crew on duty", RemindEveryMinutes = 60 }
+    };
+
+    /// <summary>Name filled in as "checked by" on new checklists.</summary>
+    public string UserName { get; set; } = "";
 
     public int CprRate { get; set; } = 110;
     public bool CprSound { get; set; } = true;

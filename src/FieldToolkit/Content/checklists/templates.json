@@ -1,0 +1,264 @@
+{
+  "items": [
+    {
+      "id": "62bf0535-c861-559c-8002-fe1be771d6e1",
+      "name": "Vehicle pre-trip check",
+      "category": "Vehicle",
+      "referencePrompt": "Vehicle / call sign",
+      "lines": [
+        {
+          "text": "Outside",
+          "heading": true
+        },
+        {
+          "text": "Tyres – pressure, tread and damage (including spare)",
+          "heading": false
+        },
+        {
+          "text": "Lights – head, tail, brake, indicators, hazards",
+          "heading": false
+        },
+        {
+          "text": "Warning beacons and sirens (if fitted)",
+          "heading": false
+        },
+        {
+          "text": "Body, windscreen, wipers and mirrors",
+          "heading": false
+        },
+        {
+          "text": "Number plates clean and visible",
+          "heading": false
+        },
+        {
+          "text": "Under the bonnet",
+          "heading": true
+        },
+        {
+          "text": "Engine oil level",
+          "heading": false
+        },
+        {
+          "text": "Coolant level",
+          "heading": false
+        },
+        {
+          "text": "Washer fluid",
+          "heading": false
+        },
+        {
+          "text": "No leaks under the vehicle",
+          "heading": false
+        },
+        {
+          "text": "Inside",
+          "heading": true
+        },
+        {
+          "text": "Fuel level – note level",
+          "heading": false
+        },
+        {
+          "text": "Dashboard warning lights clear",
+          "heading": false
+        },
+        {
+          "text": "Horn",
+          "heading": false
+        },
+        {
+          "text": "Seat belts and seats",
+          "heading": false
+        },
+        {
+          "text": "Radio check with control",
+          "heading": false
+        },
+        {
+          "text": "Navigation / Toughbook mounted and charging",
+          "heading": false
+        },
+        {
+          "text": "Equipment",
+          "heading": true
+        },
+        {
+          "text": "First aid kit present and sealed",
+          "heading": false
+        },
+        {
+          "text": "Fire extinguisher present, gauge in the green, seal intact",
+          "heading": false
+        },
+        {
+          "text": "Warning triangle / cones",
+          "heading": false
+        },
+        {
+          "text": "Hi-vis vests for all crew",
+          "heading": false
+        },
+        {
+          "text": "Torches and spare batteries",
+          "heading": false
+        },
+        {
+          "text": "Tow strap / recovery equipment",
+          "heading": false
+        }
+      ]
+    },
+    {
+      "id": "353a41bc-e78d-5b2f-b020-42c9bcc8d7a3",
+      "name": "Medical kit check",
+      "category": "Kit",
+      "referencePrompt": "Kit bag / location",
+      "lines": [
+        {
+          "text": "Bag",
+          "heading": true
+        },
+        {
+          "text": "Bag seal intact, or record seal number",
+          "heading": false
+        },
+        {
+          "text": "Contents match the kit list",
+          "heading": false
+        },
+        {
+          "text": "Expiry dates checked (update the Kit tracker)",
+          "heading": false
+        },
+        {
+          "text": "Contents",
+          "heading": true
+        },
+        {
+          "text": "Gloves – several sizes",
+          "heading": false
+        },
+        {
+          "text": "Dressings, bandages and trauma dressings",
+          "heading": false
+        },
+        {
+          "text": "Tourniquets",
+          "heading": false
+        },
+        {
+          "text": "Shears",
+          "heading": false
+        },
+        {
+          "text": "Airway adjuncts and pocket mask",
+          "heading": false
+        },
+        {
+          "text": "Foil blankets",
+          "heading": false
+        },
+        {
+          "text": "Devices",
+          "heading": true
+        },
+        {
+          "text": "AED present, status indicator OK",
+          "heading": false
+        },
+        {
+          "text": "AED pads in date (adult and child)",
+          "heading": false
+        },
+        {
+          "text": "Spare AED battery in date",
+          "heading": false
+        },
+        {
+          "text": "Oxygen cylinder level (if carried)",
+          "heading": false
+        },
+        {
+          "text": "Finish",
+          "heading": true
+        },
+        {
+          "text": "Restock list written for anything used or missing",
+          "heading": false
+        }
+      ]
+    },
+    {
+      "id": "da7fcb34-9b04-58a8-b8b4-7cbdba35602f",
+      "name": "Shift handover",
+      "category": "Handover",
+      "referencePrompt": "Handing over to",
+      "lines": [
+        {
+          "text": "Incidents",
+          "heading": true
+        },
+        {
+          "text": "Incidents still open and where they are",
+          "heading": false
+        },
+        {
+          "text": "Casualties handed over or still on scene",
+          "heading": false
+        },
+        {
+          "text": "Timers still running (tourniquet, road closures)",
+          "heading": false
+        },
+        {
+          "text": "Operations",
+          "heading": true
+        },
+        {
+          "text": "Crew locations and call signs",
+          "heading": false
+        },
+        {
+          "text": "Road closures and access routes in place",
+          "heading": false
+        },
+        {
+          "text": "Known hazards on site",
+          "heading": false
+        },
+        {
+          "text": "Radio log reviewed, outstanding messages",
+          "heading": false
+        },
+        {
+          "text": "Vehicles and kit",
+          "heading": true
+        },
+        {
+          "text": "Vehicle condition and fuel",
+          "heading": false
+        },
+        {
+          "text": "Kit used and restock needed",
+          "heading": false
+        },
+        {
+          "text": "Faults reported and to whom",
+          "heading": false
+        },
+        {
+          "text": "People",
+          "heading": true
+        },
+        {
+          "text": "Crew welfare and rest breaks",
+          "heading": false
+        },
+        {
+          "text": "Keys, radios and Toughbook handed over",
+          "heading": false
+        }
+      ]
+    }
+  ]
+}

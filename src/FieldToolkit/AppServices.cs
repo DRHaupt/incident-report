@@ -2,7 +2,9 @@ using System.Media;
 using System.Runtime.InteropServices;
 using FieldToolkit.Core.FirstAid;
 using FieldToolkit.Core;
+using FieldToolkit.Core.Checklists;
 using FieldToolkit.Core.Hazmat;
+using FieldToolkit.Core.Kit;
 using FieldToolkit.Core.Location;
 using FieldToolkit.Core.Timers;
 using FieldToolkit.Framework;
@@ -30,6 +32,12 @@ public static class AppServices
 
     /// <summary>Saved locations (incident site, rendezvous points…).</summary>
     public static JsonListStore<SavedPoint> Points { get; private set; } = null!;
+
+    public static JsonListStore<ChecklistTemplate> ChecklistTemplates { get; private set; } = null!;
+    public static JsonListStore<ChecklistRun> ChecklistRuns { get; private set; } = null!;
+    public static JsonListStore<KitItem> Kit { get; private set; } = null!;
+
+    public static DateOnly Today => DateOnly.FromDateTime(DateTime.Now);
 
     /// <summary>Raised four times a second for live read-outs (timers). Handlers must be cheap.</summary>
     public static event EventHandler? ClockTick;
@@ -68,6 +76,16 @@ public static class AppServices
         Timers.Alert += OnTimerAlert;
         Windows = new WindowManager(Path.Combine(ToolkitSettings.DataFolder, "session.json"));
         Points = new JsonListStore<SavedPoint>(Path.Combine(ToolkitSettings.DataFolder, "points.json"));
+        ChecklistTemplates = new JsonListStore<ChecklistTemplate>(Path.Combine(ToolkitSettings.DataFolder, "checklist-templates.json"));
+        if (!ChecklistTemplates.Loaded && ChecklistTemplates.LoadError == null)
+        {
+            // First run: start from the example templates shipped in Content\checklists (the user edits their own copy).
+            var defaults = new JsonListStore<ChecklistTemplate>(Path.Combine(ContentFolder, "checklists", "templates.json"));
+            ChecklistTemplates.Items.AddRange(defaults.Items);
+            ChecklistTemplates.Save();
+        }
+        ChecklistRuns = new JsonListStore<ChecklistRun>(Path.Combine(ToolkitSettings.DataFolder, "checklist-runs.json"));
+        Kit = new JsonListStore<KitItem>(Path.Combine(ToolkitSettings.DataFolder, "kit.json"));
 
         Clock.Tick += (_, _) =>
         {
