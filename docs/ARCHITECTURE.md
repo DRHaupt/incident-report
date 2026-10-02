@@ -11,8 +11,8 @@ IncidentReporting.sln
 ├─ src/Shared                  net8.0-windows  Shared WinForms infrastructure (both apps)
 │    Branding.cs               Brand palette + per-app logo/icon loading (BrandAssets)
 │    UI/UiMode.cs              Standard/Touch scaling + Standard/Daylight theme, applied live
-│    UI/Theme.cs               Colour palettes and colour roles
-│    UI/UiModeButtons.cs       Toolbar toggles for Touch Mode / Daylight theme
+│    UI/UiModeButtons.cs       Toolbar toggles and Ctrl+T / Ctrl+D handling
+│    UI/WrapLabel.cs           Self-sizing word-wrapping label for reflowing instructions
 │    Settings/JsonSettings.cs  Load/save JSON settings in %LOCALAPPDATA%\<app>
 ├─ src/IncidentReporting       net8.0-windows  Incident Report Manager (unchanged features)
 ├─ src/FieldToolkit.Core       net8.0          UI-free logic: content models, loaders, search,
@@ -67,6 +67,8 @@ and the logic is kept out of the forms.
 
 ### First aid (`Content/firstaid/`)
 
+* `_cpr.json`: CPR helper rate range, ratios, depths and hand positions per age group (clinical values are
+  data, not code).
 * `_guide.json`: disclaimer, review record (`reviewedBy`, `reviewedOn`), content version, and the
   plain-language **search synonyms** ("fitting" → seizure, "bleeding a lot" → severe bleeding…).
 * One file per topic, for example `cpr-adult.json`:
@@ -109,8 +111,11 @@ DATA** banner on every screen while `isSample` is true.
 | Scale  | Standard / **Touch** (Ctrl+T) | Fonts, rows, buttons, menus, docked chrome grow ×1.3 |
 | Theme  | Standard / **Daylight** (Ctrl+D) | High-contrast palette: pure white surfaces, black text, black headers with white/amber text, heavy borders, semibold body text |
 
-Controls get a **colour role** (`Header`, `Accent`, `Danger`, `Panel`, `Muted`, …) via
-`.Role(ColorRole.X)`. The theme maps roles to colours, so tool code never hard-codes colours.
-Controls without a role are given theme defaults by control type.
+Daylight works as a **colour transform**: every control keeps the colours it was given for the
+standard theme. In Daylight they are mapped as follows: dark colours become black, light and pastel
+colours become white, and strong signal colours (red, green, amber, blue) become their most saturated
+form. Text is set to black or white to contrast with the result. Tool code therefore uses one palette
+(`Shared.Brand`). Colours that change at run time go through `UiMode.SetColors`, and custom-painted
+controls use `UiMode.Map`.
 The Field Toolkit's tool windows use large buttons in both modes. Touch Mode makes them larger still
 for use with gloves.
