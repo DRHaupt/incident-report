@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>Shared</AssemblyName>
+    <RootNamespace>Shared</RootNamespace>
+    <Description>Branding, interface modes and settings helpers shared by the desktop apps.</Description>
+  </PropertyGroup>
+
+</Project>

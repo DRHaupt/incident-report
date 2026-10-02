@@ -1,5 +1,6 @@
 using System.Globalization;
 using IncidentReporting.Models;
+using Shared.UI;
 
 namespace IncidentReporting.UI;
 
@@ -266,7 +267,7 @@ public static class FieldEditorFactory
                 return;
             }
             var linked = Services.AppSession.Repository.GetByNumber(number);
-            _summary.ForeColor = linked == null ? Color.DarkRed : SystemColors.GrayText;
+            UiMode.SetColors(_summary, Color.Transparent, linked == null ? Color.DarkRed : SystemColors.GrayText);
             _summary.Text = linked == null
                 ? "Report not found"
                 : $"{linked.Title} ({Services.ReportFormatter.FormName(linked.FormCode)})";

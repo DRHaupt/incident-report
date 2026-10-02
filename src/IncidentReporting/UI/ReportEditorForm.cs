@@ -1,6 +1,7 @@
 using IncidentReporting.Data;
 using IncidentReporting.Models;
 using IncidentReporting.Services;
+using Shared.UI;
 
 namespace IncidentReporting.UI;
 
@@ -141,7 +142,7 @@ public sealed class ReportEditorForm : Form
         tools.Items.AddRange(new ToolStripItem[]
         {
             btnSaveTool, new ToolStripSeparator(), btnPreview, btnPrint, export, new ToolStripSeparator(),
-            _btnSubmit, _btnReview, _btnClose, _btnReopen, TouchModeButton.Create()
+            _btnSubmit, _btnReview, _btnClose, _btnReopen, UiModeButtons.Touch(), UiModeButtons.Daylight()
         });
         Controls.Add(tools);
 
@@ -704,10 +705,9 @@ public sealed class ReportEditorForm : Form
             case Keys.Control | Keys.P:
                 Print();
                 return true;
-            case Keys.Control | Keys.T:
-                UiMode.SetTouch(!UiMode.Touch);
-                return true;
         }
+        if (UiModeButtons.HandleShortcut(keyData))
+            return true;
         return base.ProcessCmdKey(ref msg, keyData);
     }
 

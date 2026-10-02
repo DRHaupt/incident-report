@@ -4,6 +4,7 @@ using IncidentReporting.Data;
 using IncidentReporting.Models;
 using IncidentReporting.Services;
 using IncidentReporting.Templates;
+using Shared.UI;
 
 namespace IncidentReporting.UI;
 
@@ -169,8 +170,15 @@ public sealed class MainForm : Form
         view.DropDownItems.Add(new ToolStripSeparator());
         var touchMenu = new ToolStripMenuItem("&Touch Mode") { ShortcutKeys = Keys.Control | Keys.T, Checked = UiMode.Touch };
         touchMenu.Click += (_, _) => UiMode.SetTouch(!UiMode.Touch);
-        UiMode.Changed += (_, _) => touchMenu.Checked = UiMode.Touch;
+        var daylightMenu = new ToolStripMenuItem("&Daylight (High Contrast)") { ShortcutKeys = Keys.Control | Keys.D, Checked = UiMode.Daylight };
+        daylightMenu.Click += (_, _) => UiMode.SetDaylight(!UiMode.Daylight);
+        UiMode.Changed += (_, _) =>
+        {
+            touchMenu.Checked = UiMode.Touch;
+            daylightMenu.Checked = UiMode.Daylight;
+        };
         view.DropDownItems.Add(touchMenu);
+        view.DropDownItems.Add(daylightMenu);
 
         var reports = new ToolStripMenuItem("&Reports");
         foreach (var category in FormCatalog.Categories)
@@ -225,7 +233,8 @@ public sealed class MainForm : Form
         tools.Items.Add(Btn("Export List", "Export the current list to CSV", ExportListCsv));
         tools.Items.Add(new ToolStripSeparator());
         tools.Items.Add(Btn("Refresh", "Refresh (F5)", () => { BuildTree(); RefreshList(); }));
-        tools.Items.Add(TouchModeButton.Create());
+        tools.Items.Add(UiModeButtons.Touch());
+        tools.Items.Add(UiModeButtons.Daylight());
 
         _search.Alignment = ToolStripItemAlignment.Right;
         _search.Width = 240;

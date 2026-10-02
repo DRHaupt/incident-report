@@ -1,4 +1,5 @@
 using IncidentReporting.Data;
+using Shared.UI;
 
 namespace IncidentReporting.UI;
 

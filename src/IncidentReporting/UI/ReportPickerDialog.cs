@@ -1,6 +1,7 @@
 using IncidentReporting.Data;
 using IncidentReporting.Models;
 using IncidentReporting.Services;
+using Shared.UI;
 
 namespace IncidentReporting.UI;
 

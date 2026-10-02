@@ -1,5 +1,6 @@
 using IncidentReporting.Services;
 using IncidentReporting.UI;
+using Shared.UI;
 
 namespace IncidentReporting;
 
@@ -20,7 +21,8 @@ internal static class Program
         try
         {
             AppSession.Initialize();
-            UiMode.Initialize(AppSession.Settings.TouchMode);
+            UiMode.Initialize(AppSession.Settings.TouchMode, AppSession.Settings.DaylightTheme);
+            UiMode.Changed += (_, _) => SaveUiPreferences();
         }
         catch (Exception ex)
         {
@@ -31,5 +33,19 @@ internal static class Program
         }
 
         Application.Run(new MainForm());
+    }
+
+    private static void SaveUiPreferences()
+    {
+        AppSession.Settings.TouchMode = UiMode.Touch;
+        AppSession.Settings.DaylightTheme = UiMode.Daylight;
+        try
+        {
+            AppSession.Settings.Save();
+        }
+        catch (IOException)
+        {
+            // Preference not persisted; the mode still applies for this session.
+        }
     }
 }
