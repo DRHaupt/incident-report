@@ -85,6 +85,8 @@ jobs:
           dotnet build installer/FieldSuite.wixproj -c Release -p:SuiteVersion=0.0.${{ github.run_number }} "-p:PublishRoot=$PWD\publish\"
           New-Item -ItemType Directory upgrade-test | Out-Null
           Move-Item installer/bin/x64/Release/*.msi upgrade-test/
+          # WiX's incremental build would skip linking the second version (same inputs) and then miss its output file.
+          Remove-Item installer/bin, installer/obj -Recurse -Force
           dotnet build installer/FieldSuite.wixproj -c Release -p:SuiteVersion=$env:SUITE_VERSION "-p:PublishRoot=$PWD\publish\"
 
       - name: Write the update manifest (fieldsuite-update.json, signed when the key is set)
