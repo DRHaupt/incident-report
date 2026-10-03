@@ -1,6 +1,7 @@
 using FieldMap.Core.Aprs;
 using FieldMap.Core.Data;
 using FieldMap.Core.Imagery;
+using FieldMap.Core.Overlays;
 using FieldMap.Core.Geo;
 using FieldMap.Core.Drawings;
 using FieldMap.Core.Routing;
@@ -134,6 +135,105 @@ public class RenderingTests
             }
         store.SetMetadata(new Dictionary<string, string> { ["name"] = "Synthetic test imagery", ["attribution"] = "SYNTHETIC IMAGERY (test)" });
         return path;
+    }
+
+    [Fact]
+    public void SquareToQuad_maps_the_corners()
+    {
+        var p = new[] { new SKPoint(10, 20), new SKPoint(200, 40), new SKPoint(180, 300), new SKPoint(0, 260) };
+        var m = MapRenderer.SquareToQuad(p[0], p[1], p[2], p[3]);
+        var unit = new[] { new SKPoint(0, 0), new SKPoint(1, 0), new SKPoint(1, 1), new SKPoint(0, 1) };
+        for (var i = 0; i < 4; i++)
+        {
+            var q = m.MapPoint(unit[i]);
+            Assert.Equal(p[i].X, q.X, 2);
+            Assert.Equal(p[i].Y, q.Y, 2);
+        }
+    }
+
+    /// <summary>An event layer like an organiser's KMZ: a rotated site-plan image, a fence, a course and posts.</summary>
+    private static OverlayLayer SampleEventLayer()
+    {
+        using var bmp = new SKBitmap(400, 300);
+        using (var c = new SKCanvas(bmp))
+        {
+            c.Clear(new SKColor(0xF4, 0xF0, 0xE0));
+            using var p = new SKPaint { IsAntialias = true };
+            p.Color = new SKColor(0x30, 0x60, 0xC0);
+            c.DrawRect(30, 30, 140, 80, p);
+            p.Color = new SKColor(0xE0, 0x40, 0x40);
+            c.DrawRect(230, 170, 120, 90, p);
+            p.Color = SKColors.Black;
+            using var f = new SKFont(SKTypeface.Default, 26);
+            c.DrawText("MAIN STAGE", 34, 80, f, p);
+            c.DrawText("FIRST AID", 236, 220, f, p);
+            p.Style = SKPaintStyle.Stroke;
+            p.StrokeWidth = 6;
+            c.DrawRect(3, 3, 394, 294, p);
+        }
+        using var img = SKImage.FromBitmap(bmp);
+        using var data = img.Encode(SKEncodedImageFormat.Png, 90);
+        var content = new MapFileContent { Name = "Sample Festival" };
+        var sw = SampleRegion.At(80, 620);
+        var ne = SampleRegion.At(480, 920);
+        content.GroundOverlays.Add(new GroundOverlay
+        {
+            Name = "Site plan",
+            Image = data.ToArray(),
+            Corners = MapFileImporter.BoxCorners(ne.Lat, sw.Lat, ne.Lon, sw.Lon, 15)
+        });
+        content.Features.Add(new OverlayFeature
+        {
+            Name = "Fence", Geometry = OverlayGeometry.Polygon, Stroke = 0xFFFF8800,
+            Parts = { new List<GeoPoint> { SampleRegion.At(60, 600), SampleRegion.At(500, 600), SampleRegion.At(500, 940), SampleRegion.At(60, 940) } }
+        });
+        content.Features.Add(new OverlayFeature
+        {
+            Name = "5 km course", Geometry = OverlayGeometry.Line, Stroke = 0xFF00A0FF, Width = 4,
+            Parts = { new List<GeoPoint> { SampleRegion.At(-400, 300), SampleRegion.At(-100, 450), SampleRegion.At(60, 700) } }
+        });
+        foreach (var (name, x, y) in new[] { ("Gate A", 60, 770), ("Medic tent", 300, 650), ("Lost kids", 420, 880) })
+            content.Features.Add(new OverlayFeature { Name = name, Geometry = OverlayGeometry.Point, Parts = { new List<GeoPoint> { SampleRegion.At(x, y) } } });
+        return new OverlayLayer(new OverlayLayerInfo { Name = content.Name, ImageOpacity = 0.85f }, content);
+    }
+
+    [Theory]
+    [InlineData("standard")]
+    [InlineData("night")]
+    public void Draws_event_layers_with_their_site_plan(string theme)
+    {
+        using var tiles = new MbTilesReader(Path.Combine(_f.Dir, RegionBuilder.TilesFile));
+        var layer = SampleEventLayer();
+        var scene = new MapScene
+        {
+            Regions = new[] { new TileSource(tiles, new GeoBounds(_f.Manifest.MinLat, _f.Manifest.MinLon, _f.Manifest.MaxLat, _f.Manifest.MaxLon)) },
+            Tiles = new TileCache(),
+            Style = theme == "night" ? MapStyle.Night : MapStyle.Standard,
+            Pois = new PoiIndex(_f.Search.LoadPois()),
+            Synchronous = true,
+            UiScale = 1.3f,
+            Overlays = new[] { layer }
+        };
+        var vp = Viewport.At(SampleRegion.At(150, 680), 16, 0, 1000, 760);
+        using var bmp = new SKBitmap(vp.Width, vp.Height);
+        RenderResult result;
+        using (var canvas = new SKCanvas(bmp))
+            result = MapRenderer.Render(canvas, vp, scene);
+        Directory.CreateDirectory(OutputDir);
+        using (var img = SKImage.FromBitmap(bmp))
+        using (var data = img.Encode(SKEncodedImageFormat.Png, 90))
+        using (var fs = File.Create(Path.Combine(OutputDir, $"event-layer-{theme}.png")))
+            data.SaveTo(fs);
+        Assert.Equal(3, result.OverlayPoints.Count);
+        var (mx, my) = vp.GeoToScreen(SampleRegion.At(300, 650));
+        Assert.Contains(result.OverlayPoints, h => h.Feature.Name == "Medic tent" && h.Rect.Contains((float)mx, (float)my));
+        if (theme == "standard")
+        {
+            // The site plan's cream background shows at its centre.
+            var (cx, cy) = vp.GeoToScreen(SampleRegion.At(280, 770));
+            var c = bmp.GetPixel((int)cx, (int)cy);
+            Assert.True(c.Red > 150 && c.Green > 140, $"site plan not drawn: {c}");
+        }
     }
 
     [Theory]

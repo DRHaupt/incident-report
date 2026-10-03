@@ -157,6 +157,9 @@ public class FieldMapSmokeTests
         // Imagery: install a small synthetic package, switch to Imagery and Hybrid, and back.
         RunImagery(follow);
 
+        // Event layers: import a KMZ with a site plan, tap a post, convert it to a drawing, remove the layer.
+        RunEventLayer(follow);
+
         // Snapshot export.
         var dir = Path.Combine(Path.GetTempPath(), "fieldmap-ui-" + Guid.NewGuid().ToString("N")[..6]);
         Directory.CreateDirectory(dir);
@@ -387,6 +390,64 @@ public class FieldMapSmokeTests
         AppServices.Imagery.Delete(AppServices.Imagery.Packages().First(p => p.Name == "UI test imagery"));
         Assert.DoesNotContain(AppServices.Imagery.Available(), s => s.Name == "UI test imagery");
         map.ClosePanel();
+    }
+
+    private static void RunEventLayer(MapWindow map)
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "fieldmap-ui-kmz-" + Guid.NewGuid().ToString("N")[..6]);
+        Directory.CreateDirectory(dir);
+        var kmz = Path.Combine(dir, "festival.kmz");
+        var post = SampleRegion.At(300, 650);
+        var sw = SampleRegion.At(80, 620);
+        var ne = SampleRegion.At(480, 920);
+        string F(double v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var kml = $"""
+            <kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>UI test festival</name>
+              <Placemark><name>Medic tent</name><description>Staffed all day</description><Point><coordinates>{F(post.Lon)},{F(post.Lat)}</coordinates></Point></Placemark>
+              <Placemark><name>Fence</name><Polygon><outerBoundaryIs><LinearRing><coordinates>{F(sw.Lon)},{F(sw.Lat)} {F(ne.Lon)},{F(sw.Lat)} {F(ne.Lon)},{F(ne.Lat)} {F(sw.Lon)},{F(ne.Lat)} {F(sw.Lon)},{F(sw.Lat)}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>
+              <GroundOverlay><name>Plan</name><Icon><href>plan.png</href></Icon>
+                <LatLonBox><north>{F(ne.Lat)}</north><south>{F(sw.Lat)}</south><east>{F(ne.Lon)}</east><west>{F(sw.Lon)}</west><rotation>10</rotation></LatLonBox></GroundOverlay>
+            </Document></kml>
+            """;
+        using (var zip = System.IO.Compression.ZipFile.Open(kmz, System.IO.Compression.ZipArchiveMode.Create))
+        {
+            using (var w = new StreamWriter(zip.CreateEntry("doc.kml").Open()))
+                w.Write(kml);
+            using var bmp = new SkiaSharp.SKBitmap(200, 150);
+            using (var c = new SkiaSharp.SKCanvas(bmp))
+                c.Clear(new SkiaSharp.SKColor(0xF4, 0xF0, 0xE0));
+            using var img = SkiaSharp.SKImage.FromBitmap(bmp);
+            using var data = img.Encode(SkiaSharp.SKEncodedImageFormat.Png, 90);
+            using var s = zip.CreateEntry("plan.png").Open();
+            data.SaveTo(s);
+        }
+        map.ImportMapFiles(new[] { kmz });
+        Pump(300);
+        var layer = Assert.Single(AppServices.Overlays.Layers, l => l.Info.Name == "UI test festival");
+        Assert.Single(layer.Content.GroundOverlays);
+        Assert.Contains("UI test festival", PanelText(map));
+        map.MapView.SetView(post, 16, 0);
+        map.MapView.Refresh();
+        Pump(300);
+        var hit = map.MapView.HitOverlayPoint(Point.Round(map.MapView.GeoToScreen(post)));
+        Assert.NotNull(hit);
+        Assert.Equal("Medic tent", hit!.Value.Feature.Name);
+        map.ShowPanel(new OverlayFeaturePanel(map, hit.Value.Layer, hit.Value.Feature));
+        Pump(100);
+        Assert.Contains("Staffed all day", PanelText(map));
+        var before = AppServices.Drawings.Items.Count;
+        All(map.CurrentPanel!).OfType<Button>().First(b => b.Text == "Add to incident drawings").PerformClick();
+        Pump(100);
+        Assert.Equal(before + 1, AppServices.Drawings.Items.Count);
+        var added = AppServices.Drawings.Items[^1];
+        Assert.Equal("Medic tent", added.Label);
+        AppServices.Drawings.Items.Remove(added);
+        AppServices.NotifyDrawingsChanged();
+        // The fence (an area) is found by tapping inside it.
+        Assert.Equal("Fence", map.MapView.HitOverlayShape(Point.Round(map.MapView.GeoToScreen(SampleRegion.At(150, 880)))) ?.Feature.Name);
+        AppServices.Overlays.Remove(layer.Info.Id);
+        map.ClosePanel();
+        Directory.Delete(dir, true);
     }
 }
 

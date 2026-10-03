@@ -248,7 +248,9 @@ The **Map / Sat / Hyb** button on every map (and *Layers → Base map*) switches
 imagery with roads and labels (**hybrid**). Facilities, drawings, routes, APRS units and the GPS stay on top; Night
 dims the photo.
 
-Field Map **ships without imagery**: we found no free imagery that is current, detailed, covers all of BC and
+Field Map **ships without imagery**. OpenStreetMap doesn't provide imagery of its own: the satellite layers in OSM
+editors (Esri, Bing and others) are licensed only for tracing map data into OpenStreetMap, not for display or
+offline use in other apps. We found no free imagery that is current, detailed, covers all of BC and
 Alberta and may be kept offline (see [docs/FIELDMAP-DATA-SOURCES.md](docs/FIELDMAP-DATA-SOURCES.md#imagery)).
 Imagery comes from:
 
@@ -264,6 +266,18 @@ Imagery comes from:
 MapBuilder imagery --source esri-world-imagery-export --key <ArcGIS token> --accept-terms ^
   --bbox -120.40,50.64,-120.25,50.72 --zoom 12-18 --out Kamloops-imagery.mbtiles --name "Kamloops 2026"
 ```
+
+## Event layers (map files from events and agencies)
+
+Import the files event organisers and agencies hand out: **KML**, **KMZ** (Google Earth, including site-plan
+images placed on the map), **GPX** (courses, waypoints, tracks), **GeoJSON** and **CSV** with latitude/longitude
+columns. Drag files onto the map, or *More → Import map file* / *Layers → Event layers*. Each file becomes a layer
+you can show, hide, zoom to, fade (site-plan image 100/80/50/30 %) or remove; folders, names, descriptions,
+extra fields and the file's colours are kept. Tap a point, line or area for its details, **Directions here**,
+**Copy for dispatch**, *What's here?*, *Send to Field Toolkit* or **Add to incident drawings**. Files are copied
+into `%LOCALAPPDATA%\FieldMap\overlays\`, so the USB stick can go back. Things that can't work offline (network
+links, pictures on the internet) are listed after the import. AED lists in KML/KMZ/GPX can also be imported as AEDs
+(*Data & updates → Import AED file*).
 
 ## Layers
 

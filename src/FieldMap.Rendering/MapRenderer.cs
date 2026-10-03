@@ -3,6 +3,7 @@ using FieldMap.Core.Drawings;
 using FieldMap.Core.Layers;
 using FieldMap.Core.Aprs;
 using FieldMap.Core.Live;
+using FieldMap.Core.Overlays;
 using FieldMap.Core.Routing;
 using SkiaSharp;
 
@@ -36,6 +37,9 @@ public sealed class MapScene
     public IReadOnlyList<AprsStation> Aprs { get; init; } = Array.Empty<AprsStation>();
     public string? SelectedAprs { get; init; }
 
+    /// <summary>Imported event layers (KML/KMZ/GPX/GeoJSON/CSV) that are switched on.</summary>
+    public IReadOnlyList<OverlayLayer> Overlays { get; init; } = Array.Empty<OverlayLayer>();
+
     /// <summary>Imagery tiles for the Imagery and Hybrid base maps (null: map only).</summary>
     public RasterTileCache? Imagery { get; init; }
     public BaseMapMode BaseMode { get; init; } = BaseMapMode.Map;
@@ -55,6 +59,7 @@ public sealed class RenderResult
 {
     public List<(SKRect Rect, Poi Poi)> Pois { get; } = new();
     public List<(SKRect Rect, string Key)> Aprs { get; } = new();
+    public List<(SKRect Rect, OverlayLayer Layer, OverlayFeature Feature)> OverlayPoints { get; } = new();
     public SKRect NorthArrow { get; set; }
     public bool TilesPending { get; set; }
 }
@@ -180,6 +185,7 @@ public static class MapRenderer
         DrawLive(canvas, vp, scene);
         DrawBreadcrumbsAndRoutes(canvas, vp, scene);
         DrawAprsTracks(canvas, vp, scene);
+        DrawOverlayLayers(canvas, vp, scene, occupied, result);
         DrawDrawings(canvas, vp, scene, scene.Drawings, false);
         if (scene.Draft != null)
             DrawDrawings(canvas, vp, scene, new[] { scene.Draft }, true);
@@ -582,6 +588,153 @@ public static class MapRenderer
         _ => LayerCatalog.Find(layer)?.Glyph ?? "?"
     };
 
+
+    // ------------------------------------------------------------------ event layers
+
+    public static readonly SKColor OverlayDefault = new(0xFF, 0x00, 0xC8);
+
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<GroundOverlay, SKImage> OverlayImages = new();
+
+    private static SKImage? OverlayImage(GroundOverlay g)
+    {
+        if (OverlayImages.TryGetValue(g, out var img))
+            return img;
+        using var data = SKData.CreateCopy(g.Image);
+        img = SKImage.FromEncodedData(data);
+        if (img != null)
+            OverlayImages.AddOrUpdate(g, img);
+        return img;
+    }
+
+    /// <summary>
+    /// The perspective matrix that maps the unit square's corners (0,0) (1,0) (1,1) (0,1) onto the four points given
+    /// (Heckbert's square-to-quad), used to lay a map image onto its corner coordinates.
+    /// </summary>
+    public static SKMatrix SquareToQuad(SKPoint p0, SKPoint p1, SKPoint p2, SKPoint p3)
+    {
+        float dx1 = p1.X - p2.X, dx2 = p3.X - p2.X, dx3 = p0.X - p1.X + p2.X - p3.X;
+        float dy1 = p1.Y - p2.Y, dy2 = p3.Y - p2.Y, dy3 = p0.Y - p1.Y + p2.Y - p3.Y;
+        float g = 0, h = 0;
+        if (Math.Abs(dx3) > 1e-6f || Math.Abs(dy3) > 1e-6f)
+        {
+            var den = dx1 * dy2 - dx2 * dy1;
+            g = (dx3 * dy2 - dx2 * dy3) / den;
+            h = (dx1 * dy3 - dx3 * dy1) / den;
+        }
+        return new SKMatrix
+        {
+            ScaleX = p1.X - p0.X + g * p1.X, SkewX = p3.X - p0.X + h * p3.X, TransX = p0.X,
+            SkewY = p1.Y - p0.Y + g * p1.Y, ScaleY = p3.Y - p0.Y + h * p3.Y, TransY = p0.Y,
+            Persp0 = g, Persp1 = h, Persp2 = 1
+        };
+    }
+
+    private static SKColor OverlayColor(uint? argb, MapScene scene) =>
+        scene.Style.Symbol(argb is { } c && (c >> 24) > 0 ? new SKColor(c) : OverlayDefault);
+
+    private static void DrawOverlayLayers(SKCanvas canvas, Viewport vp, MapScene scene, List<SKRect> occupied, RenderResult result)
+    {
+        if (scene.Overlays.Count == 0)
+            return;
+        var view = vp.VisibleBounds().Expand(500);
+        var u = scene.UiScale;
+        // Map images first (site plans), under the features.
+        foreach (var layer in scene.Overlays)
+            foreach (var g in layer.Content.GroundOverlays)
+            {
+                if (g.Corners.Length != 4 || !g.Bounds.Intersects(view) || OverlayImage(g) is not { } img)
+                    continue;
+                var c = g.Corners.Select(p => S(vp, p)).ToArray();
+                // Image top-left = upper-left corner (index 3), then UR, LR, LL.
+                var m = SquareToQuad(c[3], c[2], c[1], c[0]).PreConcat(SKMatrix.CreateScale(1f / img.Width, 1f / img.Height));
+                using var paint = new SKPaint { Color = SKColors.White.WithAlpha((byte)(255 * Math.Clamp(g.Opacity * layer.Info.ImageOpacity, 0.05f, 1f))) };
+                canvas.Save();
+                canvas.SetMatrix(m);
+                canvas.DrawImage(img, 0, 0, new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None), paint);
+                canvas.Restore();
+                if (scene.Style == MapStyle.Night)
+                {
+                    using var path = new SKPath();
+                    path.AddPoly(c, true);
+                    using var dim = new SKPaint { Color = SKColors.Black.WithAlpha(120) };
+                    canvas.DrawPath(path, dim);
+                }
+            }
+        canvas.ResetMatrix();
+
+        using var fill = new SKPaint { IsAntialias = true };
+        using var line = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeJoin = SKStrokeJoin.Round, StrokeCap = SKStrokeCap.Round };
+        using var labelFont = Font(11.5f * u, true);
+        var points = new List<(SKPoint P, OverlayLayer Layer, OverlayFeature F, SKColor Color)>();
+        foreach (var layer in scene.Overlays)
+            foreach (var f in layer.Content.Features)
+            {
+                if (!f.Bounds.Intersects(view))
+                    continue;
+                var stroke = OverlayColor(f.Stroke, scene);
+                switch (f.Geometry)
+                {
+                    case OverlayGeometry.Polygon:
+                    {
+                        using var path = new SKPath { FillType = SKPathFillType.EvenOdd };
+                        foreach (var ring in f.Parts)
+                            path.AddPath(ScreenPath(vp, ring, true));
+                        var fc = f.Fill is { } fa ? new SKColor(fa) : stroke.WithAlpha(45);
+                        if (fc.Alpha > 0)
+                        {
+                            fill.Color = scene.Style.Symbol(fc).WithAlpha(fc.Alpha);
+                            canvas.DrawPath(path, fill);
+                        }
+                        line.Color = stroke;
+                        line.StrokeWidth = Math.Clamp(f.Width ?? 2.5f, 1f, 8f) * u;
+                        canvas.DrawPath(path, line);
+                        break;
+                    }
+                    case OverlayGeometry.Line:
+                    {
+                        using var path = ScreenPath(vp, f.Parts[0], false);
+                        line.Color = SKColors.Black.WithAlpha(110);
+                        line.StrokeWidth = (Math.Clamp(f.Width ?? 3f, 1f, 10f) + 2) * u;
+                        canvas.DrawPath(path, line);
+                        line.Color = stroke;
+                        line.StrokeWidth = Math.Clamp(f.Width ?? 3f, 1f, 10f) * u;
+                        canvas.DrawPath(path, line);
+                        break;
+                    }
+                    default:
+                        points.Add((S(vp, f.Parts[0][0]), layer, f, stroke));
+                        break;
+                }
+            }
+        var r = 7.5f * u;
+        foreach (var (p, layer, f, color) in points.Take(3000))
+        {
+            // A diamond: distinct from facilities (circles) and APRS units (rounded squares).
+            using var diamond = new SKPath();
+            diamond.MoveTo(p.X, p.Y - r * 1.3f);
+            diamond.LineTo(p.X + r * 1.3f, p.Y);
+            diamond.LineTo(p.X, p.Y + r * 1.3f);
+            diamond.LineTo(p.X - r * 1.3f, p.Y);
+            diamond.Close();
+            fill.Color = color;
+            canvas.DrawPath(diamond, fill);
+            line.Color = scene.Style == MapStyle.Night ? new SKColor(0x30, 0x30, 0x30) : SKColors.White;
+            line.StrokeWidth = 2;
+            canvas.DrawPath(diamond, line);
+            var rect = new SKRect(p.X - r * 1.6f, p.Y - r * 1.6f, p.X + r * 1.6f, p.Y + r * 1.6f);
+            result.OverlayPoints.Add((rect, layer, f));
+            if (vp.Zoom >= 14 && f.Name.Length > 0)
+            {
+                var tw = labelFont.MeasureText(f.Name);
+                var lr = new SKRect(p.X - tw / 2, p.Y + r * 1.4f, p.X + tw / 2, p.Y + r * 1.4f + labelFont.Size + 2);
+                if (Free(occupied, lr))
+                {
+                    occupied.Add(lr);
+                    HaloText(canvas, f.Name, p.X, lr.Bottom - 2, labelFont, scene.Style.Label, scene.Style.LabelHalo);
+                }
+            }
+        }
+    }
 
     // ------------------------------------------------------------------ imagery
 

@@ -54,6 +54,7 @@ public sealed class MapView : SKControl
         AppServices.Live.Changed += OnRedraw;
         AppServices.Aprs.Changed += OnRedraw;
         AppServices.Imagery.Changed += OnRedraw;
+        AppServices.Overlays.Changed += OnRedraw;
         UiMode.Changed += OnRedraw;
         Disposed += (_, _) =>
         {
@@ -64,6 +65,7 @@ public sealed class MapView : SKControl
             AppServices.Live.Changed -= OnRedraw;
             AppServices.Aprs.Changed -= OnRedraw;
             AppServices.Imagery.Changed -= OnRedraw;
+            AppServices.Overlays.Changed -= OnRedraw;
             UiMode.Changed -= OnRedraw;
         };
     }
@@ -186,6 +188,7 @@ public sealed class MapView : SKControl
         AprsFadeAfter = TimeSpan.FromMinutes(Math.Max(1, AppServices.Settings.Aprs.ShowMinutes) / 2.0),
         SelectedAprs = SelectedAprs,
         NowUtc = DateTime.UtcNow,
+        Overlays = AppServices.Overlays.VisibleLayers,
         Imagery = AppServices.Imagery.Tiles,
         BaseMode = AppServices.Imagery.Tiles != null ? AppServices.Settings.BaseMode : BaseMapMode.Map,
         Attribution = AppServices.Imagery.Tiles != null && AppServices.Imagery.Current is { Attribution.Length: > 0 } img
@@ -228,7 +231,7 @@ public sealed class MapView : SKControl
             Drawings = scene.Drawings, Route = scene.Route, Alternatives = scene.Alternatives, Fix = scene.Fix, FixStale = scene.FixStale,
             Breadcrumbs = scene.Breadcrumbs, Live = scene.Live, Marker = scene.Marker, Attribution = scene.Attribution, Synchronous = true,
             Aprs = scene.Aprs, AprsTracks = scene.AprsTracks, AprsFadeAfter = scene.AprsFadeAfter, NowUtc = scene.NowUtc,
-            Imagery = scene.Imagery, BaseMode = scene.BaseMode,
+            Imagery = scene.Imagery, BaseMode = scene.BaseMode, Overlays = scene.Overlays,
             ShowControls = true, UiScale = UiScale * factor
         });
         return bmp;
@@ -263,6 +266,48 @@ public sealed class MapView : SKControl
             if (rect.Contains(p.X, p.Y))
                 return key;
         return null;
+    }
+
+    /// <summary>An event-layer point drawn under the screen point.</summary>
+    public (Core.Overlays.OverlayLayer Layer, Core.Overlays.OverlayFeature Feature)? HitOverlayPoint(Point p)
+    {
+        if (_last == null)
+            return null;
+        foreach (var (rect, layer, feature) in Enumerable.Reverse(_last.OverlayPoints))
+            if (rect.Contains(p.X, p.Y))
+                return (layer, feature);
+        return null;
+    }
+
+    /// <summary>An event-layer line or area near (or containing) the screen point.</summary>
+    public (Core.Overlays.OverlayLayer Layer, Core.Overlays.OverlayFeature Feature)? HitOverlayShape(Point p)
+    {
+        var tol = 14 * UiScale;
+        (Core.Overlays.OverlayLayer, Core.Overlays.OverlayFeature)? best = null;
+        var bestD = double.MaxValue;
+        var view = Viewport.VisibleBounds();
+        foreach (var layer in AppServices.Overlays.VisibleLayers)
+            foreach (var f in layer.Content.Features)
+            {
+                if (f.Geometry == Core.Overlays.OverlayGeometry.Point || !f.Bounds.Intersects(view))
+                    continue;
+                var dist = double.MaxValue;
+                foreach (var part in f.Parts)
+                {
+                    var pts = part.Select(GeoToScreen).ToList();
+                    var closed = f.Geometry == Core.Overlays.OverlayGeometry.Polygon;
+                    for (var i = 0; i < pts.Count - (closed ? 0 : 1); i++)
+                        dist = Math.Min(dist, SegDist(p, pts[i], pts[(i + 1) % pts.Count]));
+                }
+                if (f.Geometry == Core.Overlays.OverlayGeometry.Polygon && Inside(f.Parts[0].Select(GeoToScreen).ToList(), p))
+                    dist = Math.Min(dist, tol * 0.95);
+                if (dist <= tol && dist < bestD)
+                {
+                    bestD = dist;
+                    best = (layer, f);
+                }
+            }
+        return best;
     }
 
     public bool HitNorthArrow(Point p) => _last != null && _last.NorthArrow.Contains(p.X, p.Y);

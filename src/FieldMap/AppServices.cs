@@ -28,6 +28,9 @@ public static class AppServices
     public static LiveDataService Live { get; private set; } = null!;
     public static AprsService Aprs { get; private set; } = null!;
     public static ImageryService Imagery { get; private set; } = null!;
+
+    /// <summary>Imported event layers (KML, KMZ, GPX, GeoJSON, CSV).</summary>
+    public static Core.Overlays.OverlayLibrary Overlays { get; private set; } = null!;
     public static RegionCatalog Catalog { get; private set; } = new();
 
     /// <summary>Problems found at start-up (data folder unavailable, damaged data) to show once.</summary>
@@ -118,6 +121,17 @@ public static class AppServices
                                ?? (Data.HasData ? Data.Bounds.Center : null)
         };
         Aprs.Apply();
+
+        try
+        {
+            Overlays = new Core.Overlays.OverlayLibrary(Path.Combine(MapSettings.AppFolder, "overlays"));
+            StartupMessages.AddRange(Overlays.Problems.Select(p => "Event layer could not be loaded: " + p));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Overlays = new Core.Overlays.OverlayLibrary(Path.Combine(Path.GetTempPath(), "FieldMap-overlays"));
+            StartupMessages.Add("Event layers folder unavailable: " + ex.Message);
+        }
 
         Imagery = new ImageryService(Settings, Core.Imagery.ImageryCatalog.LoadOrEmpty(Path.Combine(ContentFolder, "imagery-sources.json")), () => Store.Root);
         Imagery.Apply();

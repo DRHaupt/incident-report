@@ -20,6 +20,8 @@ public sealed class LayersPanel : SidePanel
 
         BuildBaseMap();
 
+        BuildEventLayers();
+
         AddText("Facilities and features", FontRole.Heading);
         foreach (var layer in LayerCatalog.All)
         {
@@ -79,6 +81,50 @@ public sealed class LayersPanel : SidePanel
     {
         AppServices.Settings.Save();
         Map.MapView.Invalidate();
+    }
+
+    // ------------------------------------------------------------------ event layers
+
+    private static readonly float[] Opacities = { 1f, 0.8f, 0.5f, 0.3f };
+
+    private void BuildEventLayers()
+    {
+        var lib = AppServices.Overlays;
+        AddText("Event layers (imported map files)", FontRole.Heading);
+        AddText("KML, KMZ (including site-plan images), GPX, GeoJSON or CSV from an event or agency. Drag files onto the map, or:", FontRole.Normal, Brand.Muted);
+        AddButton("Import map file…", ButtonStyle.Primary, () => Map.ChooseMapFiles());
+        foreach (var l in lib.Layers)
+        {
+            var layer = l;
+            AddToggle($"{layer.Info.Name}", layer.Info.Visible, on => { lib.SetVisible(layer.Info.Id, on); Map.MapView.Invalidate(); },
+                $"{layer.Content.Summary} · {Path.GetFileName(layer.Info.OriginalPath)} · imported {layer.Info.ImportedUtc.ToLocalTime():yyyy-MM-dd HH:mm}" +
+                (layer.Content.Warnings.Count > 0 ? $" · {layer.Content.Warnings.Count} note(s)" : ""));
+            var buttons = new List<Button>
+            {
+                Btn("Zoom to", ButtonStyle.Secondary, () =>
+                {
+                    if (!layer.Content.Bounds.IsEmpty)
+                        Map.MapView.ZoomToFit(layer.Content.Bounds.Expand(100));
+                    if (!layer.Info.Visible)
+                        lib.SetVisible(layer.Info.Id, true);
+                })
+            };
+            if (layer.Content.GroundOverlays.Count > 0)
+                buttons.Add(Btn($"Image {layer.Info.ImageOpacity:P0}", ButtonStyle.Secondary, () =>
+                {
+                    var i = Array.FindIndex(Opacities, o => Math.Abs(o - layer.Info.ImageOpacity) < 0.01f);
+                    lib.SetImageOpacity(layer.Info.Id, Opacities[(i + 1) % Opacities.Length]);
+                    Map.ShowPanel(new LayersPanel(Map));
+                }));
+            buttons.Add(Btn("Remove", ButtonStyle.Danger, () =>
+            {
+                if (MessageBox.Show(FindForm(), $"Remove the event layer {layer.Info.Name}?", "Event layers", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                    return;
+                lib.Remove(layer.Info.Id);
+                Map.ShowPanel(new LayersPanel(Map));
+            }));
+            AddButtons(buttons.ToArray());
+        }
     }
 
     // ------------------------------------------------------------------ base map and imagery

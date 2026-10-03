@@ -142,7 +142,8 @@ public sealed class UpdateService
         var dir = Path.Combine(store.ImportsDir, "aed");
         if (!Directory.Exists(dir))
             return new();
-        return Directory.GetFiles(dir).Where(f => f.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".geojson", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+        string[] usable = { ".csv", ".geojson", ".json", ".kml", ".kmz", ".gpx" };
+        return Directory.GetFiles(dir).Where(f => usable.Contains(Path.GetExtension(f).ToLowerInvariant()))
             .OrderBy(f => f).Select(f => (f, SourceNameFor(f))).ToList();
     }
 

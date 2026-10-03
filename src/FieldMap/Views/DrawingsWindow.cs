@@ -157,7 +157,7 @@ public sealed class DrawingsWindow : ToolWindow
 
     private void Import()
     {
-        using var dialog = new OpenFileDialog { Filter = "Drawings (*.kml;*.geojson;*.json;*.gpx)|*.kml;*.geojson;*.json;*.gpx|All files|*.*" };
+        using var dialog = new OpenFileDialog { Filter = "Drawings (*.kml;*.kmz;*.geojson;*.json;*.gpx;*.csv)|*.kml;*.kmz;*.geojson;*.json;*.gpx;*.csv|All files|*.*" };
         if (dialog.ShowDialog(this) != DialogResult.OK)
             return;
         try

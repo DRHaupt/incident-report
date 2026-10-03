@@ -61,9 +61,13 @@ under the Open Government Licence – Alberta" (only the licences of installed l
   are added. Imports are kept under `imports\` and re-applied automatically after each map-data update.
 * Every AED shows source and last-verified date, and the panel always shows: "AED locations may be out of date or
   inaccessible. Confirm with dispatch."
-* Provincial registries: BC PAD program (Heart & Stroke / BCEHS, `bcpadprogram.ca`) and the Alberta PAD registry
-  publish public maps but, as far as we found, **no open-licensed download**; ask them for an export and load it
-  with the import.
+* Provincial registries: BC PAD program (Heart & Stroke / BCEHS, `bcpadprogram.ca`) and the Alberta Heart Safe /
+  PAD registry (`heart-safe.ca`, 4,000+ AEDs, shared with AHS-EMS dispatch) publish public maps but, as far as we
+  found, **no open-licensed download**. We have **not** copied their data out of their websites: ask the programs
+  for an export (or a data-sharing agreement) and load it with the import, which accepts CSV, GeoJSON, KML, KMZ and
+  GPX. Lists on blogs and third-party pages are usually old and have no licence; don't use them as a source.
+* OpenStreetMap AEDs (also shown on openaedmap.org) are always included; adding missing AEDs to OpenStreetMap
+  improves every map, this one included.
 
 ## Live data (only when connected; nothing depends on it)
 
@@ -95,6 +99,7 @@ detailed, covers all of BC and Alberta, and may be stored offline for operationa
 | ✓ NRCan Aerial Imagery of Canada (AWS open data, COG) | National Air Photo Library time series and Parks Canada mosaics; partial coverage | ◻ Open Government Licence – Canada expected; confirm per collection | Could be converted to packages where it covers the area |
 | ✓ Alberta | No province-wide open current orthophoto found (historical 1949–51 mosaics via ABMI; municipal imagery through partnerships; AltaLIS imagery is licensed) | Varies | Per licence |
 | Google, Bing, Mapbox satellite | Worldwide | Terms forbid bulk or offline caching outside their own SDKs | Not used |
+| "OpenStreetMap satellite" | – | ✓ OSM has no imagery of its own; the imagery offered in OSM editors (Esri, Bing…) is licensed only for tracing into OSM | Not usable |
 
 ## How to install real data
 

@@ -291,9 +291,12 @@ public static class DrawingFormats
         return list;
     }
 
-    /// <summary>Imports by file extension (.geojson/.json, .kml, .gpx).</summary>
+    /// <summary>Imports by file extension (.geojson/.json, .kml, .gpx; .kmz and .csv through the map-file reader).</summary>
     public static List<Drawing> Import(string path)
     {
+        var ext = Path.GetExtension(path).ToLowerInvariant();
+        if (ext is ".kmz" or ".csv")
+            return FromMapFile(Overlays.MapFileImporter.Load(path));
         var text = File.ReadAllText(path, Encoding.UTF8);
         return Path.GetExtension(path).ToLowerInvariant() switch
         {
@@ -302,6 +305,17 @@ public static class DrawingFormats
             _ => FromGeoJson(text)
         };
     }
+
+    /// <summary>Turns an imported map file's features into drawings (points and lines as notes, areas as perimeters).</summary>
+    public static List<Drawing> FromMapFile(Overlays.MapFileContent content) =>
+        content.Features.Select(f => new Drawing
+        {
+            Kind = f.Geometry == Overlays.OverlayGeometry.Polygon ? DrawingKind.Perimeter : DrawingKind.Note,
+            Shape = f.Geometry switch { Overlays.OverlayGeometry.Point => DrawingShape.Point, Overlays.OverlayGeometry.Line => DrawingShape.Line, _ => DrawingShape.Polygon },
+            Label = f.Name,
+            Notes = f.Description,
+            Points = f.Parts[0].ToList()
+        }).ToList();
 
     public static void Export(string path, IEnumerable<Drawing> drawings)
     {

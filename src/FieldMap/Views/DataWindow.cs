@@ -168,7 +168,7 @@ public sealed class DataWindow : ToolWindow
         var aeds = UpdateService.AedImports(store);
         Line(aeds.Count == 0 ? "No AED registry imported. OpenStreetMap AEDs are always included." :
             "Imported: " + string.Join(", ", aeds.Select(a => $"{Path.GetFileName(a.Path)} ({a.SourceName})")), FontRole.Normal, Brand.Muted);
-        Line("CSV columns: name, latitude, longitude, address, access, location, last_verified, source, id (or GeoJSON points). Imported AEDs replace OSM entries within 25 m and keep both sources.", FontRole.Normal, Brand.Muted);
+        Line("CSV columns: name, latitude, longitude, address, access, location, last_verified, source, id; or GeoJSON, KML, KMZ or GPX points (name, description as the location inside). Imported AEDs replace OSM entries within 25 m and keep both sources.", FontRole.Normal, Brand.Muted);
         Row(Button("Import AED file…", ButtonStyle.Secondary, () => _ = ImportAedAsync()));
 
         Line("Sample data", FontRole.Heading);
@@ -393,7 +393,7 @@ public sealed class DataWindow : ToolWindow
 
     private async Task ImportAedAsync()
     {
-        using var d = new OpenFileDialog { Filter = "AED registry (*.csv;*.geojson;*.json)|*.csv;*.geojson;*.json" };
+        using var d = new OpenFileDialog { Filter = "AED list (*.csv;*.geojson;*.json;*.kml;*.kmz;*.gpx)|*.csv;*.geojson;*.json;*.kml;*.kmz;*.gpx" };
         if (d.ShowDialog(this) != DialogResult.OK)
             return;
         List<Core.Build.Poi> aeds;

@@ -222,9 +222,12 @@ public static class PoiImport
     /// </summary>
     public static List<Poi> ReadAeds(string path, string sourceName)
     {
-        var rows = path.EndsWith(".geojson", StringComparison.OrdinalIgnoreCase) || path.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+        var ext = Path.GetExtension(path).ToLowerInvariant();
+        var rows = ext is ".geojson" or ".json"
             ? GeoJsonRows(path)
-            : ReadCsv(path, null);
+            : ext is ".kml" or ".kmz" or ".gpx"
+                ? Overlays.MapFileImporter.PointRows(Overlays.MapFileImporter.Load(path))
+                : ReadCsv(path, null);
         var list = new List<Poi>();
         foreach (var row in rows)
         {

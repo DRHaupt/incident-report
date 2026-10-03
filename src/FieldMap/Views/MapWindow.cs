@@ -110,6 +110,18 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         Body.Controls.Add(_status);
 
         _map.Tapped += OnMapTapped;
+        // Drop KML/KMZ/GPX/GeoJSON/CSV files from Explorer or a USB stick onto the map.
+        _map.AllowDrop = true;
+        _map.DragEnter += (_, e) =>
+        {
+            if (e.Data?.GetData(DataFormats.FileDrop) is string[] files && files.Any(Core.Overlays.MapFileImporter.CanRead))
+                e.Effect = DragDropEffects.Copy;
+        };
+        _map.DragDrop += (_, e) =>
+        {
+            if (e.Data?.GetData(DataFormats.FileDrop) is string[] files)
+                ImportMapFiles(files.Where(Core.Overlays.MapFileImporter.CanRead).ToList());
+        };
         _map.LongPressed += (_, e) => ShowContextMenu(e.Point, e.Screen);
         _map.UserMoved += (_, _) => SetFollowing(false);
         _map.ViewChanged += (_, _) => UpdateStatus();
@@ -280,6 +292,55 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
 
     private void OnImageryChanged(object? sender, EventArgs e) => UpdateBaseButton();
 
+    // ------------------------------------------------------------------ event layers (imported map files)
+
+    public void ChooseMapFiles()
+    {
+        using var d = new OpenFileDialog { Filter = Core.Overlays.MapFileImporter.FileFilter, Multiselect = true, Title = "Import map files from an event or agency" };
+        if (d.ShowDialog(this) == DialogResult.OK)
+            ImportMapFiles(d.FileNames);
+    }
+
+    /// <summary>Imports map files as event layers, zooms to them and reports what was found.</summary>
+    public void ImportMapFiles(IReadOnlyList<string> files)
+    {
+        if (files.Count == 0)
+            return;
+        var imported = new List<Core.Overlays.OverlayLayer>();
+        var report = new List<string>();
+        foreach (var file in files)
+        {
+            try
+            {
+                var layer = AppServices.Overlays.Import(file);
+                imported.Add(layer);
+                report.Add($"{Path.GetFileName(file)}: {layer.Content.Summary}");
+                report.AddRange(layer.Content.Warnings.Take(8).Select(w => "   • " + w));
+                if (layer.Content.Warnings.Count > 8)
+                    report.Add($"   • …and {layer.Content.Warnings.Count - 8} more notes");
+            }
+            catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or System.Xml.XmlException or System.Text.Json.JsonException or FormatException)
+            {
+                report.Add($"{Path.GetFileName(file)}: could not be imported – {ex.Message}");
+            }
+        }
+        if (imported.Count > 0)
+        {
+            var bounds = imported.Aggregate(GeoBounds.Empty, (b, l) => b.Include(l.Content.Bounds));
+            if (!bounds.IsEmpty)
+            {
+                SetFollowing(false);
+                _map.ZoomToFit(bounds.Expand(100));
+            }
+            ShowPanel(new LayersPanel(this));
+        }
+        var warnings = report.Any(r => r.StartsWith("   •") || r.Contains("could not"));
+        if (warnings || imported.Count == 0)
+            MessageBox.Show(this, string.Join("\n", report), "Import map files", MessageBoxButtons.OK, imported.Count == 0 ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
+        else
+            Flash("Imported " + string.Join("; ", report));
+    }
+
     /// <summary>Map → Imagery → Hybrid → Map. Without imagery set up, explains and opens the Layers panel.</summary>
     private void CycleBaseMap()
     {
@@ -331,6 +392,7 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         menu.Items.Add(new ToolStripMenuItem("Touch Mode (Ctrl+T)", null, (_, _) => UiMode.SetTouch(!UiMode.Touch)) { Checked = UiMode.Touch });
         menu.Items.Add(new ToolStripMenuItem("Spoken directions", null, (_, _) => { _voice = !_voice; AppServices.Settings.Voice = _voice; AppServices.Settings.Save(); }) { Checked = _voice });
         menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add("Import map file (KML, KMZ, GPX, GeoJSON, CSV)…", null, (_, _) => ChooseMapFiles());
         menu.Items.Add("APRS stations", null, (_, _) => ShowPanel(new AprsPanel(this)));
         menu.Items.Add("APRS messages", null, (_, _) => ShowPanel(new AprsMessagesPanel(this)));
         menu.Items.Add("APRS settings…", null, (_, _) => { using var d = new AprsSettingsDialog(); d.ShowDialog(this); });
@@ -409,6 +471,11 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
             SelectAprs(aprs, center: false);
             return;
         }
+        if (_map.HitOverlayPoint(e.Screen) is { } overlayPoint)
+        {
+            ShowPanel(new OverlayFeaturePanel(this, overlayPoint.Layer, overlayPoint.Feature));
+            return;
+        }
         if (_map.HitPoi(e.Screen) is { } poi)
         {
             SelectPoi(poi);
@@ -417,6 +484,11 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         if (_map.HitDrawing(e.Screen) is { } drawing)
         {
             SelectDrawing(drawing);
+            return;
+        }
+        if (_map.HitOverlayShape(e.Screen) is { } overlayShape)
+        {
+            ShowPanel(new OverlayFeaturePanel(this, overlayShape.Layer, overlayShape.Feature));
             return;
         }
         if (_map.SelectedPoi != null || _map.SelectedDrawing != null || _map.SelectedAprs != null)

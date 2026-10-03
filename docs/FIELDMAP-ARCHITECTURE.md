@@ -282,3 +282,26 @@ online source (xyz / WMS 1.1.1 EPSG:3857) ─┴─► cache (imagery\cache) ┘
   once before first use; "Save this area" and the on-disk cache only exist for sources marked `allowOffline`.
   `MapBuilder imagery` needs `--accept-terms`.
 
+## 8. Event layers (imported map files)
+
+* **`FieldMap.Core/Overlays/MapFiles.cs`** – `MapFileImporter.Load(path)` → `MapFileContent` (features, ground
+  overlays, warnings):
+  * KML/KMZ: Document/Folder tree (folder path kept), Placemark with Point, LineString, LinearRing, Polygon (holes),
+    MultiGeometry, gx:Track/gx:MultiTrack; shared and inline styles, StyleMap "normal" (KML `aabbggrr` colours →
+    ARGB); ExtendedData Data/SimpleData; HTML descriptions turned into text. KMZ: `doc.kml` (or the shallowest .kml),
+    GroundOverlay pictures resolved inside the archive; LatLonBox (with rotation, done in local metres so the box
+    stays rectangular) or gx:LatLonQuad. NetworkLinks, online pictures, Photo/ScreenOverlays are reported, not used.
+  * GPX 1.0/1.1: waypoints (sym/type kept), routes, track segments (start/end time, length).
+  * GeoJSON: every geometry type incl. GeometryCollection; properties; simplestyle-spec colours.
+  * CSV: latitude/longitude (lat/lon/lng/long/y/x) columns; name, description, category → folder; other columns kept.
+  * Limits: 500,000 points per file; bad coordinates skipped and counted.
+* **`OverlayLibrary`** copies each file into `overlays\` with `layers.json` (name, visible, image opacity), reloads
+  at start-up, and reports files it can't read.
+* **Renderer**: ground overlays drawn through a square-to-quad perspective matrix (Heckbert) from the picture to its
+  four corners, at the layer's opacity, dimmed at Night; then areas (file fill or 18 % of the line colour), lines
+  (with a dark casing), and points as diamonds (distinct from facility circles and APRS squares), labelled from
+  zoom 14 when there's room. Default colour magenta, distinct from the incident drawing colours.
+* **App**: drag-and-drop or menu import, import report, Layers → Event layers (toggle, zoom to, fade, remove), tap →
+  details with directions / dispatch copy / Field Toolkit / convert to an incident drawing. The AED import and the
+  Drawings import also read these formats.
+
