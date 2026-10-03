@@ -55,6 +55,50 @@ jobs:
           dotnet publish tools/MapBuilder/MapBuilder.csproj -c Release -r win-x64
           --self-contained true -p:PublishSingleFile=true -o publish/MapBuilder
 
+      - name: Build the Field Suite installer (MSI, WiX v5)
+        shell: pwsh
+        run: |
+          Get-ChildItem publish -Recurse -Filter *.pdb | Remove-Item
+          dotnet build installer/FieldSuite.wixproj -c Release -p:SuiteVersion=0.1.${{ github.run_number }} "-p:PublishRoot=$PWD\publish\"
+
+      - name: Test the installer (silent install, start each app, uninstall)
+        shell: pwsh
+        run: |
+          $msi = Get-ChildItem installer/bin -Recurse -Filter *.msi | Select-Object -First 1
+          Write-Host "Installing $($msi.Name) ($([math]::Round($msi.Length / 1MB)) MB)"
+          $p = Start-Process msiexec -ArgumentList "/i `"$($msi.FullName)`" /qn /l*v install.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content install.log -Tail 120; throw "msiexec /i failed: $($p.ExitCode)" }
+          $base = Join-Path $env:ProgramFiles "Field Suite"
+          $expected = "IncidentReportManager\IncidentReporting.exe", "FieldToolkit\FieldToolkit.exe", "FieldToolkit\Content\erg\erg.json",
+                      "FieldMap\FieldMap.exe", "FieldMap\Content\regions.json", "FieldMap\Content\imagery-sources.json",
+                      "Documents\FieldSuite-Quick-Reference.pdf", "Licenses\THIRD-PARTY-NOTICES.txt"
+          foreach ($f in $expected) { if (-not (Test-Path (Join-Path $base $f))) { throw "Not installed: $f" } }
+          if (Test-Path (Join-Path $base "MapBuilder")) { throw "MapBuilder is optional and should not be installed by default" }
+          $menu = Join-Path $env:ProgramData "Microsoft\Windows\Start Menu\Programs\Field Suite"
+          foreach ($l in "Incident Report Manager.lnk", "Field Toolkit.lnk", "Field Map.lnk", "Field Suite quick reference.lnk") {
+            if (-not (Test-Path (Join-Path $menu $l))) { throw "Start menu shortcut missing: $l" } }
+          foreach ($l in "Incident Report Manager.lnk", "Field Toolkit.lnk", "Field Map.lnk") {
+            if (-not (Test-Path (Join-Path $env:PUBLIC "Desktop\$l"))) { throw "Desktop shortcut missing: $l" } }
+          # Each installed app starts from Program Files and is still running after 15 s.
+          foreach ($exe in "IncidentReportManager\IncidentReporting.exe", "FieldToolkit\FieldToolkit.exe", "FieldMap\FieldMap.exe") {
+            $proc = Start-Process (Join-Path $base $exe) -PassThru
+            Start-Sleep -Seconds 15
+            if ($proc.HasExited) { throw "$exe exited straight away (code $($proc.ExitCode))" }
+            Stop-Process -Id $proc.Id -Force
+            Write-Host "$exe started OK"
+          }
+          Start-Sleep -Seconds 3
+          $p = Start-Process msiexec -ArgumentList "/x `"$($msi.FullName)`" /qn /l*v uninstall.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content uninstall.log -Tail 120; throw "msiexec /x failed: $($p.ExitCode)" }
+          if (Test-Path (Join-Path $base "FieldMap\FieldMap.exe")) { throw "Uninstall left the programs behind" }
+          if (Test-Path $menu) { throw "Uninstall left the Start menu folder" }
+          Write-Host "Install, start and uninstall OK"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FieldSuite-installer
+          path: installer/bin/**/*.msi
+
       - uses: actions/upload-artifact@v4
         with:
           name: FieldMap-win-x64

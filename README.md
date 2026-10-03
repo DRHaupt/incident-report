@@ -17,6 +17,29 @@ The apps share branding, the switchable **Touch Mode** (Ctrl+T), the high-contra
 (Ctrl+D) and the **Night** theme (Ctrl+N) through `src/Shared`, and coordinate/GPS code through
 `src/Shared.Core` and `src/Shared.Location`. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design.
 
+## Installing (all three apps)
+
+The **Field Suite installer** (`FieldSuite-x.y.z-x64.msi`, built by the CI workflow and attached to each run as the
+*FieldSuite-installer* artifact) installs Incident Report Manager, Field Toolkit and Field Map for all users of the
+PC, with Start menu and desktop shortcuts, the quick-reference cards and the licence notices. The programs are
+self-contained: no .NET or other download is needed, and they work offline. Pick the apps on the feature page;
+*MapBuilder* (for preparing map data on a connected PC) is optional and off by default. A newer MSI upgrades in place;
+uninstalling (Settings → Apps) removes the programs but keeps each user's reports, drawings, settings and map data.
+
+For fleet deployment (Intune, Group Policy, SCCM) the MSI installs silently:
+
+```
+msiexec /i FieldSuite-0.1.42-x64.msi /qn                                   (everything)
+msiexec /i FieldSuite-0.1.42-x64.msi /qn REMOVE=IrmDesktop,ToolkitDesktop,MapDesktop   (no desktop shortcuts)
+msiexec /i FieldSuite-0.1.42-x64.msi /qn ADDLOCAL=FieldMap,MapDesktop,Documents        (Field Map only)
+msiexec /x FieldSuite-0.1.42-x64.msi /qn                                   (uninstall)
+```
+
+To build it yourself on Windows: `powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1 -Version 0.1.0`.
+The installer is made with the WiX Toolset v5 (see `docs/LEGAL-NOTES.md` on why v5). It is **not code-signed** yet, so
+Windows SmartScreen warns on first run; sign the MSI and the three .exe files with your organisation's certificate
+before rolling out. Quick-reference cards for crews: [docs/quick-reference](docs/quick-reference/FieldSuite-Quick-Reference.pdf).
+
 ---
 
 # Field Toolkit

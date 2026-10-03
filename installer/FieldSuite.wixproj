@@ -1,0 +1,27 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+
+  <!--
+    Windows Installer package (MSI) for the three apps. Built with the WiX Toolset v5 (MS-RL licence, no maintenance
+    fee; v6 and later require the Open Source Maintenance Fee for organisations over US$10k revenue, so stay on v5
+    unless that is settled). Builds on Windows only.
+
+    Inputs: the self-contained publish folders made by the CI workflow (or by build-installer.ps1):
+      $(PublishRoot)IncidentReportManager\  $(PublishRoot)FieldToolkit\  $(PublishRoot)FieldMap\  $(PublishRoot)MapBuilder\
+  -->
+  <PropertyGroup>
+    <OutputName>FieldSuite-$(SuiteVersion)-x64</OutputName>
+    <OutputType>Package</OutputType>
+    <Platform>x64</Platform>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <SuiteVersion Condition="'$(SuiteVersion)' == ''">0.1.0</SuiteVersion>
+    <PublishRoot Condition="'$(PublishRoot)' == ''">$(MSBuildThisFileDirectory)..\publish\</PublishRoot>
+    <DefineConstants>SuiteVersion=$(SuiteVersion);PublishRoot=$(PublishRoot);RepoRoot=$(MSBuildThisFileDirectory)..\</DefineConstants>
+    <!-- ICE validation needs the Windows Installer service; CI runs it, so keep it on. -->
+    <SuppressValidation>false</SuppressValidation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+  </ItemGroup>
+
+</Project>

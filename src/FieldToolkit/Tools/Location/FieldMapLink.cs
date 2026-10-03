@@ -29,7 +29,7 @@ public static class FieldMapLink
         }
     }
 
-    /// <summary>FieldMap.exe next to the toolkit, in a sibling FieldMap folder, or in Program Files.</summary>
+    /// <summary>FieldMap.exe next to the toolkit, in a sibling FieldMap folder (the installer's layout), or in Program Files.</summary>
     public static string? FindFieldMap()
     {
         var baseDir = AppContext.BaseDirectory;
@@ -37,6 +37,7 @@ public static class FieldMapLink
         {
             Path.Combine(baseDir, "FieldMap.exe"),
             Path.Combine(baseDir, "..", "FieldMap", "FieldMap.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Field Suite", "FieldMap", "FieldMap.exe"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "FieldMap", "FieldMap.exe"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "FieldMap", "FieldMap.exe")
         };

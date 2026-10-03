@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Field Suite installer: Incident Report Manager, Field Toolkit and Field Map (plus the optional MapBuilder tool) in
+  one per-machine MSI. Choose the apps on the feature page; each gets a Start menu shortcut and, optionally, a desktop
+  shortcut. Newer versions upgrade in place (MajorUpgrade). Uninstalling removes the programs but keeps every user's
+  data (%LOCALAPPDATA%\IncidentReportManager, FieldToolkit, FieldMap, FieldSuite) and the map data folders.
+
+  Silent install for fleet deployment (all apps):        msiexec /i FieldSuite-x.y.z-x64.msi /qn
+  Only some apps:  msiexec /i FieldSuite-x.y.z-x64.msi /qn ADDLOCAL=FieldMap,MapDesktop,FieldToolkit,ToolkitDesktop,Documents
+  Without desktop shortcuts: msiexec /i FieldSuite-x.y.z-x64.msi /qn REMOVE=IrmDesktop,ToolkitDesktop,MapDesktop
+  Uninstall: msiexec /x FieldSuite-x.y.z-x64.msi /qn (or Settings > Apps)
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package Name="Field Suite" Manufacturer="Field Suite" Version="$(var.SuiteVersion)"
+           UpgradeCode="d444599e-086f-4fd3-af42-d9c3fc062904" Scope="perMachine" Language="1033">
+
+    <SummaryInformation Description="Field Suite: Incident Report Manager, Field Toolkit and Field Map" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Field Suite is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="SuiteIcon" SourceFile="$(var.RepoRoot)src\FieldToolkit\Resources\app.ico" />
+    <Property Id="ARPPRODUCTICON" Value="SuiteIcon" />
+    <Property Id="ARPCOMMENTS" Value="Offline field apps for emergency response: incident reports, first aid / hazmat / location toolkit, and an offline map for BC and Alberta." />
+    <Property Id="ARPNOREPAIR" Value="1" />
+
+    <!-- Feature page with a notice page in front (disclaimers and third-party licences). -->
+    <ui:WixUI Id="WixUI_FeatureTree" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.RepoRoot)installer\Notice.rtf" />
+
+    <!-- ============================================================ folders -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Field Suite">
+        <Directory Id="IrmFolder" Name="IncidentReportManager" />
+        <Directory Id="ToolkitFolder" Name="FieldToolkit" />
+        <Directory Id="MapFolder" Name="FieldMap" />
+        <Directory Id="MapBuilderFolder" Name="MapBuilder" />
+        <Directory Id="DocsFolder" Name="Documents" />
+        <Directory Id="LicensesFolder" Name="Licenses" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="StartMenuFolder" Name="Field Suite" />
+    </StandardDirectory>
+    <StandardDirectory Id="DesktopFolder" />
+
+    <!-- ============================================================ features -->
+    <Feature Id="IncidentReportManager" Title="Incident Report Manager" Description="Record, track and print incident reports (96 forms)." Level="1" ConfigurableDirectory="INSTALLFOLDER">
+      <Files Directory="IrmFolder" Include="$(var.PublishRoot)IncidentReportManager\**" />
+      <ComponentRef Id="IrmStartMenu" />
+      <Feature Id="IrmDesktop" Title="Desktop shortcut" Level="1">
+        <ComponentRef Id="IrmDesktopShortcut" />
+      </Feature>
+    </Feature>
+
+    <Feature Id="FieldToolkit" Title="Field Toolkit" Description="First aid, CPR, hazmat (ERG 2024), location, timers, checklists, kit and radio." Level="1">
+      <Files Directory="ToolkitFolder" Include="$(var.PublishRoot)FieldToolkit\**" />
+      <ComponentRef Id="ToolkitStartMenu" />
+      <Feature Id="ToolkitDesktop" Title="Desktop shortcut" Level="1">
+        <ComponentRef Id="ToolkitDesktopShortcut" />
+      </Feature>
+    </Feature>
+
+    <Feature Id="FieldMap" Title="Field Map" Description="Offline map for BC and Alberta: search, nearest facilities, directions, incident drawings, APRS." Level="1">
+      <Files Directory="MapFolder" Include="$(var.PublishRoot)FieldMap\**" />
+      <ComponentRef Id="MapStartMenu" />
+      <Feature Id="MapDesktop" Title="Desktop shortcut" Level="1">
+        <ComponentRef Id="MapDesktopShortcut" />
+      </Feature>
+      <Feature Id="MapBuilder" Title="MapBuilder (command line)" Description="For building and exporting map data and imagery packages on a connected PC. Not needed on vehicles." Level="2">
+        <Files Directory="MapBuilderFolder" Include="$(var.PublishRoot)MapBuilder\**" />
+      </Feature>
+    </Feature>
+
+    <Feature Id="Documents" Title="Quick reference and licences" Level="1" AllowAbsent="no">
+      <File Directory="DocsFolder" Source="$(var.RepoRoot)docs\quick-reference\FieldSuite-Quick-Reference.pdf" />
+      <File Directory="DocsFolder" Source="$(var.RepoRoot)docs\LEGAL-NOTES.md" Name="LEGAL-NOTES.txt" />
+      <Files Directory="LicensesFolder" Include="$(var.RepoRoot)installer\licenses\**" />
+      <ComponentRef Id="DocsStartMenu" />
+    </Feature>
+
+    <!-- ============================================================ shortcuts -->
+    <!-- Shortcut components use a registry key path (Windows Installer validation, ICE38/ICE43, expects HKCU). -->
+    <Component Id="IrmStartMenu" Directory="StartMenuFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a01">
+      <Shortcut Id="IrmStartShortcut" Name="Incident Report Manager" Target="[IrmFolder]IncidentReporting.exe" WorkingDirectory="IrmFolder" />
+      <RegistryValue Root="HKCU" Key="Software\Field Suite\Shortcuts" Name="IncidentReportManager" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="ToolkitStartMenu" Directory="StartMenuFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a02">
+      <Shortcut Id="ToolkitStartShortcut" Name="Field Toolkit" Target="[ToolkitFolder]FieldToolkit.exe" WorkingDirectory="ToolkitFolder" />
+      <RegistryValue Root="HKCU" Key="Software\Field Suite\Shortcuts" Name="FieldToolkit" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="MapStartMenu" Directory="StartMenuFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a03">
+      <Shortcut Id="MapStartShortcut" Name="Field Map" Target="[MapFolder]FieldMap.exe" WorkingDirectory="MapFolder" />
+      <RegistryValue Root="HKCU" Key="Software\Field Suite\Shortcuts" Name="FieldMap" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="DocsStartMenu" Directory="StartMenuFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a04">
+      <Shortcut Id="DocsStartShortcut" Name="Field Suite quick reference" Target="[DocsFolder]FieldSuite-Quick-Reference.pdf" />
+      <!-- Always installed, so it removes the Start menu folder. -->
+      <RemoveFolder Id="RemoveStartMenuFolder" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\Field Suite\Shortcuts" Name="QuickReference" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <Component Id="IrmDesktopShortcut" Directory="DesktopFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a11">
+      <Shortcut Id="IrmDesktop" Name="Incident Report Manager" Target="[IrmFolder]IncidentReporting.exe" WorkingDirectory="IrmFolder" />
+      <RegistryValue Root="HKCU" Key="Software\Field Suite\Shortcuts" Name="IncidentReportManagerDesktop" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="ToolkitDesktopShortcut" Directory="DesktopFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a12">
+      <Shortcut Id="ToolkitDesktop" Name="Field Toolkit" Target="[ToolkitFolder]FieldToolkit.exe" WorkingDirectory="ToolkitFolder" />
+      <RegistryValue Root="HKCU" Key="Software\Field Suite\Shortcuts" Name="FieldToolkitDesktop" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="MapDesktopShortcut" Directory="DesktopFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a13">
+      <Shortcut Id="MapDesktop" Name="Field Map" Target="[MapFolder]FieldMap.exe" WorkingDirectory="MapFolder" />
+      <RegistryValue Root="HKCU" Key="Software\Field Suite\Shortcuts" Name="FieldMapDesktop" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Package>
+</Wix>
