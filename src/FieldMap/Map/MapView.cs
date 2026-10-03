@@ -47,6 +47,8 @@ public sealed class MapView : SKControl
         SetStyle(ControlStyles.Selectable, true);
         TabStop = true;
         Cursor = Cursors.Hand;
+        // The map pans and zooms with its own touch gestures.
+        TouchScroll.Exclude(this);
         Tiles.TileLoaded += OnTileLoaded;
         AppServices.Data.Changed += OnDataChanged;
         AppServices.DrawingsChanged += OnRedraw;

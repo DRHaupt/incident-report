@@ -31,6 +31,8 @@ internal static class Program
         Application.SetCompatibleTextRenderingDefault(false);
         Application.SetDefaultFont(new Font("Segoe UI", 10f));
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+        // Drag lists and pages with a finger, like a phone.
+        Shared.UI.TouchScroll.Install();
         Application.ThreadException += (_, e) =>
             MessageBox.Show("An unexpected error occurred.\n\n" + e.Exception.Message, Branding.ProductName,
                 MessageBoxButtons.OK, MessageBoxIcon.Error);

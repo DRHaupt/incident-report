@@ -11,4 +11,13 @@
     <Description>Branding, interface modes and settings helpers shared by the desktop apps.</Description>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Shared.Core\Shared.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="FieldToolkit.UiTests" />
+    <InternalsVisibleTo Include="FieldMap.UiTests" />
+  </ItemGroup>
+
 </Project>
