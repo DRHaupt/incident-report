@@ -106,7 +106,8 @@
     "cpr-infant",
     "choking-adult",
     "drowning",
-    "unconscious-recovery"
+    "unconscious-recovery",
+    "opioid-overdose"
   ],
   "sources": [
     {

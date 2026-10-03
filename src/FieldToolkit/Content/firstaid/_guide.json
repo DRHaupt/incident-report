@@ -1,7 +1,7 @@
 {
   // Guide-wide settings for the First Aid & Emergency Guide. Comments are allowed in these files.
   "title": "First Aid & Emergency Guide",
-  "contentVersion": "0.1-draft",
+  "contentVersion": "0.2-draft",
   "disclaimer": "This guide supports first aid training. It does not replace it. Get trained in first aid and CPR, follow the instructions of emergency dispatchers and your organisation's protocols, and always call for professional help in an emergency. The content is based on published guidelines from recognised bodies (sources are listed on every topic) and must be reviewed by a qualified clinician before operational use.",
   "review": {
     "status": "Draft – awaiting clinical review",
@@ -9,8 +9,10 @@
     "reviewedOn": "",
     "notes": "Fill in reviewedBy and reviewedOn (YYYY-MM-DD) once a qualified clinician has reviewed every topic against the current guideline editions and local protocols. Each topic also has its own review record."
   },
-  "emergencyNumber": "911 / 112",
-  "poisonCentre": "Poison Control (US: 1-800-222-1222) or your local poison centre",
+  "emergencyNumber": "911",
+  "poisonCentre": "your poison centre (BC: 1-800-567-8911 · Alberta PADIS: 1-800-332-1414 · US: 1-800-222-1222)",
+  "crisisLine": "988 (Suicide Crisis Helpline, call or text – Canada & US)",
+  // Synonyms: plain words people type, and the topics they lead to – most likely topic first.
   "synonyms": [
     { "phrases": ["not breathing", "stopped breathing", "no breathing", "isnt breathing", "not breathing properly", "gasping", "no pulse", "heart stopped", "dead", "lifeless"], "topics": ["cpr-adult", "scene-safety", "cpr-child", "cpr-infant"] },
     { "phrases": ["baby not breathing", "infant not breathing", "newborn not breathing", "baby blue", "baby floppy"], "topics": ["cpr-infant"] },
@@ -27,15 +29,31 @@
     { "phrases": ["broken", "snapped", "twisted", "out of place", "bone sticking out", "deformed"], "topics": ["fractures-sprains"] },
     { "phrases": ["hit head", "hit their head", "banged head", "knocked out", "concussed", "concussion"], "topics": ["head-injury"] },
     { "phrases": ["neck pain", "back pain after fall", "cant feel legs", "cant move legs", "rolled car", "rollover", "car off", "crash", "fell from height"], "topics": ["spinal-injury", "scene-safety"] },
-    { "phrases": ["passed out", "fainted", "unconscious", "wont wake", "not waking", "out cold", "unresponsive"], "topics": ["unconscious-recovery", "scene-safety", "cpr-adult"] },
+    { "phrases": ["passed out", "unconscious", "wont wake", "not waking", "out cold", "unresponsive"], "topics": ["unconscious-recovery", "scene-safety", "cpr-adult"] },
+    { "phrases": ["fainted"], "topics": ["fainting", "unconscious-recovery"] },
     { "phrases": ["too hot", "overheated", "heat", "sunstroke"], "topics": ["heat-illness"] },
     { "phrases": ["too cold", "freezing", "shivering", "frozen"], "topics": ["hypothermia"] },
     { "phrases": ["drowning", "drowned", "pulled from water", "pulled out of water", "under water"], "topics": ["drowning"] },
     { "phrases": ["electrocuted", "electric", "power line", "lightning", "shocked by electricity"], "topics": ["electric-shock"] },
-    { "phrases": ["overdose", "od", "pills", "tablets", "drugs", "poison", "poisoned", "swallowed chemical", "fumes", "gas", "naloxone", "narcan"], "topics": ["poisoning-overdose"] },
+    { "phrases": ["overdose", "od", "opioid", "fentanyl", "heroin", "naloxone", "narcan", "toxic drug", "down and not breathing"], "topics": ["opioid-overdose", "poisoning-overdose"] },
+    { "phrases": ["pills", "tablets", "drugs", "poison", "poisoned", "swallowed chemical", "bleach"], "topics": ["poisoning-overdose"] },
+    { "phrases": ["smoke", "fumes", "gas", "carbon monoxide", "co", "exhaust", "generator", "house fire"], "topics": ["smoke-co"] },
+    { "phrases": ["stabbed in chest", "chest wound", "shot", "gunshot", "sucking chest wound", "hole in chest"], "topics": ["chest-wound", "severe-bleeding"] },
+    { "phrases": ["stabbed in stomach", "stomach wound", "guts", "organs out", "belly wound"], "topics": ["abdominal-wound"] },
+    { "phrases": ["impaled", "stuck in", "embedded", "knife in", "rebar", "branch through"], "topics": ["impaled-object"] },
+    { "phrases": ["cut off", "severed", "amputated", "finger off", "lost finger", "amputation"], "topics": ["amputation", "severe-bleeding"] },
+    { "phrases": ["eye", "something in eye", "chemical in eye", "splash in eye", "eye injury"], "topics": ["eye-injury"] },
+    { "phrases": ["nosebleed", "nose bleed", "bleeding nose", "blood from nose"], "topics": ["nosebleed"] },
+    { "phrases": ["tooth", "teeth", "knocked out tooth", "lost tooth"], "topics": ["dental-injury"] },
+    { "phrases": ["graze", "scrape", "small cut", "splinter", "road rash"], "topics": ["minor-wounds"] },
+    { "phrases": ["frostbite", "frostnip", "frozen fingers", "frozen toes", "white fingers"], "topics": ["frostbite", "hypothermia"] },
+    { "phrases": ["feel faint", "going to faint", "dizzy", "light headed", "lightheaded", "fainting"], "topics": ["fainting"] },
+    { "phrases": ["suicidal", "suicide", "wants to die", "self harm", "panic attack", "anxiety", "hyperventilating", "crisis", "mental health"], "topics": ["mental-health-crisis"] },
+    { "phrases": ["triage", "mass casualty", "many injured", "major incident", "mci", "lots of casualties"], "topics": ["triage-start", "scene-safety"] },
+    { "phrases": ["handover", "hand over", "sample history", "head to toe", "secondary survey", "mist", "what to tell paramedics"], "topics": ["secondary-survey"] },
     { "phrases": ["bitten", "stung", "snake", "dog bite", "bee", "wasp", "tick", "spider"], "topics": ["bites-stings"] },
     { "phrases": ["pale and clammy", "cold and clammy", "clammy", "grey skin", "going grey"], "topics": ["shock"] },
     { "phrases": ["baby coming", "giving birth", "in labour", "in labor", "waters broke", "contractions"], "topics": ["childbirth"] },
-    { "phrases": ["what do i do", "where do i start", "accident", "help", "multiple casualties"], "topics": ["scene-safety"] }
+    { "phrases": ["what do i do", "where do i start", "accident", "help"], "topics": ["scene-safety"] }
   ]
 }

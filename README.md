@@ -52,11 +52,22 @@ sunlight and no network connection, for use at events and in general emergency r
 
 ### First Aid & Emergency Guide
 
-* 26 topics: scene safety & primary survey (DRABC / ABCDE, always listed first); CPR for adults, children
-  and infants; choking (adult/child and infant); severe bleeding & tourniquet; shock; burns; fractures &
-  sprains; head injury; suspected spinal injury; seizures; stroke (FAST); heart attack; anaphylaxis;
-  asthma; diabetic emergency; heat exhaustion/stroke; hypothermia; drowning; electric shock;
-  poisoning/overdose; bites & stings; unconscious casualty / recovery position; emergency childbirth.
+* 41 topics:
+  * **Start here:** scene safety & primary survey (DRABC / ABCDE, always first), mass-casualty triage
+    (START), and secondary survey & handover (SAMPLE, MIST).
+  * **Life-threatening:** CPR for adults, children and infants; choking (adult/child and infant); severe
+    bleeding & tourniquet; shock; and the unconscious casualty / recovery position.
+  * **Injuries:** burns; fractures & sprains; head injury; suspected spinal injury; chest wounds; abdominal
+    wounds; impaled objects; amputation; eye injuries and chemicals in the eye; nosebleeds; knocked-out
+    teeth; and minor cuts, grazes & splinters.
+  * **Medical:** seizures; stroke (FAST); heart attack; anaphylaxis; asthma; diabetic emergency; fainting;
+    poisoning; opioid overdose & naloxone (including BC's SAVE ME steps); mental health crisis, panic &
+    suicidal thoughts; and emergency childbirth.
+  * **Environmental:** heat exhaustion/stroke; hypothermia; frostbite; drowning; electric shock; smoke &
+    carbon monoxide; and bites & stings.
+* Numbers shown in the text come from `_guide.json`: **911**, the BC (1-800-567-8911) and Alberta PADIS
+  (1-800-332-1414) poison centres, and the **988** Suicide Crisis Helpline. Change them there for other
+  regions.
 * Each topic has a red **"call emergency services"** banner (tap it to see when to call), **one step per
   screen with large Back/Next buttons**, an **All steps** view, **Warnings · Do NOT**, and **Related ·
   Sources** (related topics can open in a new window).

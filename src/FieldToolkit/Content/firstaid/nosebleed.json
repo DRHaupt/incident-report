@@ -1,0 +1,83 @@
+{
+  "id": "nosebleed",
+  "title": "Nosebleed",
+  "category": "Injuries",
+  "order": 49,
+  "summary": "Sit up, lean forward and pinch the soft part of the nose firmly for 10–15 minutes without letting go.",
+  "keywords": [
+    "nosebleed",
+    "nose bleed",
+    "bleeding nose",
+    "blood from nose",
+    "epistaxis"
+  ],
+  "callEmergency": {
+    "headline": "Get medical help if the bleeding does not stop",
+    "when": [
+      "Bleeding continues for more than 20 minutes",
+      "Heavy bleeding, or after a head injury",
+      "They feel faint, or are taking blood thinners"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Sit and lean forward",
+      "text": "Sit them down, leaning forward so blood drains out of the nose, not down the throat."
+    },
+    {
+      "title": "Pinch the soft part of the nose",
+      "text": "Pinch firmly just below the bony bridge and keep pinching. Breathe through the mouth.",
+      "action": {
+        "type": "timer",
+        "label": "Start 10-minute pressure timer",
+        "timerLabel": "Nosebleed pressure",
+        "mode": "countdown",
+        "minutes": 10
+      }
+    },
+    {
+      "title": "Check",
+      "text": "After 10–15 minutes, release gently. If still bleeding, pinch again for another 10–15 minutes."
+    },
+    {
+      "title": "Afterwards",
+      "text": "Avoid blowing the nose, strenuous activity and hot drinks for some hours."
+    }
+  ],
+  "warningSigns": [
+    "Bleeding longer than 20 minutes",
+    "Feeling faint, pale or clammy",
+    "Clear fluid from the nose after a head injury"
+  ],
+  "doNot": [
+    "Do not tilt the head back",
+    "Do not pack the nose",
+    "Do not keep releasing to check"
+  ],
+  "related": [
+    "head-injury",
+    "shock"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Nosebleeds",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Epistaxis",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

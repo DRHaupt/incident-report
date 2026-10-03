@@ -94,7 +94,12 @@
   "related": [
     "shock",
     "fractures-sprains",
-    "scene-safety"
+    "scene-safety",
+    "amputation",
+    "impaled-object",
+    "chest-wound",
+    "abdominal-wound",
+    "minor-wounds"
   ],
   "sources": [
     {

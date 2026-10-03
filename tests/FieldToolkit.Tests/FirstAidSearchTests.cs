@@ -35,7 +35,24 @@ public class FirstAidSearchTests
     [InlineData("shivering", "hypothermia")]
     [InlineData("pulled from water", "drowning")]
     [InlineData("electrocuted", "electric-shock")]
-    [InlineData("overdose", "poisoning-overdose")]
+    [InlineData("overdose", "opioid-overdose")]
+    [InlineData("fentanyl", "opioid-overdose")]
+    [InlineData("swallowed bleach", "poisoning-overdose")]
+    [InlineData("stabbed in chest", "chest-wound")]
+    [InlineData("guts out", "abdominal-wound")]
+    [InlineData("knife stuck in leg", "impaled-object")]
+    [InlineData("finger cut off", "amputation")]
+    [InlineData("chemical in eye", "eye-injury")]
+    [InlineData("nosebleed", "nosebleed")]
+    [InlineData("knocked out tooth", "dental-injury")]
+    [InlineData("graze", "minor-wounds")]
+    [InlineData("frostbite", "frostbite")]
+    [InlineData("feel faint", "fainting")]
+    [InlineData("carbon monoxide", "smoke-co")]
+    [InlineData("suicidal", "mental-health-crisis")]
+    [InlineData("panic attack", "mental-health-crisis")]
+    [InlineData("mass casualty", "triage-start")]
+    [InlineData("handover", "secondary-survey")]
     [InlineData("snake bite", "bites-stings")]
     [InlineData("bee sting", "bites-stings")]
     [InlineData("passed out", "unconscious-recovery")]
@@ -65,7 +82,7 @@ public class FirstAidSearchTests
     public void Empty_query_lists_all_topics_in_display_order()
     {
         var hits = Search.Value.Search("  ");
-        Assert.Equal(26, hits.Count);
+        Assert.Equal(41, hits.Count);
         Assert.Equal("scene-safety", hits[0].Topic.Id);
     }
 

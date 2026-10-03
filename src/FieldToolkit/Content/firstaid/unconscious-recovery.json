@@ -84,7 +84,9 @@
     "cpr-adult",
     "scene-safety",
     "seizures",
-    "diabetic-emergency"
+    "diabetic-emergency",
+    "fainting",
+    "opioid-overdose"
   ],
   "sources": [
     {

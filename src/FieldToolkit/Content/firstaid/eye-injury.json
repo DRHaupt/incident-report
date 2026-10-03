@@ -1,0 +1,103 @@
+{
+  "id": "eye-injury",
+  "title": "Eye Injuries & Chemicals in the Eye",
+  "category": "Injuries",
+  "order": 48,
+  "summary": "Chemicals in the eye: rinse immediately with lots of clean running water and keep rinsing. Objects in the eye: do not remove anything stuck in it – shield the eye.",
+  "keywords": [
+    "eye injury",
+    "chemical in eye",
+    "something in eye",
+    "object in eye",
+    "eye burn",
+    "splash in eye",
+    "eye cut",
+    "black eye",
+    "grit in eye",
+    "glass in eye"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} or get urgent medical help for serious eye injuries",
+    "when": [
+      "Chemical in the eye (keep rinsing while help comes)",
+      "Object stuck in the eye, or a cut to the eye",
+      "Sudden loss of vision, double vision or severe pain",
+      "Blood inside the coloured part of the eye"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Chemical in the eye",
+      "text": "Rinse at once with large amounts of clean, lukewarm running water. Hold the eye open and tilt the head so the water runs away from the other eye.",
+      "points": [
+        "Keep rinsing for at least 15–20 minutes, or until help arrives",
+        "Remove contact lenses if easy to do"
+      ],
+      "action": {
+        "type": "timer",
+        "label": "Start 20-minute rinse timer",
+        "timerLabel": "Eye rinse",
+        "mode": "countdown",
+        "minutes": 20
+      }
+    },
+    {
+      "title": "Note the chemical",
+      "text": "Keep the container or label for responders. Use the Hazmat lookup for transport incidents.",
+      "action": {
+        "type": "topic",
+        "label": "Poisoning & chemicals",
+        "target": "poisoning-overdose"
+      }
+    },
+    {
+      "title": "Object stuck in the eye",
+      "text": "Do not remove it. Cover the eye with a paper cup or rigid shield that does not press on the object. Ask them to keep both eyes as still as possible."
+    },
+    {
+      "title": "Loose grit or dust",
+      "text": "Rinse with clean water. Do not rub the eye."
+    },
+    {
+      "title": "Blow to the eye",
+      "text": "Apply a cold pack wrapped in cloth gently, without pressure on the eye, and get medical advice."
+    }
+  ],
+  "warningSigns": [
+    "Loss of vision",
+    "Severe pain",
+    "Visible damage to the eye"
+  ],
+  "doNot": [
+    "Do not remove an object stuck in the eye",
+    "Do not rub the eye",
+    "Do not use anything other than clean water to rinse chemicals"
+  ],
+  "related": [
+    "poisoning-overdose",
+    "burns",
+    "impaled-object"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Chemical eye injuries",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Chemical eye injury",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

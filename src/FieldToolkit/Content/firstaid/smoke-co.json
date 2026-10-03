@@ -1,0 +1,100 @@
+{
+  "id": "smoke-co",
+  "title": "Smoke & Carbon Monoxide",
+  "category": "Environmental",
+  "order": 67,
+  "summary": "Get people out to fresh air if you can do it safely, call for help, and suspect carbon monoxide when several people in the same place feel unwell.",
+  "keywords": [
+    "smoke inhalation",
+    "carbon monoxide",
+    "co poisoning",
+    "exhaust fumes",
+    "generator fumes",
+    "heater fumes",
+    "fumes",
+    "gas leak",
+    "house fire",
+    "several people unwell"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for smoke or carbon monoxide exposure",
+    "when": [
+      "Anyone who has breathed smoke or fumes and is unwell",
+      "Headache, dizziness, nausea, confusion or drowsiness in several people in the same place or vehicle",
+      "Burns around the mouth or nose, soot, hoarse voice",
+      "Unresponsive or not breathing normally"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Do not become a casualty",
+      "text": "Do not enter smoke, a burning building or a space with fumes. Carbon monoxide has no smell."
+    },
+    {
+      "title": "Get to fresh air",
+      "text": "If safe, move people out and open doors and windows. Turn off engines, generators or heaters if safe."
+    },
+    {
+      "title": "Call {EMERGENCY}",
+      "text": "Tell them carbon monoxide or smoke is suspected."
+    },
+    {
+      "title": "Check breathing",
+      "text": "If not breathing normally, start CPR. If breathing but unresponsive, recovery position.",
+      "action": {
+        "type": "topic",
+        "label": "CPR – Adult",
+        "target": "cpr-adult"
+      }
+    },
+    {
+      "title": "Oxygen",
+      "text": "Give oxygen if available and you are trained."
+    },
+    {
+      "title": "Monitor",
+      "text": "Watch for hoarse voice, coughing or breathing difficulty – airway swelling can develop later.",
+      "action": {
+        "type": "topic",
+        "label": "Burns",
+        "target": "burns"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Hoarse voice, stridor, coughing",
+    "Confusion or drowsiness",
+    "Chest pain"
+  ],
+  "doNot": [
+    "Do not enter a smoke- or fume-filled area",
+    "Do not run engines or generators in enclosed spaces",
+    "Do not let them return inside until it has been cleared"
+  ],
+  "related": [
+    "burns",
+    "poisoning-overdose",
+    "cpr-adult"
+  ],
+  "sources": [
+    {
+      "body": "American Red Cross",
+      "title": "American Red Cross First Aid/CPR/AED Participant's Manual",
+      "section": "Inhaled poisons",
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Poisoning",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "id": "fainting",
+  "title": "Fainting",
+  "category": "Medical",
+  "order": 56,
+  "summary": "If someone feels faint, have them lie down or tense their leg and arm muscles. If they faint, lay them flat and check breathing – most recover within a minute.",
+  "keywords": [
+    "fainted",
+    "fainting",
+    "feel faint",
+    "going to faint",
+    "light headed",
+    "lightheaded",
+    "dizzy",
+    "passed out briefly",
+    "collapsed and came round",
+    "vasovagal"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} if any of these apply",
+    "when": [
+      "They do not wake within a minute, or are not breathing normally",
+      "Fainting with chest pain, palpitations, breathlessness or a severe headache",
+      "Fainting during exercise or without warning",
+      "They are injured, pregnant, older, or have heart problems"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Feeling faint",
+      "text": "Help them sit or lie down. If they can't, cross the legs and tense the leg, buttock and arm muscles (or squat) until the feeling passes."
+    },
+    {
+      "title": "If they faint",
+      "text": "Lay them flat on their back. Check breathing. If not breathing normally, start CPR.",
+      "action": {
+        "type": "topic",
+        "label": "CPR – Adult",
+        "target": "cpr-adult"
+      }
+    },
+    {
+      "title": "Help recovery",
+      "text": "Loosen tight clothing and give them fresh air. Raising the legs may help if there is no injury."
+    },
+    {
+      "title": "If they don't wake within a minute",
+      "text": "Call {EMERGENCY}. Place them in the recovery position if breathing.",
+      "action": {
+        "type": "topic",
+        "label": "Recovery position",
+        "target": "unconscious-recovery"
+      }
+    },
+    {
+      "title": "After they recover",
+      "text": "Keep them sitting or lying for a while. Check for injuries from the fall. They should get medical advice."
+    }
+  ],
+  "warningSigns": [
+    "Not waking within a minute",
+    "Chest pain or irregular heartbeat",
+    "Repeated fainting"
+  ],
+  "doNot": [
+    "Do not prop them up in a chair while unconscious",
+    "Do not give anything by mouth until fully alert",
+    "Do not let them stand up quickly"
+  ],
+  "related": [
+    "unconscious-recovery",
+    "heart-attack",
+    "diabetic-emergency",
+    "shock"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Presyncope – physical counterpressure manoeuvres",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Presyncope",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid – Presyncope",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

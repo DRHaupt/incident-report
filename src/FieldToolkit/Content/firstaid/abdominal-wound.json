@@ -1,0 +1,93 @@
+{
+  "id": "abdominal-wound",
+  "title": "Abdominal Wound",
+  "category": "Injuries",
+  "order": 45,
+  "summary": "Cover an open abdominal wound with a moist, clean dressing. Do not push organs back in. Lie the person down with knees bent and treat for shock.",
+  "keywords": [
+    "abdominal wound",
+    "stomach wound",
+    "stabbed in stomach",
+    "belly wound",
+    "guts out",
+    "evisceration",
+    "organs out",
+    "abdominal injury"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for any open or penetrating abdominal wound",
+    "when": [
+      "Any stab or penetrating wound to the abdomen",
+      "Organs visible through the wound",
+      "Signs of shock"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Call {EMERGENCY}",
+      "text": "Wear gloves."
+    },
+    {
+      "title": "Position",
+      "text": "Help them lie on their back with knees bent and supported – this eases tension on the wound."
+    },
+    {
+      "title": "Cover the wound",
+      "text": "Cover with a large, clean, moist dressing or cling film. If organs are showing, cover them loosely – do not push them back in."
+    },
+    {
+      "title": "Control bleeding",
+      "text": "Apply gentle pressure around the wound. Do not press directly on exposed organs.",
+      "action": {
+        "type": "topic",
+        "label": "Severe bleeding",
+        "target": "severe-bleeding"
+      }
+    },
+    {
+      "title": "Treat for shock and monitor",
+      "text": "Keep them warm and still and check breathing regularly.",
+      "action": {
+        "type": "topic",
+        "label": "Shock",
+        "target": "shock"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Signs of shock",
+    "Increasing pain or swelling of the abdomen",
+    "Vomiting blood"
+  ],
+  "doNot": [
+    "Do not push organs back in",
+    "Do not remove impaled objects",
+    "Do not give food or drink"
+  ],
+  "related": [
+    "severe-bleeding",
+    "shock",
+    "impaled-object"
+  ],
+  "sources": [
+    {
+      "body": "American Red Cross",
+      "title": "American Red Cross First Aid/CPR/AED Participant's Manual",
+      "section": "Open wounds – abdominal injuries",
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Bleeding control",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

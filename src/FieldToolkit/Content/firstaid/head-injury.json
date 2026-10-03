@@ -86,7 +86,10 @@
     "spinal-injury",
     "scene-safety",
     "seizures",
-    "unconscious-recovery"
+    "unconscious-recovery",
+    "nosebleed",
+    "dental-injury",
+    "secondary-survey"
   ],
   "sources": [
     {
