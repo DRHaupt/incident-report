@@ -142,7 +142,7 @@ public sealed class UpdateService
         var dir = Path.Combine(store.ImportsDir, "aed");
         if (!Directory.Exists(dir))
             return new();
-        string[] usable = { ".csv", ".geojson", ".json", ".kml", ".kmz", ".gpx" };
+        string[] usable = { ".csv", ".xlsx", ".geojson", ".json", ".kml", ".kmz", ".gpx" };
         return Directory.GetFiles(dir).Where(f => usable.Contains(Path.GetExtension(f).ToLowerInvariant()))
             .OrderBy(f => f).Select(f => (f, SourceNameFor(f))).ToList();
     }

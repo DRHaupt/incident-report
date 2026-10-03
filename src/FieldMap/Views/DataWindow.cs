@@ -1,3 +1,4 @@
+using System.Text;
 using FieldMap.Core.Data;
 using FieldMap.Core.Sample;
 using FieldMap.Framework;
@@ -393,31 +394,77 @@ public sealed class DataWindow : ToolWindow
 
     private async Task ImportAedAsync()
     {
-        using var d = new OpenFileDialog { Filter = "AED list (*.csv;*.geojson;*.json;*.kml;*.kmz;*.gpx)|*.csv;*.geojson;*.json;*.kml;*.kmz;*.gpx" };
+        using var d = new OpenFileDialog { Filter = AedFile.FileFilter };
         if (d.ShowDialog(this) != DialogResult.OK)
             return;
-        List<Core.Build.Poi> aeds;
+        List<AedRow> rows;
         try
         {
-            aeds = PoiImport.ReadAeds(d.FileName, Path.GetFileNameWithoutExtension(d.FileName));
+            rows = AedFile.Read(d.FileName, Path.GetFileNameWithoutExtension(d.FileName));
         }
-        catch (Exception ex) when (ex is IOException or FormatException or System.Text.Json.JsonException)
+        catch (Exception ex) when (ex is IOException or FormatException or InvalidDataException or System.Text.Json.JsonException or System.Xml.XmlException)
         {
             MessageBox.Show(this, "The file could not be read: " + ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
-        if (aeds.Count == 0)
+        if (rows.Count == 0)
         {
-            MessageBox.Show(this, "No AEDs with valid coordinates were found. Check the column names (latitude, longitude…).", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(this, "No AED sites were found. The list needs a name or address column, and latitude/longitude columns or street addresses.", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
-        var source = InputDialog.Ask(this, "AED source", $"{aeds.Count} AEDs found. Name of this source (shown on every AED):", Path.GetFileNameWithoutExtension(d.FileName));
+        // Sites with only an address are placed with the offline address search of the installed map data.
+        SetBusy(true, "Placing AEDs listed by address…");
+        var data = AppServices.Data;
+        Func<string, IReadOnlyList<Core.Search.SearchResult>>? search = data.HasData ? q => data.Search.Search(q, null, 8) : null;
+        var report = await Task.Run(() => AedFile.Locate(rows, search));
+        SetBusy(false);
+        var placed = rows.Where(r => r.HasPosition).ToList();
+        var notPlaced = rows.Where(r => !r.HasPosition).ToList();
+        var summary = new StringBuilder();
+        summary.AppendLine($"{rows.Count:N0} AED sites in {Path.GetFileName(d.FileName)} ({rows.Sum(r => r.Count ?? 1):N0} AEDs):");
+        summary.AppendLine($"• {report.Given:N0} with coordinates");
+        if (report.FromText > 0)
+            summary.AppendLine($"• {report.FromText:N0} from coordinates written in the list");
+        if (report.ByAddress > 0)
+            summary.AppendLine($"• {report.ByAddress:N0} placed by street address (approximate – shown as such)");
+        if (report.NotPlaced > 0)
+            summary.AppendLine($"• {report.NotPlaced:N0} could not be placed{(search == null ? " (no map data installed to look addresses up)" : " (address not found in the installed map data, or no house number)")} – saved to a list for checking");
+        foreach (var g in rows.GroupBy(r => r.Source))
+            summary.AppendLine($"   {g.Key}: {g.Count(r => r.HasPosition):N0} of {g.Count():N0} placed");
+        summary.AppendLine();
+        summary.AppendLine("AED lists go out of date: every AED shows its source and when it was imported, with the warning to confirm with dispatch.");
+        if (placed.Count == 0)
+        {
+            MessageBox.Show(this, summary + "\nNothing could be placed on the map.", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+        if (MessageBox.Show(this, summary + "\nImport the placed AEDs?", Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
+            return;
+        var source = InputDialog.Ask(this, "AED source", "Source name for rows that don't name their own source:", Path.GetFileNameWithoutExtension(d.FileName));
         if (string.IsNullOrWhiteSpace(source))
             return;
-        UpdateService.AddAedImport(AppServices.Store, d.FileName, source);
+        // Store the list as the plain CSV every build reads (with positions found), and the rest for checking.
+        var safe = string.Concat(Path.GetFileNameWithoutExtension(d.FileName).Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+        var temp = Path.Combine(Path.GetTempPath(), "fieldmap-aed-" + Guid.NewGuid().ToString("N")[..6]);
+        Directory.CreateDirectory(temp);
+        var csv = Path.Combine(temp, safe + ".csv");
+        AedFile.WriteCsv(csv, placed, DateTime.UtcNow);
+        UpdateService.AddAedImport(AppServices.Store, csv, source);
+        string? notPlacedFile = null;
+        if (notPlaced.Count > 0)
+        {
+            var dir = Path.Combine(AppServices.Store.ImportsDir, "aed-not-placed");
+            Directory.CreateDirectory(dir);
+            notPlacedFile = Path.Combine(dir, safe + "-not-placed.csv");
+            AedFile.WriteCsv(notPlacedFile, notPlaced, DateTime.UtcNow);
+        }
+        Directory.Delete(temp, true);
+        var aeds = placed;
         // Apply now: rebuild installed regions from the cached downloads (or the sample).
         SetBusy(true, "Merging AEDs…");
-        var log = new List<string> { $"Imported {aeds.Count} AEDs from {Path.GetFileName(d.FileName)} as \"{source}\". They are merged into every future build." };
+        var log = new List<string> { $"Imported {aeds.Count:N0} AED sites from {Path.GetFileName(d.FileName)}. They are merged into every future build." };
+        if (notPlacedFile != null)
+            log.Add($"{notPlaced.Count:N0} sites without a position are listed in {notPlacedFile}. Add latitude/longitude there (or install the province's map data) and import that file again.");
         var any = false;
         var progress = Progress();
         foreach (var id in AppServices.Store.InstalledRegions().ToList())

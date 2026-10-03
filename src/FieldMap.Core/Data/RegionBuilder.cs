@@ -67,7 +67,8 @@ public static class RegionBuilder
         foreach (var (path, name) in req.AedImports)
         {
             Report($"Merging AEDs from {Path.GetFileName(path)}", 0);
-            var aeds = PoiImport.ReadAeds(path, name);
+            // Registries list a few sites outside the province; keep the ones on this region's map.
+            var aeds = PoiImport.ReadAeds(path, name).Where(a => data.Bounds.IsEmpty || data.Bounds.Expand(5000).Contains(a.Lat, a.Lon)).ToList();
             PoiImport.Merge(data.Pois, aeds, PoiImport.AedMapping.MergeRadiusMeters);
             foreach (var src in aeds.Select(a => a.Source).Distinct())
                 Source(layerSources, LayerCatalog.Aed, src);

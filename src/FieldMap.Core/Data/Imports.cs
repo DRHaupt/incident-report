@@ -220,41 +220,34 @@ public static class PoiImport
     /// Reads an AED registry (CSV or GeoJSON). Columns: name, latitude/lat, longitude/lon/lng, address, access, location,
     /// last_verified, source (per row; defaults to <paramref name="sourceName"/>), id.
     /// </summary>
-    public static List<Poi> ReadAeds(string path, string sourceName)
-    {
-        var ext = Path.GetExtension(path).ToLowerInvariant();
-        var rows = ext is ".geojson" or ".json"
-            ? GeoJsonRows(path)
-            : ext is ".kml" or ".kmz" or ".gpx"
-                ? Overlays.MapFileImporter.PointRows(Overlays.MapFileImporter.Load(path))
-                : ReadCsv(path, null);
-        var list = new List<Poi>();
-        foreach (var row in rows)
+    public static List<Poi> ReadAeds(string path, string sourceName) =>
+        AedFile.Read(path, sourceName).Where(r => r.HasPosition).Select(r =>
         {
-            var lat = CsvStream.Number(CsvStream.Get(row, "latitude", "lat", "y"));
-            var lon = CsvStream.Number(CsvStream.Get(row, "longitude", "lon", "lng", "long", "x"));
-            if (lat is not { } la || lon is not { } lo || la is < -90 or > 90 || lo is < -180 or > 180 || (la == 0 && lo == 0))
-                continue;
             var props = new Dictionary<string, string>();
-            if (CsvStream.Get(row, "address") is { } a) props["address"] = a;
-            if (CsvStream.Get(row, "access", "hours", "opening_hours") is { } ac) props["access"] = ac;
-            if (CsvStream.Get(row, "location", "defibrillator:location", "placement") is { } loc) props["defibrillator:location"] = loc;
-            if (CsvStream.Get(row, "phone") is { } ph) props["phone"] = ph;
-            list.Add(new Poi
+            void Set(string key, string value)
+            {
+                if (value.Length > 0)
+                    props[key] = value;
+            }
+            Set("address", r.FullAddress);
+            Set("access", r.Access);
+            Set("defibrillator:location", r.Location);
+            Set("phone", r.Phone);
+            Set("aed_count", r.Count is > 1 ? r.Count.Value.ToString(CultureInfo.InvariantCulture) : "");
+            Set("location_method", r.LocationMethod);
+            return new Poi
             {
                 Layer = LayerCatalog.Aed,
                 Kind = "aed",
-                Name = CsvStream.Get(row, "name", "site", "site_name") ?? "",
-                Lat = la,
-                Lon = lo,
+                Name = r.Name,
+                Lat = r.Lat!.Value,
+                Lon = r.Lon!.Value,
                 Props = props,
-                Source = CsvStream.Get(row, "source") ?? sourceName,
-                LastVerified = NormalizeDate(CsvStream.Get(row, "last_verified", "verified", "check_date", "inspection_date")),
-                SourceId = CsvStream.Get(row, "id")
-            });
-        }
-        return list;
-    }
+                Source = r.Source.Length > 0 ? r.Source : sourceName,
+                LastVerified = NormalizeDate(r.LastVerified.Length > 0 ? r.LastVerified : null),
+                SourceId = r.Id.Length > 0 ? r.Id : null
+            };
+        }).ToList();
 
     private static IEnumerable<Dictionary<string, string>> ReadCsv(string path, string? zipEntry)
     {

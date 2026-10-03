@@ -380,7 +380,7 @@ staging areas) on every map, from the internet, from a radio, or both:
   atomic switch. A failed or interrupted update never touches the map in use; the previous version is kept
   for one-tap **Roll back**.
 * **Vehicles without internet**: *Export USB package* on a connected PC, *Install from USB* on the vehicle.
-* **AED registries**: import CSV or GeoJSON (merged by location, both sources kept, re-applied after updates).
+* **AED registries**: import CSV, Excel, GeoJSON, KML/KMZ or GPX (merged by location, each row's source kept, re-applied after updates). Sites with only an address are placed with the offline address search and marked approximate; the rest are listed for checking.
 
 The same pipeline runs from the command line (`publish/MapBuilder`):
 

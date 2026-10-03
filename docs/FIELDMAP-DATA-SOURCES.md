@@ -53,19 +53,28 @@ under the Open Government Licence – Alberta" (only the licences of installed l
 ## AEDs
 
 * OSM `emergency=defibrillator` points are imported with their `check_date`/`survey:date` as "last verified".
-* **Import** (Data → AEDs → Import): CSV or GeoJSON. CSV columns (header names are case-insensitive): `name`,
-  `latitude`, `longitude`, `address`, `access` (e.g. "24/7", "business hours"), `location` (where inside),
-  `last_verified` (yyyy-mm-dd), `source` (defaults to the file name), `id`. GeoJSON: Point features with the same
-  property names.
+* **Import** (Data → AEDs → Import): CSV, Excel (.xlsx, first sheet), GeoJSON, KML, KMZ or GPX. Column names are
+  matched loosely (case, spaces and punctuation ignored): name / venue / site, latitude, longitude, address, city /
+  municipality, province, postal code, AED location in building / location, access, phone, # AEDs, site id / id,
+  source, last_verified. A `source` column is kept per row (so a combined list keeps "Alberta Heart Safe" and
+  "BC PAD Program" apart); the name asked for at import is used only for rows without one.
+* **Sites without coordinates** are placed when possible: first from coordinates written in the text (e.g.
+  "LATITUDE 49 DEGREES 4 MINUTES 46.7 SECONDS NORTH, …"), then with the offline address search of the installed map
+  data (house-number matches only, unit numbers removed, same municipality when the row has one). Those AEDs say
+  "Position from the street address – approximate". Sites that can't be placed (no house number, address not in
+  the data, province not installed) are written to `imports\aed-not-placed\` for checking; add coordinates or
+  install the province and import that file again.
+* AEDs outside the installed region (registries list a few out-of-province sites) are left out of that region.
 * Merge: an imported AED within 25 m of an existing one replaces its details (keeping both sources listed); others
   are added. Imports are kept under `imports\` and re-applied automatically after each map-data update.
 * Every AED shows source and last-verified date, and the panel always shows: "AED locations may be out of date or
   inaccessible. Confirm with dispatch."
 * Provincial registries: BC PAD program (Heart & Stroke / BCEHS, `bcpadprogram.ca`) and the Alberta Heart Safe /
   PAD registry (`heart-safe.ca`, 4,000+ AEDs, shared with AHS-EMS dispatch) publish public maps but, as far as we
-  found, **no open-licensed download**. We have **not** copied their data out of their websites: ask the programs
-  for an export (or a data-sharing agreement) and load it with the import, which accepts CSV, GeoJSON, KML, KMZ and
-  GPX. Lists on blogs and third-party pages are usually old and have no licence; don't use them as a source.
+  found, **no open-licensed download**. Field Map does not ship their data. Load a copy your organisation holds (an
+  export from the program, ideally under a data-sharing agreement, or a dated snapshot of the public listing) with
+  the import, and keep a note of where and when it came from. Lists on blogs and third-party pages are usually old,
+  often have only street names, and have no licence; don't use them as a source.
 * OpenStreetMap AEDs (also shown on openaedmap.org) are always included; adding missing AEDs to OpenStreetMap
   improves every map, this one included.
 

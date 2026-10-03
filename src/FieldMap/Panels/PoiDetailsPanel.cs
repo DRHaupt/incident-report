@@ -26,6 +26,9 @@ public sealed class PoiDetailsPanel : SidePanel
         }
         Line("Address", p.GetValueOrDefault("address") ?? (p.TryGetValue("addr:housenumber", out var n) ? $"{n} {p.GetValueOrDefault("addr:street")}, {p.GetValueOrDefault("addr:city")}".TrimEnd(',', ' ') : null));
         Line("Where", p.GetValueOrDefault("defibrillator:location"));
+        Line("AEDs at this site", p.GetValueOrDefault("aed_count"));
+        if (p.GetValueOrDefault("location_method") is { Length: > 0 } method)
+            AddText($"Position from the {method} – approximate; the list had no coordinates.", FontRole.Bold, Brand.Danger);
         Line("Access", p.GetValueOrDefault("access"));
         Line("Hours", p.GetValueOrDefault("opening_hours"));
         Line("Phone", p.GetValueOrDefault("phone") ?? p.GetValueOrDefault("contact:phone"));
