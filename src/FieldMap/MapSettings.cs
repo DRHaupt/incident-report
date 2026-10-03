@@ -93,6 +93,12 @@ public enum TncConnection
     Tcp
 }
 
+public enum BeaconMode
+{
+    Smart,
+    Fixed
+}
+
 public sealed class AprsSettings
 {
     /// <summary>Draw APRS stations on the map.</summary>
@@ -131,7 +137,12 @@ public sealed class AprsSettings
     /// <summary>APRS-IS passcode; only needed to send your position over the internet.</summary>
     public string Passcode { get; set; } = "";
 
+    /// <summary>Receive messages to my call sign and acknowledge them; advertise messaging in the beacon.</summary>
+    public bool MessagingEnabled { get; set; } = true;
+
     public bool BeaconEnabled { get; set; }
+    public BeaconMode BeaconMode { get; set; } = BeaconMode.Smart;
+    public FieldMap.Core.Aprs.SmartBeaconSettings Smart { get; set; } = new();
     public bool BeaconRadio { get; set; } = true;
     public bool BeaconInternet { get; set; } = true;
     public string BeaconSymbol { get; set; } = "/>";

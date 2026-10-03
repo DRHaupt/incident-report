@@ -24,12 +24,54 @@ public sealed class AprsService : IDisposable
     private DateTime _lastPurge = DateTime.MinValue;
     private DateTime? _lastBeaconUtc;
     private GeoPoint? _lastBeaconPoint;
+    private double? _lastBeaconCourse;
     private bool _beaconBusy;
+    private readonly ConcurrentQueue<AprsMessage> _incoming = new();
+    private readonly JsonListStore<AprsMessage> _messageStore;
+    private int _savedMessages = -1;
+    private DateTime _lastMessageSave;
 
-    public AprsService(MapSettings settings)
+    /// <param name="messagesFile">Where messages are kept between runs (null: memory only).</param>
+    public AprsService(MapSettings settings, string? messagesFile = null)
     {
         _settings = settings;
+        _messageStore = new JsonListStore<AprsMessage>(messagesFile);
+        Messenger = new AprsMessenger(Transmit, _messageStore.Items);
     }
+
+    /// <summary>APRS text messages to and from this station, and bulletins heard.</summary>
+    public AprsMessenger Messenger { get; }
+
+    /// <summary>A message for this station arrived (raised on the UI thread).</summary>
+    public event EventHandler<AprsMessage>? MessageReceived;
+
+    /// <summary>Messages changed (new, acknowledged, retried).</summary>
+    public event EventHandler? MessagesChanged;
+
+    public bool CanSendMessages => AprsBeacon.IsValidCallsign(Settings.Callsign) && (_radio is { CanTransmit: true } || _internet is { CanTransmit: true });
+
+    /// <summary>Sends an information field on the requested links that are able to send. Returns the links used.</summary>
+    private AprsVia Transmit(string info, AprsVia via)
+    {
+        var s = Settings;
+        if (!AprsBeacon.IsValidCallsign(s.Callsign))
+            return AprsVia.None;
+        var call = s.Callsign.Trim().ToUpperInvariant();
+        var sent = AprsVia.None;
+        if (via.HasFlag(AprsVia.Radio) && _radio is { CanTransmit: true } radio)
+        {
+            Fire(radio.SendAsync(AprsBeacon.Packet(call, s.BeaconPath, info)));
+            sent |= AprsVia.Radio;
+        }
+        if (via.HasFlag(AprsVia.Internet) && _internet is { CanTransmit: true } internet)
+        {
+            Fire(internet.SendAsync(AprsBeacon.Packet(call, "TCPIP*", info)));
+            sent |= AprsVia.Internet;
+        }
+        return sent;
+    }
+
+    private static void Fire(Task t) => t.ContinueWith(x => _ = x.Exception, TaskScheduler.Default);
 
     public AprsStationTracker Tracker { get; } = new();
 
@@ -90,6 +132,8 @@ public sealed class AprsService : IDisposable
             Hook(_internet);
             _internet.Start();
         }
+        Messenger.MyCall = AprsBeacon.IsValidCallsign(s.Callsign) ? s.Callsign.Trim().ToUpperInvariant() : "";
+        Messenger.Acknowledge = s.MessagingEnabled;
         if (s.RadioEnabled && (s.Connection == TncConnection.Tcp ? !string.IsNullOrWhiteSpace(s.TcpHost) : !string.IsNullOrWhiteSpace(s.ComPort)))
         {
             var open = s.Connection == TncConnection.Tcp ? KissTncClient.Tcp(s.TcpHost.Trim(), s.TcpPort) : SerialOpener(s.ComPort.Trim(), s.Baud);
@@ -118,6 +162,8 @@ public sealed class AprsService : IDisposable
         var station = Tracker.Process(packet, via, DateTime.UtcNow);
         if (station is { Emergency: true })
             _emergencies.Enqueue(station);
+        if (Messenger.Handle(packet, via, DateTime.UtcNow) is { } message)
+            _incoming.Enqueue(message);
     }
 
     private static Func<CancellationToken, Task<Stream>> SerialOpener(string portName, int baud) => _ =>
@@ -153,6 +199,18 @@ public sealed class AprsService : IDisposable
         while (_emergencies.TryDequeue(out var e))
             if (_emergencyKeys.Add(e.Key))
                 EmergencyHeard?.Invoke(this, e);
+
+        Messenger.Tick(now);
+        while (_incoming.TryDequeue(out var m))
+            MessageReceived?.Invoke(this, m);
+        var mv = Messenger.Version;
+        if (mv != _savedMessages && now - _lastMessageSave > TimeSpan.FromSeconds(2))
+        {
+            _savedMessages = mv;
+            _lastMessageSave = now;
+            Messenger.Persist(_messageStore.Save);
+            MessagesChanged?.Invoke(this, EventArgs.Empty);
+        }
 
         if (now - _lastPurge > TimeSpan.FromMinutes(1))
         {
@@ -228,6 +286,8 @@ public sealed class AprsService : IDisposable
         if (!s.BeaconEnabled || _beaconBusy || BeaconProblem() != null)
             return false;
         var fix = UsableFix()!;
+        if (s.BeaconMode == BeaconMode.Smart)
+            return SmartBeacon.Due(s.Smart, now, _lastBeaconUtc, _lastBeaconCourse, (fix.SpeedMetersPerSecond ?? 0) * 3.6, fix.CourseDegrees, out _);
         var moving = (fix.SpeedMetersPerSecond ?? 0) > 2;
         var interval = TimeSpan.FromMinutes(Math.Max(1, moving ? s.BeaconMovingMinutes : s.BeaconMinutes));
         if (_lastBeaconUtc is not { } last)
@@ -253,7 +313,7 @@ public sealed class AprsService : IDisposable
             var s = Settings;
             var fix = UsableFix()!;
             var info = AprsBeacon.Position(fix.Latitude, fix.Longitude, s.SymbolTable, s.SymbolCode, fix.CourseDegrees,
-                fix.SpeedMetersPerSecond * 3.6, fix.AltitudeMeters, s.BeaconComment);
+                fix.SpeedMetersPerSecond * 3.6, fix.AltitudeMeters, s.BeaconComment, messaging: s.MessagingEnabled);
             var call = s.Callsign.Trim().ToUpperInvariant();
             var sent = new List<string>();
             var failed = new List<string>();
@@ -283,6 +343,7 @@ public sealed class AprsService : IDisposable
             }
             _lastBeaconUtc = DateTime.UtcNow;
             _lastBeaconPoint = new GeoPoint(fix.Latitude, fix.Longitude);
+            _lastBeaconCourse = fix.CourseDegrees;
             LastBeaconResult = (sent.Count > 0 ? $"Beacon sent by {string.Join(" and ", sent)} at {DateTime.Now:HH:mm}" : "Beacon not sent") +
                                (failed.Count > 0 ? " · failed: " + string.Join("; ", failed) : "");
             StatusChanged?.Invoke(this, EventArgs.Empty);
@@ -306,6 +367,8 @@ public sealed class AprsService : IDisposable
             parts.Add("IS " + Mark(_internet.State));
         if (_radio != null)
             parts.Add("TNC " + Mark(_radio.State));
+        if (Messenger.Unread is var unread and > 0)
+            parts.Add($"✉ {unread}");
         return string.Join(" · ", parts);
     }
 
@@ -328,7 +391,20 @@ public sealed class AprsService : IDisposable
             l?.Dispose();
     }
 
-    public void Dispose() => StopLinks();
+    /// <summary>A short description of the beacon schedule.</summary>
+    public string BeaconScheduleText()
+    {
+        var s = Settings;
+        return s.BeaconMode == BeaconMode.Smart
+            ? $"SmartBeaconing: every {s.Smart.SlowRateSeconds / 60} min stopped, down to every {s.Smart.FastRateSeconds / 60.0:0.#} min at {s.Smart.HighSpeedKmh:0} km/h, and after turns"
+            : $"every {s.BeaconMinutes} min ({s.BeaconMovingMinutes} min moving)";
+    }
+
+    public void Dispose()
+    {
+        StopLinks();
+        Messenger.Persist(_messageStore.Save);
+    }
 
     /// <summary>A serial port as a stream that closes the port when disposed.</summary>
     private sealed class SerialStream : Stream

@@ -84,6 +84,8 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         {
             if (AppServices.Aprs.ActiveEmergencies.FirstOrDefault() is { } key)
                 SelectAprs(key, center: true);
+            else if (AppServices.Aprs.Messenger.Unread > 0)
+                ShowPanel(new AprsMessagesPanel(this, AppServices.Aprs.Messenger.Snapshot().LastOrDefault(m => !m.Outgoing && !m.Read && m.State == Core.Aprs.AprsMessageState.Received)?.From));
             else
                 ShowPanel(new AprsPanel(this));
         };
@@ -115,6 +117,8 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         AppServices.Aprs.StatusChanged += OnAprsStatus;
         AppServices.Aprs.Changed += OnAprsStatus;
         AppServices.Aprs.EmergencyHeard += OnAprsEmergency;
+        AppServices.Aprs.MessageReceived += OnAprsMessage;
+        AppServices.Aprs.MessagesChanged += OnAprsStatus;
         FormClosed += (_, _) =>
         {
             AppServices.ClockTick -= OnClock;
@@ -122,6 +126,8 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
             AppServices.Aprs.StatusChanged -= OnAprsStatus;
             AppServices.Aprs.Changed -= OnAprsStatus;
             AppServices.Aprs.EmergencyHeard -= OnAprsEmergency;
+            AppServices.Aprs.MessageReceived -= OnAprsMessage;
+            AppServices.Aprs.MessagesChanged -= OnAprsStatus;
             AppServices.Location.Changed -= OnLocationChanged;
             if (_locationAcquired)
                 AppServices.Location.Release();
@@ -285,6 +291,7 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         menu.Items.Add(new ToolStripMenuItem("Spoken directions", null, (_, _) => { _voice = !_voice; AppServices.Settings.Voice = _voice; AppServices.Settings.Save(); }) { Checked = _voice });
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("APRS stations", null, (_, _) => ShowPanel(new AprsPanel(this)));
+        menu.Items.Add("APRS messages", null, (_, _) => ShowPanel(new AprsMessagesPanel(this)));
         menu.Items.Add("APRS settings…", null, (_, _) => { using var d = new AprsSettingsDialog(); d.ShowDialog(this); });
         menu.Items.Add("Incidents & drawings", null, (_, _) => AppServices.Windows.Open(DrawingsWindow.ToolId));
         menu.Items.Add("Data & updates", null, (_, _) => AppServices.Windows.Open(DataWindow.ToolId));
@@ -723,9 +730,21 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         else
         {
             _aprsLabel.Text = aprs.ShortStatus();
-            var color = aprs.AnyLinkFailed ? Brand.Amber : Brand.Navy;
+            var color = aprs.Messenger.Unread > 0 || aprs.AnyLinkFailed ? Brand.Amber : Brand.Navy;
             UiMode.SetColors(_aprsLabel, color, color == Brand.Amber ? Brand.Navy : Color.White);
         }
+    }
+
+    private bool FirstMapWindow => AppServices.Windows.Windows.OfType<MapWindow>().FirstOrDefault(w => !w.IsDisposed) == this;
+
+    private void OnAprsMessage(object? sender, Core.Aprs.AprsMessage m)
+    {
+        UpdateAprsStatus();
+        if (!FirstMapWindow)
+            return;
+        Flash($"✉ APRS message from {m.From}: {m.Text}");
+        if (_voice)
+            AppServices.Speech.Say($"A P R S message from {Phonetic.Spell(m.From)}.");
     }
 
     private void OnAprsEmergency(object? sender, Core.Aprs.AprsStation station)
@@ -733,7 +752,7 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         UpdateAprsStatus();
         _map.Invalidate();
         // Speak once, from the first map window.
-        if (_voice && AppServices.Windows.Windows.OfType<MapWindow>().FirstOrDefault(w => !w.IsDisposed) == this)
+        if (_voice && FirstMapWindow)
             AppServices.Speech.Say($"A P R S emergency from {Phonetic.Spell(station.Key)}.");
     }
 

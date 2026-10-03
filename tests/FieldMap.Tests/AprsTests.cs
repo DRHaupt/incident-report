@@ -425,13 +425,190 @@ public class AprsLinkTests
             Interlocked.Increment(ref attempts);
             throw new IOException("The port 'COM9' does not exist.");
         }) { RetryDelays = new[] { TimeSpan.FromMilliseconds(50) } };
+        // The status text changes on every attempt ("Connecting…", then the error), so record every change.
+        var statuses = new System.Collections.Concurrent.ConcurrentQueue<(AprsLinkState State, string Text)>();
+        tnc.StateChanged += (_, _) => statuses.Enqueue((tnc.State, tnc.StatusText));
         tnc.Start();
         var deadline = DateTime.UtcNow.AddSeconds(5);
         while (Volatile.Read(ref attempts) < 3 && DateTime.UtcNow < deadline)
             await Task.Delay(20);
         Assert.True(attempts >= 3);
-        Assert.Contains("COM9", tnc.StatusText);
+        Assert.Contains(statuses, x => x.State == AprsLinkState.Failed && x.Text.Contains("COM9"));
         tnc.Stop();
         Assert.Equal(AprsLinkState.Off, tnc.State);
+    }
+}
+
+public class AprsMessagingTests
+{
+    private static readonly DateTime T0 = new(2026, 10, 3, 12, 0, 0, DateTimeKind.Utc);
+
+    private sealed class Radio
+    {
+        public List<(string Info, AprsVia Via)> Sent { get; } = new();
+        public AprsVia Available { get; set; } = AprsVia.Radio;
+
+        public AprsVia Transmit(string info, AprsVia via)
+        {
+            var v = via & Available;
+            if (v != AprsVia.None)
+                Sent.Add((info, v));
+            return v;
+        }
+    }
+
+    private static AprsPacket Msg(string from, string info) => AprsParser.Parse($"{from}>APRS,WIDE1-1:{info}");
+
+    [Fact]
+    public void ReceivesAndAcknowledgesEveryCopyButShowsItOnce()
+    {
+        var radio = new Radio();
+        var m = new AprsMessenger(radio.Transmit) { MyCall = "VE7ABC-9" };
+        var received = new List<AprsMessage>();
+        m.Received += (_, x) => received.Add(x);
+        Assert.NotNull(m.Handle(Msg("VE7EOC", ":VE7ABC-9 :Report to staging{42"), AprsVia.Radio, T0));
+        Assert.Null(m.Handle(Msg("VE7EOC", ":VE7ABC-9 :Report to staging{42"), AprsVia.Radio, T0.AddSeconds(30)));
+        Assert.Single(received);
+        Assert.Equal("Report to staging", received[0].Text);
+        Assert.Equal(1, m.Unread);
+        Assert.Equal(2, radio.Sent.Count);
+        Assert.All(radio.Sent, s => Assert.Equal(":VE7EOC   :ack42", s.Info));
+        m.MarkRead("VE7EOC");
+        Assert.Equal(0, m.Unread);
+    }
+
+    [Fact]
+    public void IgnoresMessagesForOtherStationsAndKeepsBulletins()
+    {
+        var radio = new Radio();
+        var m = new AprsMessenger(radio.Transmit) { MyCall = "VE7ABC-9" };
+        Assert.Null(m.Handle(Msg("VE7EOC", ":VE7XYZ   :Not for you{1"), AprsVia.Radio, T0));
+        Assert.Null(m.Handle(Msg("VE7EOC", ":BLN1     :Net tonight 1900 on 146.52"), AprsVia.Radio, T0));
+        Assert.Null(m.Handle(Msg("VE7EOC", ":BLN1     :Net tonight 1900 on 146.52"), AprsVia.Internet, T0.AddMinutes(1)));
+        Assert.Empty(radio.Sent);
+        var b = Assert.Single(m.Snapshot());
+        Assert.Equal(AprsMessageState.Bulletin, b.State);
+    }
+
+    [Fact]
+    public void SendsRetriesAndCompletesOnAck()
+    {
+        var radio = new Radio();
+        var m = new AprsMessenger(radio.Transmit) { MyCall = "VE7ABC-9" };
+        var sent = m.Send("ve7eoc", "On scene, 2 patients", T0);
+        Assert.Equal(AprsMessageState.Sending, sent.State);
+        var info = Assert.Single(radio.Sent).Info;
+        Assert.Equal($":VE7EOC   :On scene, 2 patients{{{sent.MessageId}", info);
+        Assert.Equal(sent.MessageId, AprsParser.Parse("VE7ABC-9>APZFMP:" + info).MessageId);
+
+        m.Tick(T0.AddSeconds(10));
+        Assert.Single(radio.Sent);
+        m.Tick(T0.AddSeconds(31));
+        Assert.Equal(2, radio.Sent.Count);
+
+        m.Handle(Msg("VE7EOC", $":VE7ABC-9 :ack{sent.MessageId}"), AprsVia.Radio, T0.AddSeconds(40));
+        var done = m.Snapshot().Single(x => x.Outgoing);
+        Assert.Equal(AprsMessageState.Acked, done.State);
+        m.Tick(T0.AddMinutes(10));
+        Assert.Equal(2, radio.Sent.Count);
+    }
+
+    [Fact]
+    public void ReplyAckCompletesTheEarlierMessage()
+    {
+        var radio = new Radio();
+        var m = new AprsMessenger(radio.Transmit) { MyCall = "VE7ABC-9" };
+        var sent = m.Send("VE7EOC", "Need a second unit", T0);
+        var reply = Msg("VE7EOC", $":VE7ABC-9 :Unit 5 en route{{7}}{sent.MessageId}");
+        Assert.Equal("7", reply.MessageId);
+        Assert.Equal(sent.MessageId, reply.ReplyAck);
+        Assert.NotNull(m.Handle(reply, AprsVia.Radio, T0.AddSeconds(5)));
+        Assert.Equal(AprsMessageState.Acked, m.Snapshot().Single(x => x.Outgoing).State);
+        Assert.Contains(radio.Sent, s => s.Info == ":VE7EOC   :ack7");
+    }
+
+    [Fact]
+    public void GivesUpAfterTheLastRetryAndCanRetryByHand()
+    {
+        var radio = new Radio();
+        var m = new AprsMessenger(radio.Transmit) { MyCall = "VE7ABC-9", RetryDelays = new[] { TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20) } };
+        var sent = m.Send("VE7EOC", "Test", T0);
+        m.Tick(T0.AddSeconds(10));
+        m.Tick(T0.AddSeconds(30));
+        Assert.Equal(2, radio.Sent.Count);
+        Assert.Equal(AprsMessageState.Failed, m.Snapshot()[0].State);
+        m.Retry(sent.Id, T0.AddMinutes(5));
+        Assert.Equal(3, radio.Sent.Count);
+        Assert.Equal(AprsMessageState.Sending, m.Snapshot()[0].State);
+    }
+
+    [Fact]
+    public void FailsAtOnceWithNoWayToSend()
+    {
+        var radio = new Radio { Available = AprsVia.None };
+        var m = new AprsMessenger(radio.Transmit) { MyCall = "VE7ABC-9" };
+        m.Send("VE7EOC", "Test", T0);
+        var msg = m.Snapshot()[0];
+        Assert.Equal(AprsMessageState.Failed, msg.State);
+        Assert.Contains("No TNC", msg.Problem);
+        Assert.Throws<ArgumentException>(() => m.Send("NOT A CALL", "x", T0));
+        Assert.Throws<ArgumentException>(() => m.Send("VE7EOC", "   ", T0));
+    }
+
+    [Fact]
+    public void LongMessagesAreCutAndUnsafeCharactersRemoved()
+    {
+        var radio = new Radio();
+        var m = new AprsMessenger(radio.Transmit) { MyCall = "VE7ABC-9" };
+        var sent = m.Send("VE7EOC", new string('x', 80) + "{|~", T0);
+        Assert.Equal(AprsMessenger.MaxText, sent.Text.Length);
+    }
+
+    [Fact]
+    public void BeaconAdvertisesMessaging()
+    {
+        Assert.StartsWith("=", AprsBeacon.Position(49, -123, '/', '>', null, null, null, "", messaging: true));
+        Assert.StartsWith("!", AprsBeacon.Position(49, -123, '/', '>', null, null, null, ""));
+    }
+}
+
+public class SmartBeaconTests
+{
+    private static readonly SmartBeaconSettings S = new();
+    private static readonly DateTime T0 = new(2026, 10, 3, 12, 0, 0, DateTimeKind.Utc);
+
+    [Theory]
+    [InlineData(0, 1200)]
+    [InlineData(5, 1200)]
+    [InlineData(90, 180)]
+    [InlineData(120, 180)]
+    [InlineData(45, 360)]
+    [InlineData(10, 1200)]
+    public void RateDependsOnSpeed(double kmh, double seconds) => Assert.Equal(seconds, SmartBeacon.Rate(S, kmh).TotalSeconds, 0);
+
+    [Fact]
+    public void BeaconsOnFirstFixAndWhenTheRateIsUp()
+    {
+        Assert.True(SmartBeacon.Due(S, T0, null, null, 0, null, out var r));
+        Assert.Equal("first", r);
+        Assert.False(SmartBeacon.Due(S, T0.AddSeconds(170), T0, 90, 100, 90, out _));
+        Assert.True(SmartBeacon.Due(S, T0.AddSeconds(181), T0, 90, 100, 90, out r));
+        Assert.Equal("time", r);
+    }
+
+    [Fact]
+    public void CornerPeggingNeedsABiggerTurnAtLowSpeed()
+    {
+        // 100 km/h: threshold ≈ 28 + 255/62 ≈ 32°.
+        Assert.True(SmartBeacon.Due(S, T0.AddSeconds(20), T0, 0, 100, 40, out var r));
+        Assert.Equal("turn", r);
+        // 20 km/h: threshold ≈ 28 + 255/12.4 ≈ 48.5°, so 40° is not enough.
+        Assert.False(SmartBeacon.Due(S, T0.AddSeconds(20), T0, 0, 20, 40, out _));
+        // Not within the minimum turn time.
+        Assert.False(SmartBeacon.Due(S, T0.AddSeconds(10), T0, 0, 100, 90, out _));
+        // Wrapping through north counts as the small angle.
+        Assert.Equal(20, SmartBeacon.HeadingChange(350, 10));
+        // Stopped: no corner pegging.
+        Assert.False(SmartBeacon.Due(S, T0.AddSeconds(60), T0, 0, 2, 180, out _));
     }
 }

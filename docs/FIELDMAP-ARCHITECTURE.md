@@ -245,7 +245,14 @@ KISS TNC (COM port or TCP) ─ AX.25 ───┘                    └─ stat
 * **Sending** is off by default and needs a valid call sign. By radio the packet goes to the TNC as an AX.25 UI frame
   with the chosen path; by internet it needs the APRS-IS passcode (the server must answer "verified"). The
   destination `APZFMP` is in the experimental block; register a permanent tocall before wide use.
-* **Etiquette and rules** followed: filtered port only, software name and version in the login, default beacon
-  every 10 min (2 min moving), `WIDE1-1,WIDE2-1` default path. APRS is public and unencrypted; ISED's amateur radio
+* **Messaging** (`AprsMessenger`, APRS 1.0.1 ch. 14 + 1.1 reply-acks): outgoing messages get a number (`{n`), are
+  sent on every link that can send and retried after 30 s, 1, 2, 4 and 8 min until an `ack`/`rej` (or a reply-ack
+  `{MM}AA`) arrives. Messages to our call sign are acknowledged on the link they came in on, every copy (so the
+  sender stops retrying), but listed once. Bulletins (`BLN*`, `NWS*`) are kept; telemetry definitions ignored.
+  Persisted to `aprs-messages.json`. The beacon starts with `=` (messaging capable) when messaging is on.
+* **SmartBeaconing** (`SmartBeacon`): interval = slow rate below the low speed, fast rate above the high speed,
+  fast × high ÷ speed in between; plus "corner pegging": beacon early when the heading has changed by more than
+  min-angle + slope ÷ speed(mph) since the last beacon, at most once per min-turn-time.
+* **Etiquette and rules** followed: filtered port only, software name and version in the login, default SmartBeaconing (20 min stopped, 3 min at speed), `WIDE1-1,WIDE2-1` default path. APRS is public and unencrypted; ISED's amateur radio
   rules limit use for business, so organisations should decide whether staff may transmit as part of their job.
 

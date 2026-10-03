@@ -110,7 +110,7 @@ public static class AppServices
             StartupMessages.Add("Field Toolkit hand-over is unavailable: " + ex.Message);
         }
 
-        Aprs = new AprsService(Settings)
+        Aprs = new AprsService(Settings, Path.Combine(MapSettings.AppFolder, "aprs-messages.json"))
         {
             CurrentFix = () => _location is { State: LocationState.Ready } l ? l.Fix : null,
             AreaCenter = () => Windows.Windows.OfType<Views.MapWindow>().FirstOrDefault(w => !w.IsDisposed)?.MapView.Center

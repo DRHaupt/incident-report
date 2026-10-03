@@ -293,10 +293,19 @@ staging areas) on every map, from the internet, from a radio, or both:
   *Send to Field Toolkit*.
 * **Emergencies** (Mic-E "Emergency" or the emergency symbol) turn the APRS status red, are listed first and are
   spoken once.
-* **Beacon** (off by default): send your own position by radio and/or internet at set intervals (shorter
-  while moving) with a chosen symbol and comment. Needs an **amateur radio licence** and your call sign; sending
-  by internet also needs your APRS-IS passcode. APRS is public and unencrypted, and ISED's amateur rules limit
-  use for business: check your organisation's policy before transmitting as part of your job.
+* **Messages**: send and receive APRS text messages (up to 67 characters) with your call sign. Sent messages are
+  numbered and retried (30 s, 1, 2, 4, 8 min) until the other station acknowledges them; each shows *Sending (try
+  n)*, *✓ Received*, *Rejected* or *Not acknowledged* (tap to send again). Messages to you are acknowledged
+  automatically (reply-acks understood), shown once even if heard several times, announced, and counted in the
+  status bar (✉). Conversations by station, quick phrases for gloves (*Copy*, *On scene*, *En route*…), bulletins,
+  and *Send message* from any station's details. Kept in `%LOCALAPPDATA%\FieldMap\aprs-messages.json`.
+* **Beacon** (off by default): send your own position by radio and/or internet with a chosen symbol and comment,
+  either by **SmartBeaconing** (default: every 20 min stopped, faster with speed down to every 3 min at 90 km/h,
+  and straight after a turn, so tracks follow the road without crowding the channel; all values adjustable) or at
+  a fixed interval. The beacon tells others you can receive messages.
+* Sending anything (beacon, messages, acknowledgements) needs an **amateur radio licence** and your call sign;
+  sending by internet also needs your APRS-IS passcode. APRS is public and unencrypted, and ISED's amateur rules
+  limit use for business: check your organisation's policy before transmitting as part of your job.
 * Open from the status bar (*APRS 12 · IS ✓ · TNC ✓*), *More → APRS stations / APRS settings*, the Layers panel
   or Settings. A packet log shows the raw packets for checking a TNC.
 

@@ -97,6 +97,9 @@ public sealed class AprsPacket
     public string? MessageText { get; set; }
     public string? MessageId { get; set; }
 
+    /// <summary>Reply-ack: the id of one of our messages that this message also acknowledges.</summary>
+    public string? ReplyAck { get; set; }
+
     /// <summary>Why the packet could not be decoded, if it couldn't.</summary>
     public string? Error { get; set; }
 

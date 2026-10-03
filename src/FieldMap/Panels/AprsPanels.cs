@@ -57,9 +57,11 @@ public sealed class AprsPanel : SidePanel
             Build();
         });
         AddButtons(beacon, Btn("Clear list", ButtonStyle.Secondary, () => { AppServices.Aprs.Tracker.Clear(); Build(); }));
+        var unread = aprs.Messenger.Unread;
+        AddButton(unread > 0 ? $"✉ Messages ({unread} new)" : "Messages", unread > 0 ? ButtonStyle.Accent : ButtonStyle.Secondary, () => Map.ShowPanel(new AprsMessagesPanel(Map)));
         var problem = aprs.BeaconProblem();
         AddText(problem != null ? $"Beacon: {problem}"
-            : s.BeaconEnabled ? $"Beacon on: every {s.BeaconMinutes} min ({s.BeaconMovingMinutes} min moving) as {s.Callsign.ToUpperInvariant()}"
+            : s.BeaconEnabled ? $"Beacon on as {s.Callsign.ToUpperInvariant()}: {aprs.BeaconScheduleText()}"
             : $"Beacon off (sending is allowed as {s.Callsign.ToUpperInvariant()}).", FontRole.Normal, Brand.Muted);
         if (aprs.LastBeaconResult != null)
             AddText(aprs.LastBeaconResult, FontRole.Normal, Brand.Muted);
@@ -174,6 +176,8 @@ public sealed class AprsStationPanel : SidePanel
                    Btn("Centre map", ButtonStyle.Secondary, () => Map.CenterOn(p)));
         AddButtons(Btn("What's here?", ButtonStyle.Secondary, () => Map.ShowWhatsHere(p, s.Key)),
                    Btn("Send to Field Toolkit", ButtonStyle.Secondary, () => Map.SendToToolkit(p, s.Key, "APRS " + s.SymbolName)));
+        if (!s.IsObject)
+            AddButton("Send message", ButtonStyle.Primary, () => Map.ShowPanel(new AprsMessagesPanel(Map, s.Key)));
         AddButton("All APRS stations", ButtonStyle.Secondary, () => Map.ShowPanel(new AprsPanel(Map)));
 
         AddText("Packet", FontRole.Heading);

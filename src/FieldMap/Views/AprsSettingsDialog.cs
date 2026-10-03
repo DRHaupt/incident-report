@@ -37,6 +37,17 @@ public sealed class AprsSettingsDialog : Form
     private readonly ComboBox _symbol = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300 };
     private readonly TextBox _comment = Box(460);
     private readonly TextBox _path = Box(300);
+    private readonly CheckBox _messaging = Check("Messaging: receive messages to my call sign and acknowledge them");
+    private readonly ComboBox _mode = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300 };
+    private readonly NumericUpDown _sbLow = Number(1, 60, 8);
+    private readonly NumericUpDown _sbHigh = Number(20, 200, 90);
+    private readonly NumericUpDown _sbSlow = Number(1, 120, 20);
+    private readonly NumericUpDown _sbFast = Number(30, 1800, 180);
+    private readonly NumericUpDown _sbAngle = Number(5, 90, 28);
+    private readonly NumericUpDown _sbSlope = Number(0, 1000, 255);
+    private readonly NumericUpDown _sbTurnTime = Number(5, 300, 15);
+    private readonly Panel _smartBox = new() { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Margin = new Padding(0) };
+    private readonly Panel _fixedBox = new() { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Margin = new Padding(0) };
     private readonly NumericUpDown _every = Number(1, 120, 10);
     private readonly NumericUpDown _everyMoving = Number(1, 60, 2);
     private readonly NumericUpDown _showMinutes = Number(5, 1440, 60);
@@ -89,6 +100,17 @@ public sealed class AprsSettingsDialog : Form
         _symbol.SelectedIndex = idx >= 0 ? idx : 0;
         _comment.Text = s.BeaconComment;
         _path.Text = s.BeaconPath;
+        _messaging.Checked = s.MessagingEnabled;
+        _mode.Items.AddRange(new object[] { "SmartBeaconing (by speed and turns)", "Fixed interval" });
+        _mode.SelectedIndex = s.BeaconMode == BeaconMode.Fixed ? 1 : 0;
+        var sb = s.Smart;
+        _sbLow.Value = (decimal)Math.Clamp(sb.LowSpeedKmh, 1, 60);
+        _sbHigh.Value = (decimal)Math.Clamp(sb.HighSpeedKmh, 20, 200);
+        _sbSlow.Value = Math.Clamp(sb.SlowRateSeconds / 60, 1, 120);
+        _sbFast.Value = Math.Clamp(sb.FastRateSeconds, 30, 1800);
+        _sbAngle.Value = (decimal)Math.Clamp(sb.MinTurnAngle, 5, 90);
+        _sbSlope.Value = (decimal)Math.Clamp(sb.TurnSlope, 0, 1000);
+        _sbTurnTime.Value = Math.Clamp(sb.MinTurnSeconds, 5, 300);
         _every.Value = Math.Clamp(s.BeaconMinutes, 1, 120);
         _everyMoving.Value = Math.Clamp(s.BeaconMovingMinutes, 1, 60);
         _showMinutes.Value = Math.Clamp(s.ShowMinutes, 5, 1440);
@@ -129,6 +151,8 @@ public sealed class AprsSettingsDialog : Form
         Head("Call sign and sending");
         Field("Your amateur radio call sign, with SSID (e.g. VE7ABC-9)", _call, "Without a call sign Field Map only receives. SSID -9 is the usual choice for a vehicle.");
         Field("APRS-IS passcode (only to send by internet)", _passcode, "Issued for your call sign by APRS-IS software authors and server operators. Stored in this computer's Field Map settings.");
+        stack.Controls.Add(_messaging);
+        Hint("Acknowledging is a transmission. Your beacon tells other stations you can receive messages.");
         stack.Controls.Add(_beacon);
         var how = new FlowLayoutPanel { AutoSize = true, WrapContents = true, Margin = new Padding(0) };
         how.Controls.Add(_beaconRadio);
@@ -137,8 +161,38 @@ public sealed class AprsSettingsDialog : Form
         Field("Symbol", _symbol);
         Field("Comment (optional, e.g. unit name)", _comment);
         Field("Radio path", _path, "WIDE1-1,WIDE2-1 is the usual path in North America. Use WIDE2-1 or no path where digipeaters are busy.");
-        Field("Every (minutes, stopped)", _every);
-        Field("Every (minutes, moving)", _everyMoving, "Don't beacon more often than you need: the radio channel is shared by everyone.");
+        Field("When to send", _mode, "SmartBeaconing sends often at speed, rarely when stopped, and right after turns, so your track follows the road without crowding the channel.");
+
+        // The two schedules' fields live in their own stacks, shown for the chosen mode.
+        FlowLayoutPanel SubStack(Panel host)
+        {
+            var sub = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Margin = new Padding(0) };
+            host.Controls.Add(sub);
+            return sub;
+        }
+        var smart = SubStack(_smartBox);
+        var fixedStack = SubStack(_fixedBox);
+        void SubField(FlowLayoutPanel target, string label, Control c, string? hint = null)
+        {
+            target.Controls.Add(Ui.Text(label, FontRole.Bold));
+            c.Margin = new Padding(0, 0, 0, 6);
+            target.Controls.Add(c);
+            if (hint != null)
+                target.Controls.Add(Ui.Text(hint, FontRole.Normal, Brand.Muted));
+        }
+        SubField(smart, "Stopped below (km/h)", _sbLow);
+        SubField(smart, "Every (minutes) when stopped", _sbSlow);
+        SubField(smart, "Fastest at (km/h)", _sbHigh);
+        SubField(smart, "Every (seconds) at that speed", _sbFast, "In between, the interval grows as you slow down.");
+        SubField(smart, "Turn that triggers a beacon (degrees, at speed)", _sbAngle);
+        SubField(smart, "Turn slope", _sbSlope, "Extra turn needed at low speed: angle + slope ÷ speed in mph (255 is the usual value).");
+        SubField(smart, "At most one turn beacon every (seconds)", _sbTurnTime);
+        SubField(fixedStack, "Every (minutes, stopped)", _every);
+        SubField(fixedStack, "Every (minutes, moving)", _everyMoving, "Don't beacon more often than you need: the radio channel is shared by everyone.");
+        stack.Controls.Add(_smartBox);
+        stack.Controls.Add(_fixedBox);
+        _mode.SelectedIndexChanged += (_, _) => SyncMode();
+        SyncMode();
 
         Head("Map");
         Field("Show stations heard in the last (minutes)", _showMinutes);
@@ -150,7 +204,7 @@ public sealed class AprsSettingsDialog : Form
             _com.Enabled = _baud.Enabled = !tcp;
             _host.Enabled = _tcpPort.Enabled = tcp;
             var canSend = AprsBeacon.IsValidCallsign(_call.Text);
-            _beacon.Enabled = canSend;
+            _beacon.Enabled = _messaging.Enabled = canSend;
             _beaconRadio.Enabled = _beaconInternet.Enabled = canSend && _beacon.Checked;
         }
         _connection.SelectedIndexChanged += (_, _) => SyncEnabled();
@@ -158,7 +212,7 @@ public sealed class AprsSettingsDialog : Form
         _beacon.CheckedChanged += (_, _) => SyncEnabled();
         SyncEnabled();
 
-        foreach (var c in new Control[] { _server, _extra, _connection, _com, _baud, _host, _init, _call, _passcode, _symbol, _comment, _path, _serverPort, _range, _tcpPort, _every, _everyMoving, _showMinutes, _trackMinutes })
+        foreach (var c in new Control[] { _server, _extra, _connection, _com, _baud, _host, _init, _call, _passcode, _symbol, _comment, _path, _serverPort, _range, _tcpPort, _every, _everyMoving, _showMinutes, _trackMinutes, _mode, _sbLow, _sbHigh, _sbSlow, _sbFast, _sbAngle, _sbSlope, _sbTurnTime })
             c.Styled(FontRole.Large);
 
         var ok = Ui.Button("Save and connect", ButtonStyle.Primary, Accept);
@@ -182,6 +236,12 @@ public sealed class AprsSettingsDialog : Form
         var w = Math.Min(f.Width, wa.Width);
         var h = Math.Min(f.Height, wa.Height);
         f.Bounds = new Rectangle(Math.Clamp(f.Left, wa.Left, wa.Right - w), Math.Clamp(f.Top, wa.Top, wa.Bottom - h), w, h);
+    }
+
+    private void SyncMode()
+    {
+        _smartBox.Visible = _mode.SelectedIndex == 0;
+        _fixedBox.Visible = _mode.SelectedIndex == 1;
     }
 
     private static CheckBox Check(string text) => new CheckBox { Text = text, AutoSize = true, Margin = new Padding(0, 4, 12, 4) }.Styled(FontRole.Bold);
@@ -228,6 +288,18 @@ public sealed class AprsSettingsDialog : Form
         s.BeaconSymbol = Symbols[Math.Max(0, _symbol.SelectedIndex)].Symbol;
         s.BeaconComment = _comment.Text.Trim();
         s.BeaconPath = _path.Text.Trim();
+        s.MessagingEnabled = _messaging.Checked;
+        s.BeaconMode = _mode.SelectedIndex == 1 ? BeaconMode.Fixed : BeaconMode.Smart;
+        s.Smart = new SmartBeaconSettings
+        {
+            LowSpeedKmh = (double)_sbLow.Value,
+            HighSpeedKmh = Math.Max((double)_sbHigh.Value, (double)_sbLow.Value + 1),
+            SlowRateSeconds = (int)_sbSlow.Value * 60,
+            FastRateSeconds = (int)_sbFast.Value,
+            MinTurnAngle = (double)_sbAngle.Value,
+            TurnSlope = (double)_sbSlope.Value,
+            MinTurnSeconds = (int)_sbTurnTime.Value
+        };
         s.BeaconMinutes = (int)_every.Value;
         s.BeaconMovingMinutes = (int)_everyMoving.Value;
         s.ShowMinutes = (int)_showMinutes.Value;

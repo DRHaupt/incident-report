@@ -141,6 +141,7 @@ public static partial class AprsParser
         p.Addressee = inner.Addressee;
         p.MessageText = inner.MessageText;
         p.MessageId = inner.MessageId;
+        p.ReplyAck = inner.ReplyAck;
         p.Error = inner.Error;
     }
 
@@ -386,9 +387,17 @@ public static partial class AprsParser
         p.Addressee = info[1..10].Trim();
         var text = info[11..];
         var brace = text.LastIndexOf('{');
-        if (brace >= 0)
+        if (brace >= 0 && text.Length - brace <= 12)
         {
-            p.MessageId = text[(brace + 1)..].Trim();
+            var id = text[(brace + 1)..].Trim();
+            // Reply-ack (APRS 1.1 addendum): "{MM}AA" = message id MM, and an ack for our message AA.
+            var close = id.IndexOf('}');
+            if (close >= 0)
+            {
+                p.ReplyAck = id[(close + 1)..].Trim() is { Length: > 0 } ra ? ra : null;
+                id = id[..close];
+            }
+            p.MessageId = id.Length > 0 ? id : null;
             text = text[..brace];
         }
         p.MessageText = text;
