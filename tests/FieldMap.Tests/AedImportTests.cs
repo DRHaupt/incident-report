@@ -158,8 +158,11 @@ public class AedImportTests
             "Regina AED,50.4189,-104.5115,Test registry\n");
         var output = Path.Combine(dir, "out");
         RegionBuilder.BuildSample(output, Path.Combine(dir, "work"), null, default, new List<(string, string)> { (csv, "Test registry") });
-        using var search = new FieldMap.Core.Search.SearchEngine(Path.Combine(output, RegionBuilder.SearchFile));
-        var aeds = search.LoadPois().Where(p => p.Layer == FieldMap.Core.Layers.LayerCatalog.Aed).ToList();
+        List<FieldMap.Core.Build.Poi> aeds;
+        using (var search = new FieldMap.Core.Search.SearchEngine(Path.Combine(output, RegionBuilder.SearchFile)))
+            aeds = search.LoadPois().Where(p => p.Layer == FieldMap.Core.Layers.LayerCatalog.Aed).ToList();
+        // Windows keeps files open by pooled SQLite connections; release them before deleting the folder.
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         Assert.Contains(aeds, a => a.Name == "Inside AED" && a.Source == "Test registry");
         Assert.DoesNotContain(aeds, a => a.Name == "Regina AED");
         Directory.Delete(dir, true);
