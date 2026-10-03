@@ -1,0 +1,91 @@
+{
+  "id": "amputation",
+  "title": "Amputation",
+  "category": "Injuries",
+  "order": 47,
+  "summary": "Control the bleeding first – use a tourniquet if needed. Then save the amputated part: wrap it, bag it and keep it cool but not frozen.",
+  "keywords": [
+    "amputation",
+    "amputated",
+    "finger cut off",
+    "severed",
+    "cut off",
+    "lost finger",
+    "limb off",
+    "degloving"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for any amputation",
+    "when": [
+      "Any amputated finger, toe or limb",
+      "Severe bleeding or signs of shock"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Control the bleeding",
+      "text": "Firm direct pressure. For an arm or leg with life-threatening bleeding, apply a tourniquet.",
+      "action": {
+        "type": "topic",
+        "label": "Severe bleeding & tourniquet",
+        "target": "severe-bleeding"
+      }
+    },
+    {
+      "title": "Call {EMERGENCY}",
+      "text": ""
+    },
+    {
+      "title": "Save the amputated part",
+      "text": "Wrap it in clean, moist gauze or cloth. Put it in a sealed plastic bag. Put the bag in a container of ice and water.",
+      "caution": "The part must not touch ice directly and must not freeze."
+    },
+    {
+      "title": "Label it",
+      "text": "Write the person's name and the time of the injury on the bag and send it with the person."
+    },
+    {
+      "title": "Treat for shock and monitor",
+      "text": "",
+      "action": {
+        "type": "topic",
+        "label": "Shock",
+        "target": "shock"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Bleeding not controlled",
+    "Signs of shock"
+  ],
+  "doNot": [
+    "Do not put the amputated part directly on ice or in water",
+    "Do not wash the part with anything other than clean water if it is dirty",
+    "Do not delay bleeding control to look for the part"
+  ],
+  "related": [
+    "severe-bleeding",
+    "shock"
+  ],
+  "sources": [
+    {
+      "body": "American Red Cross",
+      "title": "American Red Cross First Aid/CPR/AED Participant's Manual",
+      "section": "Amputations",
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Bleeding control and tourniquets",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

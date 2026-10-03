@@ -76,7 +76,8 @@
     "severe-bleeding",
     "anaphylaxis",
     "burns",
-    "cpr-adult"
+    "cpr-adult",
+    "secondary-survey"
   ],
   "sources": [
     {

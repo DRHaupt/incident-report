@@ -1,0 +1,95 @@
+{
+  "id": "mental-health-crisis",
+  "title": "Mental Health Crisis, Panic & Suicidal Thoughts",
+  "category": "Medical",
+  "order": 58,
+  "summary": "Stay calm and with the person, listen without judging, keep them safe, and connect them with help – a crisis line or emergency services.",
+  "keywords": [
+    "suicidal",
+    "suicide",
+    "wants to die",
+    "self harm",
+    "mental health",
+    "panic attack",
+    "anxiety attack",
+    "hyperventilating",
+    "distressed",
+    "crisis",
+    "overwhelmed",
+    "psychosis"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} if anyone is in immediate danger",
+    "when": [
+      "They have harmed themselves or have a plan and the means to do so now",
+      "They are a danger to others",
+      "They may have taken an overdose – see Opioid overdose / Poisoning",
+      "Otherwise, call or text {CRISIS} for support"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Make it safe",
+      "text": "Check for dangers to them, you and others. If safe, remove means of harm. Do not put yourself at risk."
+    },
+    {
+      "title": "Stay with them and stay calm",
+      "text": "Speak slowly and simply. Introduce yourself. Listen without judging or arguing."
+    },
+    {
+      "title": "Ask directly about suicide",
+      "text": "If you are worried, ask: \"Are you thinking about killing yourself?\" Asking does not put the idea in their head."
+    },
+    {
+      "title": "Panic attack",
+      "text": "Help them sit somewhere quieter. Encourage slow breathing – in through the nose, out slowly through the mouth – and reassure them it will pass.",
+      "caution": "Chest pain, breathlessness or fainting may be a medical emergency – do not assume it is panic."
+    },
+    {
+      "title": "Connect them with help",
+      "text": "Call or text {CRISIS}, or call {EMERGENCY} if they are in immediate danger. Offer to make the call with them."
+    },
+    {
+      "title": "Do not leave them alone",
+      "text": "Stay with them until help arrives or they are with someone they trust."
+    }
+  ],
+  "warningSigns": [
+    "Talking about wanting to die or having a plan",
+    "Self-harm or overdose",
+    "Confusion, hallucinations or aggression"
+  ],
+  "doNot": [
+    "Do not leave someone at risk alone",
+    "Do not promise to keep a suicide plan secret",
+    "Do not argue, threaten or make them feel guilty",
+    "Do not put yourself in danger"
+  ],
+  "related": [
+    "poisoning-overdose",
+    "opioid-overdose",
+    "scene-safety"
+  ],
+  "sources": [
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid – Mental health first aid",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Acute stress and suicidal behaviour",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

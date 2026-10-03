@@ -24,6 +24,17 @@ public static class ErgPlacards
         new() { Code = "9", Label = "CLASS 9", ClassName = "Class 9 – Miscellaneous" }
     };
 
+    /// <summary>Picker order: by class/division, with the extra ERG placards next to their class.</summary>
+    public static double OrderKey(string code) => code switch
+    {
+        "DANGEROUS" => 0,
+        "OXYGEN" => 2.25,
+        "HOT" => 3.5,
+        "LITHIUM-ION" => 9.1,
+        "LITHIUM-METAL" => 9.2,
+        _ => double.TryParse(code, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : 99
+    };
+
     /// <summary>Applies "code,guide" rows (from placards.csv) to the placard list. Returns problems found.</summary>
     public static List<string> ApplyGuides(List<ErgPlacard> placards, IEnumerable<string> csvLines)
     {
@@ -44,9 +55,15 @@ public static class ErgPlacards
             var code = parts[0].Trim();
             var placard = placards.FirstOrDefault(p => p.Code == code);
             if (placard == null)
-                placards.Add(placard = new ErgPlacard { Code = code, Label = parts.Length > 2 ? parts[2].Trim() : code, ClassName = parts.Length > 2 ? parts[2].Trim() : code });
+            {
+                var label = parts.Length > 2 && parts[2].Trim().Length > 0 ? parts[2].Trim() : code;
+                // The description may itself contain commas ("Lithium ion batteries (UN3480, UN3481)").
+                var description = parts.Length > 3 ? string.Join(",", parts.Skip(3)).Trim() : label;
+                placards.Add(placard = new ErgPlacard { Code = code, Label = label, ClassName = description });
+            }
             placard.Guide = parts[1].Trim();
         }
+        placards.Sort((a, b) => OrderKey(a.Code).CompareTo(OrderKey(b.Code)));
         return problems;
     }
 }

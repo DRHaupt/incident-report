@@ -130,7 +130,9 @@
     "severe-bleeding",
     "unconscious-recovery",
     "spinal-injury",
-    "shock"
+    "shock",
+    "triage-start",
+    "secondary-survey"
   ],
   "sources": [
     {

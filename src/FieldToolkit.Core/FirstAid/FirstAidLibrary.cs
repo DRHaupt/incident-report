@@ -41,10 +41,11 @@ public sealed class FirstAidLibrary
 
     public FirstAidTopic? Find(string id) => _byId.TryGetValue(id, out var t) ? t : null;
 
-    /// <summary>Replaces the {EMERGENCY} and {POISON} placeholders with the numbers set in _guide.json.</summary>
+    /// <summary>Replaces the {EMERGENCY}, {POISON} and {CRISIS} placeholders with the numbers set in _guide.json.</summary>
     public string Expand(string text) => text
         .Replace("{EMERGENCY}", Guide.EmergencyNumber, StringComparison.Ordinal)
-        .Replace("{POISON}", string.IsNullOrWhiteSpace(Guide.PoisonCentre) ? "your poison centre" : Guide.PoisonCentre, StringComparison.Ordinal);
+        .Replace("{POISON}", string.IsNullOrWhiteSpace(Guide.PoisonCentre) ? "your poison centre" : Guide.PoisonCentre, StringComparison.Ordinal)
+        .Replace("{CRISIS}", string.IsNullOrWhiteSpace(Guide.CrisisLine) ? "a crisis line" : Guide.CrisisLine, StringComparison.Ordinal);
 
     public static FirstAidLibrary Load(string folder)
     {

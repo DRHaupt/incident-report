@@ -95,7 +95,10 @@
     "unconscious-recovery",
     "cpr-adult",
     "burns",
-    "seizures"
+    "seizures",
+    "opioid-overdose",
+    "smoke-co",
+    "eye-injury"
   ],
   "sources": [
     {

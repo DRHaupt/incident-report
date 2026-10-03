@@ -78,8 +78,8 @@ public sealed class FirstAidSearch
 
         foreach (var (phrase, topics) in _synonyms)
             if (padded.Contains(" " + phrase + " ", StringComparison.Ordinal) || (q.Length >= 4 && phrase.StartsWith(q, StringComparison.Ordinal)))
-                foreach (var id in topics)
-                    Add(id, 100 + phrase.Length, phrase);
+                for (var i = 0; i < topics.Length; i++)
+                    Add(topics[i], 100 + phrase.Length - 10 * i, phrase);   // topics are listed in priority order
 
         foreach (var t in _library.Topics)
         {

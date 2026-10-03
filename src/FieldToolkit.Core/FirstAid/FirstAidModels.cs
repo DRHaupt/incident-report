@@ -16,6 +16,9 @@ public sealed class FirstAidGuide
     /// <summary>Replaces <c>{POISON}</c> in topic text.</summary>
     public string PoisonCentre { get; set; } = "";
 
+    /// <summary>Replaces <c>{CRISIS}</c> in topic text, e.g. "988".</summary>
+    public string CrisisLine { get; set; } = "";
+
     public List<SynonymGroup> Synonyms { get; set; } = new();
 }
 

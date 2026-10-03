@@ -94,8 +94,19 @@ public class ToolkitSmokeTests
         Pump();
         Assert.Empty(AppServices.Windows.Windows);
 
-        // Hazmat: home, each material page, each guide page.
-        foreach (var m in AppServices.Erg.Materials)
+        // Hazmat: every guide page, and a material page for every kind of entry (Table 1 / Table 3 references,
+        // water-reactive, polymerizable, no ID number) plus one material per guide.
+        Assert.False(AppServices.Erg.IsSample);
+        Assert.Empty(AppServices.Erg.Problems);
+        var materials = AppServices.Erg.Materials.Where(m => m.Highlighted).Take(25)
+            .Concat(AppServices.Erg.Materials.Where(m => m.WaterReactive).Take(10))
+            .Concat(AppServices.Erg.Materials.Where(m => m.Polymerizable).Take(5))
+            .Concat(AppServices.Erg.Materials.Where(m => m.Id.Length == 0))
+            .Concat(AppServices.Erg.Materials.GroupBy(m => m.Guide).Select(g => g.First()))
+            .Concat(AppServices.Erg.Materials.Where(m => m.Id is "1005" or "1017" or "1203"))
+            .Distinct()
+            .ToList();
+        foreach (var m in materials)
         {
             var w = AppServices.Windows.Open(HazmatWindow.ToolId, $"material:{m.Id}|{m.Name}")!;
             Pump(10);

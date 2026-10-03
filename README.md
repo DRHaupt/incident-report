@@ -52,11 +52,22 @@ sunlight and no network connection, for use at events and in general emergency r
 
 ### First Aid & Emergency Guide
 
-* 26 topics: scene safety & primary survey (DRABC / ABCDE, always listed first); CPR for adults, children
-  and infants; choking (adult/child and infant); severe bleeding & tourniquet; shock; burns; fractures &
-  sprains; head injury; suspected spinal injury; seizures; stroke (FAST); heart attack; anaphylaxis;
-  asthma; diabetic emergency; heat exhaustion/stroke; hypothermia; drowning; electric shock;
-  poisoning/overdose; bites & stings; unconscious casualty / recovery position; emergency childbirth.
+* 41 topics:
+  * **Start here:** scene safety & primary survey (DRABC / ABCDE, always first), mass-casualty triage
+    (START), and secondary survey & handover (SAMPLE, MIST).
+  * **Life-threatening:** CPR for adults, children and infants; choking (adult/child and infant); severe
+    bleeding & tourniquet; shock; and the unconscious casualty / recovery position.
+  * **Injuries:** burns; fractures & sprains; head injury; suspected spinal injury; chest wounds; abdominal
+    wounds; impaled objects; amputation; eye injuries and chemicals in the eye; nosebleeds; knocked-out
+    teeth; and minor cuts, grazes & splinters.
+  * **Medical:** seizures; stroke (FAST); heart attack; anaphylaxis; asthma; diabetic emergency; fainting;
+    poisoning; opioid overdose & naloxone (including BC's SAVE ME steps); mental health crisis, panic &
+    suicidal thoughts; and emergency childbirth.
+  * **Environmental:** heat exhaustion/stroke; hypothermia; frostbite; drowning; electric shock; smoke &
+    carbon monoxide; and bites & stings.
+* Numbers shown in the text come from `_guide.json`: **911**, the BC (1-800-567-8911) and Alberta PADIS
+  (1-800-332-1414) poison centres, and the **988** Suicide Crisis Helpline. Change them there for other
+  regions.
 * Each topic has a red **"call emergency services"** banner (tap it to see when to call), **one step per
   screen with large Back/Next buttons**, an **All steps** view, **Warnings · Do NOT**, and **Related ·
   Sources** (related topics can open in a new window).
@@ -77,18 +88,31 @@ timers. Press Space to start or stop.
 
 ### Hazmat Lookup (ERG)
 
+The data is the **official 2024 Emergency Response Guidebook (ERG2024)**, imported from the PHMSA PDF
+(`ERG2024-Eng-Web-a.pdf`). It has 2,771 ID/name entries, all 62 guides (111–174; 121 and 167 are printed
+"Intentionally left blank"), 537 Table 1 rows, 108 water-reactive materials from Table 2, the General First Aid
+section and the placard table. Text is kept exactly as printed. The import was checked against a second,
+independent PDF reader and by hand against the printed pages; see
+[docs/erg/ERG2024-verification.md](docs/erg/ERG2024-verification.md).
+
 * Search by 4-digit UN/NA number (there is an on-screen **keypad** for gloves; "UN1203", "NA 1993" and
-  partial numbers also work), by material name, or by guide ("guide 128").
-* Each material page shows the ID, guide and flags (P = may polymerize, water-reactive), then the **full
-  guide page**: potential hazards, public safety (protective clothing, evacuation) and emergency response
-  (fire, spill or leak, first aid).
-* Materials in the **Table of Initial Isolation and Protective Action Distances** are highlighted in green.
+  partial numbers also work), by material name, or by guide ("guide 128"). The four explosives entries the
+  guidebook lists without an ID number ("— —") can be found by name.
+* Each material page shows the ID, guide and flags (P = may polymerize; water-reactive with the toxic gases
+  it produces), then the **full guide page**: potential hazards, public safety (protective clothing,
+  evacuation) and emergency response (fire, spill or leak, first aid). The guidebook's **General First Aid**
+  section is shown under each guide's FIRST AID, and the **Canadian ERAP notice** is shown on the guides that
+  carry it.
+* Materials in **Table 1 – Initial Isolation and Protective Action Distances** are highlighted in green.
   Their page shows small and large spill distances, with isolation distance and day and night protective
-  action distances.
-* **Placard picker**: tap a hazard class placard to filter materials and show its initial response guide.
-* ⚠️ **The repository ships a SAMPLE dataset only.** It contains six fictitious materials (IDs 9901–9906,
-  guides 901–903, all marked SAMPLE), and the app shows a red banner while it is loaded. Build the real
-  dataset from the official PHMSA ERG PDF with [`tools/ErgImport`](tools/ErgImport/README.md).
+  action distances, for every row (synonyms, "when spilled on land / in water", inhalation hazard zones
+  A–D). Rows for the six gases in Table 3 say "Refer to Table 3"; use the printed guidebook for those large
+  spills.
+* **Placard picker**: tap a placard to see its **initial response guide** from the guidebook's placard table
+  (pages 8–9), including DANGEROUS, oxygen, HOT, infectious substances and lithium batteries, and the
+  materials that use that guide.
+* To update to a future edition, re-run [`tools/ErgImport`](tools/ErgImport/README.md) on the new PDF, then
+  run its verify and cross-check steps.
 
 ### Location
 

@@ -1,0 +1,94 @@
+{
+  "id": "impaled-object",
+  "title": "Impaled (Embedded) Object",
+  "category": "Injuries",
+  "order": 46,
+  "summary": "Leave the object in place. Control bleeding around it and pad it so it cannot move.",
+  "keywords": [
+    "impaled",
+    "embedded object",
+    "stuck in",
+    "knife stuck",
+    "rebar",
+    "branch in body",
+    "glass in wound",
+    "object in wound",
+    "nail in"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for a large or deep impaled object",
+    "when": [
+      "Any object impaled in the head, neck, chest, abdomen or groin",
+      "Large objects anywhere, or heavy bleeding"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Do not remove it",
+      "text": "The object may be plugging the wound. Removing it can cause severe bleeding."
+    },
+    {
+      "title": "Control bleeding around it",
+      "text": "Press firmly on either side of the object, not on it.",
+      "action": {
+        "type": "topic",
+        "label": "Severe bleeding",
+        "target": "severe-bleeding"
+      }
+    },
+    {
+      "title": "Stabilise the object",
+      "text": "Build padding (rolled bandages, cloth) around the object and bandage over the padding so the object cannot move."
+    },
+    {
+      "title": "If the object is fixed to something",
+      "text": "Do not try to free the person yourself – wait for rescue services, supporting the person and the object."
+    },
+    {
+      "title": "Treat for shock and monitor",
+      "text": "",
+      "action": {
+        "type": "topic",
+        "label": "Shock",
+        "target": "shock"
+      }
+    }
+  ],
+  "warningSigns": [
+    "Bleeding that won't stop",
+    "Signs of shock",
+    "Breathing difficulty"
+  ],
+  "doNot": [
+    "Do not pull the object out",
+    "Do not press directly on the object",
+    "Do not cut or shorten the object unless rescue services do it"
+  ],
+  "related": [
+    "severe-bleeding",
+    "chest-wound",
+    "abdominal-wound",
+    "eye-injury"
+  ],
+  "sources": [
+    {
+      "body": "American Red Cross",
+      "title": "American Red Cross First Aid/CPR/AED Participant's Manual",
+      "section": "Embedded objects",
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Bleeding control",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

@@ -131,8 +131,10 @@ static int Verify(string[] a)
     var checks = new List<string>();
     void Check(bool ok, string text) => checks.Add((ok ? "PASS  " : "FAIL  ") + text);
 
-    var numbers = data.Guides.Select(g => int.TryParse(g.Number, out var x) ? x : 0).ToList();
-    Check(data.Guides.Count > 0 && numbers.Max() - numbers.Min() + 1 == data.Guides.Count, $"Guide numbers are continuous ({data.Guides.Count} guides, {numbers.DefaultIfEmpty().Min()}–{numbers.DefaultIfEmpty().Max()})");
+    var numbers = data.Guides.Select(g => g.Number).Concat(data.BlankGuides).Select(n => int.TryParse(n, out var x) ? x : 0).ToList();
+    Check(data.Guides.Count > 0 && numbers.Max() - numbers.Min() + 1 == numbers.Distinct().Count(),
+        $"Guide numbers are continuous ({data.Guides.Count} guides + {data.BlankGuides.Count} printed blank, {numbers.DefaultIfEmpty().Min()}–{numbers.DefaultIfEmpty().Max()})");
+    Check(data.GeneralFirstAid?.Subsections.Sum(s => s.Items.Count) > 0, "General First Aid section present");
     Check(data.Guides.All(g => g.Sections.Select(x => x.Heading).SequenceEqual(new[] { "POTENTIAL HAZARDS", "PUBLIC SAFETY", "EMERGENCY RESPONSE" })),
         "Every guide has POTENTIAL HAZARDS, PUBLIC SAFETY and EMERGENCY RESPONSE in that order");
     Check(data.Guides.All(g => g.Title.Length > 0), "Every guide has a title");

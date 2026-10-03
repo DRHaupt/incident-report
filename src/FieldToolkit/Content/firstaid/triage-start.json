@@ -1,0 +1,104 @@
+{
+  "id": "triage-start",
+  "title": "Mass Casualty Triage (START)",
+  "category": "Start here",
+  "order": 1,
+  "summary": "For trained responders with more casualties than rescuers: sort everyone quickly into priority groups using walking, breathing, circulation and responsiveness.",
+  "keywords": [
+    "triage",
+    "start triage",
+    "mass casualty",
+    "multiple casualties",
+    "major incident",
+    "mci",
+    "many injured",
+    "prioritise casualties",
+    "sort casualties",
+    "red yellow green"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} and declare a major incident early",
+    "when": [
+      "More casualties than responders",
+      "Give a METHANE report (see Radio & Comms) and ask for resources"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Scene safety and report",
+      "text": "Make the scene safe and send an early report: location, type of incident, hazards, access, number of casualties.",
+      "action": {
+        "type": "topic",
+        "label": "Scene safety & primary survey",
+        "target": "scene-safety"
+      }
+    },
+    {
+      "title": "Walking wounded → GREEN (minor)",
+      "text": "Call out: \"If you can walk, go to [point].\" Those who walk away are GREEN – reassess them later."
+    },
+    {
+      "title": "Breathing?",
+      "text": "For each remaining casualty: not breathing → open the airway. Still not breathing → BLACK (expectant). Starts breathing → RED (immediate).",
+      "caution": "Spend under a minute per casualty. Only stop to open the airway or control major bleeding."
+    },
+    {
+      "title": "Breathing rate",
+      "text": "More than 30 breaths per minute → RED."
+    },
+    {
+      "title": "Circulation",
+      "text": "No radial pulse, or capillary refill longer than 2 seconds → RED. Control major bleeding now."
+    },
+    {
+      "title": "Mental status",
+      "text": "Cannot follow simple commands → RED. Otherwise → YELLOW (delayed)."
+    },
+    {
+      "title": "Tag, record and re-triage",
+      "text": "Mark each casualty, keep a count of each colour, and re-triage regularly – casualties change.",
+      "action": {
+        "type": "timer",
+        "label": "Start incident timer",
+        "timerLabel": "Major incident started",
+        "mode": "stopwatch",
+        "remindEveryMinutes": 10
+      }
+    }
+  ],
+  "warningSigns": [
+    "Casualties getting worse while waiting",
+    "Hazards changing (fire, fuel, traffic)"
+  ],
+  "doNot": [
+    "Do not stop to treat one casualty beyond airway and major bleeding during triage",
+    "Do not forget to re-triage GREEN and YELLOW casualties",
+    "Do not use START unless you have been trained in it – follow your organisation's triage system"
+  ],
+  "related": [
+    "scene-safety",
+    "severe-bleeding",
+    "secondary-survey"
+  ],
+  "sources": [
+    {
+      "body": "U.S. Department of Health and Human Services",
+      "title": "CHEMM – START Adult Triage Algorithm",
+      "section": "START Adult Triage",
+      "url": "https://chemm.hhs.gov/startadult.htm"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Mass casualty incidents",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

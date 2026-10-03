@@ -1,0 +1,112 @@
+{
+  "id": "secondary-survey",
+  "title": "Secondary Survey & Handover (SAMPLE, MIST)",
+  "category": "Start here",
+  "order": 2,
+  "summary": "Once life threats are dealt with: check the casualty head to toe, take a SAMPLE history, record observations and times, and hand over clearly.",
+  "keywords": [
+    "secondary survey",
+    "head to toe",
+    "sample history",
+    "handover",
+    "hand over",
+    "mist",
+    "at-mist",
+    "vital signs",
+    "observations",
+    "what to tell paramedics",
+    "casualty report"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} if anything found is serious",
+    "when": [
+      "Any life-threatening problem found – go back to the primary survey",
+      "Changes in breathing, response or skin colour"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Primary survey first",
+      "text": "Danger, Response, Airway, Breathing, Circulation must be sorted first.",
+      "action": {
+        "type": "topic",
+        "label": "Scene safety & primary survey",
+        "target": "scene-safety"
+      }
+    },
+    {
+      "title": "Head-to-toe check",
+      "text": "With consent and gloves, look and feel gently from head to toe for bleeding, swelling, deformity, wounds and pain. Tell them what you are doing."
+    },
+    {
+      "title": "SAMPLE history",
+      "text": "Ask the casualty (or bystanders):",
+      "points": [
+        "S – Signs and symptoms",
+        "A – Allergies",
+        "M – Medications",
+        "P – Past medical history",
+        "L – Last oral intake (food, drink)",
+        "E – Events leading up to the incident"
+      ]
+    },
+    {
+      "title": "Record observations",
+      "text": "Note level of response (AVPU), breathing rate, skin colour/temperature and pulse if trained, with the time. Repeat regularly.",
+      "action": {
+        "type": "timer",
+        "label": "Start observations timer",
+        "timerLabel": "Observations",
+        "mode": "stopwatch",
+        "remindEveryMinutes": 5
+      }
+    },
+    {
+      "title": "Hand over (MIST)",
+      "text": "When help arrives, give a short, structured handover:",
+      "points": [
+        "M – Mechanism of injury / what happened",
+        "I – Injuries found or illness suspected",
+        "S – Signs: observations and how they have changed",
+        "T – Treatment given and times (tourniquet time, naloxone, aspirin)"
+      ]
+    }
+  ],
+  "warningSigns": [
+    "Deteriorating response",
+    "Breathing becoming difficult",
+    "Signs of shock"
+  ],
+  "doNot": [
+    "Do not move a casualty unnecessarily to examine them",
+    "Do not forget to record times",
+    "Do not delay calling for help to complete a full survey"
+  ],
+  "related": [
+    "scene-safety",
+    "triage-start",
+    "shock",
+    "head-injury"
+  ],
+  "sources": [
+    {
+      "body": "American Red Cross",
+      "title": "American Red Cross First Aid/CPR/AED Participant's Manual",
+      "section": "Checking an injured or ill person",
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Assessment",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

@@ -1,5 +1,27 @@
-# Initial response guide for each placard, from the ERG's "Table of Placards and Initial Response Guide
-# to Use On-Scene". Fill in the guide numbers from the printed guidebook – they are deliberately left blank
-# here so that nothing is entered from memory. Format: code,guide[,label]
-# Rows without a guide are ignored. Example of the format only:  3,999
-code,guide
+# Initial response guide for each placard, read from the ERG 2024 "Table of Markings, Labels and Placards
+# and Initial Response Guide to Use On-scene" (printed pages 8-9, PDF pages 10-11). That table is printed as
+# images, so it is transcribed here; check it against those pages when a new edition is imported.
+# Format: code,guide[,label on the placard,description] – label/description only for codes outside the standard class list.
+code,guide,label,description
+DANGEROUS,111,DANGEROUS,Dangerous – mixed load / unidentified cargo
+1,112
+1.4,114,EXPLOSIVES,Division 1.4 – Explosives
+1.6,114,EXPLOSIVES,Division 1.6 – Explosives
+2.1,118
+2.2,120
+OXYGEN,122,OXYGEN,Oxygen / oxidizing gas
+2.3,123
+3,127
+HOT,128,HOT,Elevated temperature material (HOT); also fuel oil and gasoline placards
+4.1,134
+4.2,136
+4.3,139
+5.1,143
+5.2,148
+6.1,153
+6.2,158,INFECTIOUS SUBSTANCE,Division 6.2 – Infectious substance
+7,163
+8,153
+9,171
+LITHIUM-ION,147,LITHIUM ION BATTERIES,Lithium ion batteries (UN3480, UN3481)
+LITHIUM-METAL,138,LITHIUM METAL BATTERIES,Lithium metal batteries (UN3090, UN3091)

@@ -1,0 +1,93 @@
+{
+  "id": "frostbite",
+  "title": "Frostbite",
+  "category": "Environmental",
+  "order": 66,
+  "summary": "Get them out of the cold and treat any hypothermia first. Only rewarm frostbitten skin if it will not refreeze – then use warm (not hot) water.",
+  "keywords": [
+    "frostbite",
+    "frost nip",
+    "frostnip",
+    "frozen fingers",
+    "frozen toes",
+    "frozen skin",
+    "white fingers",
+    "numb fingers cold"
+  ],
+  "callEmergency": {
+    "headline": "Get medical help for frostbite",
+    "when": [
+      "Skin that is white, grey, waxy, hard or blistered",
+      "Any signs of hypothermia (call {EMERGENCY})",
+      "Frostbite on the face, or large areas"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Treat hypothermia first",
+      "text": "Move to shelter, remove wet clothing, insulate and warm the whole person.",
+      "action": {
+        "type": "topic",
+        "label": "Hypothermia",
+        "target": "hypothermia"
+      }
+    },
+    {
+      "title": "Protect the area",
+      "text": "Remove rings and tight items. Handle gently and do not let them walk on frostbitten feet if avoidable."
+    },
+    {
+      "title": "Rewarm only if it will not refreeze",
+      "text": "If there is no risk of refreezing and medical care is delayed, rewarm the area in warm water (about 37–40 °C / 99–104 °F) for 20–30 minutes.",
+      "caution": "Refreezing after thawing causes much worse damage – if it may refreeze, keep it protected and do not rewarm.",
+      "action": {
+        "type": "timer",
+        "label": "Start 30-minute rewarming timer",
+        "timerLabel": "Frostbite rewarming",
+        "mode": "countdown",
+        "minutes": 30
+      }
+    },
+    {
+      "title": "Afterwards",
+      "text": "Cover loosely with dry, clean dressings, separating fingers and toes. Expect pain as it thaws."
+    }
+  ],
+  "warningSigns": [
+    "Hard, white or grey skin",
+    "Blisters after rewarming",
+    "Signs of hypothermia"
+  ],
+  "doNot": [
+    "Do not rub or massage the area",
+    "Do not use direct dry heat (fires, heaters, hot water bottles)",
+    "Do not thaw if there is a risk of refreezing",
+    "Do not break blisters"
+  ],
+  "related": [
+    "hypothermia",
+    "burns"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Frostbite",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Frostbite",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

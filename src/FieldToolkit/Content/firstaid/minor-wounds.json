@@ -1,0 +1,93 @@
+{
+  "id": "minor-wounds",
+  "title": "Minor Cuts, Grazes & Splinters",
+  "category": "Injuries",
+  "order": 51,
+  "summary": "Clean small wounds thoroughly with running water, cover them, and watch for infection.",
+  "keywords": [
+    "cut",
+    "small cut",
+    "graze",
+    "scrape",
+    "abrasion",
+    "splinter",
+    "minor wound",
+    "road rash",
+    "scratch",
+    "cleaning a wound"
+  ],
+  "callEmergency": {
+    "headline": "Get medical advice if the wound is more than minor",
+    "when": [
+      "Bleeding that won't stop with pressure – treat as severe bleeding",
+      "Deep or gaping wounds, wounds from bites or dirty objects",
+      "Dirt or debris that won't wash out",
+      "Signs of infection: spreading redness, swelling, heat, pus, fever",
+      "Tetanus vaccination not up to date"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Stop the bleeding",
+      "text": "Press with a clean dressing until it stops.",
+      "action": {
+        "type": "topic",
+        "label": "Severe bleeding",
+        "target": "severe-bleeding"
+      }
+    },
+    {
+      "title": "Clean the wound",
+      "text": "Rinse with plenty of clean running water (tap water is fine) until visibly clean. Remove loose dirt."
+    },
+    {
+      "title": "Splinters",
+      "text": "Remove small, shallow splinters with clean tweezers, then clean the area. Leave deep or large splinters for a clinician."
+    },
+    {
+      "title": "Cover",
+      "text": "Cover with a clean dressing or adhesive bandage. An antibiotic ointment may be used on minor wounds if available and the person is not allergic."
+    },
+    {
+      "title": "Watch for infection",
+      "text": "Check over the next few days for spreading redness, swelling, heat or pus."
+    }
+  ],
+  "warningSigns": [
+    "Spreading redness or red streaks",
+    "Fever",
+    "Increasing pain or swelling"
+  ],
+  "doNot": [
+    "Do not use harsh antiseptics deep in a wound",
+    "Do not close a dirty wound with tape strips",
+    "Do not ignore bites – see Bites & stings"
+  ],
+  "related": [
+    "severe-bleeding",
+    "bites-stings",
+    "burns"
+  ],
+  "sources": [
+    {
+      "body": "American Heart Association and American Red Cross",
+      "title": "2024 American Heart Association and American Red Cross Guidelines for First Aid",
+      "section": "Wound care / abrasions",
+      "year": 2024,
+      "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid"
+    },
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Wound management",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

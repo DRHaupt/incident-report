@@ -1,0 +1,111 @@
+{
+  "id": "chest-wound",
+  "title": "Chest Wound (Penetrating or Open)",
+  "category": "Injuries",
+  "order": 44,
+  "summary": "A wound to the chest can damage the lungs. Control bleeding, leave an open chest wound uncovered or use a non-sealing dressing, and watch breathing closely.",
+  "keywords": [
+    "chest wound",
+    "stab wound chest",
+    "stabbed in chest",
+    "gunshot",
+    "shot",
+    "sucking chest wound",
+    "penetrating chest",
+    "chest injury",
+    "hole in chest",
+    "punctured lung"
+  ],
+  "callEmergency": {
+    "headline": "Call {EMERGENCY} for any penetrating chest wound",
+    "when": [
+      "Any stab, gunshot or impalement wound to the chest, back or upper abdomen",
+      "Difficulty breathing, coughing blood or blue lips",
+      "Signs of shock"
+    ]
+  },
+  "steps": [
+    {
+      "title": "Make it safe and call {EMERGENCY}",
+      "text": "Weapons or the cause of the injury may still be present. Wear gloves."
+    },
+    {
+      "title": "Help them into the easiest position to breathe",
+      "text": "Usually half-sitting, leaning towards the injured side."
+    },
+    {
+      "title": "Leave an open chest wound open",
+      "text": "Do not seal it. Leave it exposed, or if a dressing is needed, use a non-occlusive (non-sealing) dressing.",
+      "caution": "Do not tape a sealed dressing or plastic over an open chest wound – trapped air can make breathing much worse."
+    },
+    {
+      "title": "Control bleeding",
+      "text": "Apply direct pressure with a dressing over bleeding points.",
+      "action": {
+        "type": "topic",
+        "label": "Severe bleeding",
+        "target": "severe-bleeding"
+      }
+    },
+    {
+      "title": "Do not remove impaled objects",
+      "text": "Pad around anything stuck in the wound to stop it moving.",
+      "action": {
+        "type": "topic",
+        "label": "Impaled object",
+        "target": "impaled-object"
+      }
+    },
+    {
+      "title": "Monitor",
+      "text": "Watch breathing and response closely and be ready to start CPR.",
+      "action": {
+        "type": "timer",
+        "label": "Start casualty timer",
+        "timerLabel": "Chest wound",
+        "mode": "stopwatch",
+        "remindEveryMinutes": 5
+      }
+    }
+  ],
+  "warningSigns": [
+    "Increasing breathlessness",
+    "Blue lips or face",
+    "Coughing up blood",
+    "Becoming confused or drowsy",
+    "Signs of shock"
+  ],
+  "doNot": [
+    "Do not apply an airtight (occlusive) dressing to an open chest wound",
+    "Do not remove an impaled object",
+    "Do not give food or drink"
+  ],
+  "related": [
+    "severe-bleeding",
+    "impaled-object",
+    "shock",
+    "cpr-adult"
+  ],
+  "sources": [
+    {
+      "body": "European Resuscitation Council",
+      "title": "European Resuscitation Council Guidelines 2025",
+      "section": "First Aid – Open chest wounds",
+      "year": 2025,
+      "url": "https://www.cprguidelines.eu"
+    },
+    {
+      "body": "International Liaison Committee on Resuscitation (ILCOR)",
+      "title": "International Consensus on CPR and ECC Science With Treatment Recommendations (CoSTR)",
+      "section": "First Aid – Dressings for open chest wounds",
+      "year": 2025,
+      "url": "https://www.ilcor.org"
+    }
+  ],
+  "review": {
+    "status": "Draft – awaiting clinical review",
+    "reviewedBy": "",
+    "reviewedOn": "",
+    "notes": "Drafted from the cited guidelines. Must be checked by a qualified clinician against the current editions and local protocols before operational use."
+  }
+}

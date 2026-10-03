@@ -11,7 +11,10 @@ public class FirstAidContentTests
         "scene-safety", "cpr-adult", "cpr-child", "cpr-infant", "choking-adult", "choking-infant", "severe-bleeding",
         "shock", "burns", "fractures-sprains", "head-injury", "spinal-injury", "seizures", "stroke", "heart-attack",
         "anaphylaxis", "asthma", "diabetic-emergency", "heat-illness", "hypothermia", "drowning", "electric-shock",
-        "poisoning-overdose", "bites-stings", "unconscious-recovery", "childbirth"
+        "poisoning-overdose", "bites-stings", "unconscious-recovery", "childbirth",
+        "chest-wound", "abdominal-wound", "impaled-object", "amputation", "eye-injury", "nosebleed", "dental-injury",
+        "minor-wounds", "frostbite", "fainting", "opioid-overdose", "smoke-co", "mental-health-crisis", "triage-start",
+        "secondary-survey"
     };
 
     [Fact]
@@ -44,7 +47,8 @@ public class FirstAidContentTests
     private static readonly string[] RecognisedBodies =
     {
         "American Heart Association", "American Red Cross", "American Heart Association and American Red Cross",
-        "European Resuscitation Council", "International Liaison Committee on Resuscitation (ILCOR)"
+        "European Resuscitation Council", "International Liaison Committee on Resuscitation (ILCOR)",
+        "BC Centre for Disease Control", "U.S. Department of Health and Human Services"
     };
 
     [Fact]
@@ -71,6 +75,28 @@ public class FirstAidContentTests
         var text = lib.Expand(lib.Find("cpr-adult")!.CallEmergency.Headline);
         Assert.DoesNotContain("{EMERGENCY}", text);
         Assert.Contains(lib.Guide.EmergencyNumber, text);
+    }
+
+    [Fact]
+    public void Every_placeholder_in_every_topic_expands()
+    {
+        var lib = Library.Value;
+        foreach (var t in lib.Topics)
+        {
+            var text = string.Join("\n", new[] { t.Title, t.Summary, t.CallEmergency.Headline }
+                .Concat(t.CallEmergency.When).Concat(t.WarningSigns).Concat(t.DoNot)
+                .Concat(t.Steps.SelectMany(s => new[] { s.Title, s.Text, s.Caution, s.Action?.Label ?? "" }.Concat(s.Points))));
+            Assert.DoesNotContain("{", lib.Expand(text));
+        }
+        Assert.Contains("988", lib.Expand("{CRISIS}"));
+        Assert.Equal("911", lib.Guide.EmergencyNumber);
+    }
+
+    [Fact]
+    public void Every_category_and_order_is_set()
+    {
+        Assert.All(Library.Value.Topics, t => Assert.False(string.IsNullOrWhiteSpace(t.Category)));
+        Assert.Equal(new[] { "scene-safety", "triage-start", "secondary-survey" }, Library.Value.Topics.Take(3).Select(t => t.Id));
     }
 
     [Fact]

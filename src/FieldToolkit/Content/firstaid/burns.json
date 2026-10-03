@@ -91,7 +91,9 @@
     "shock",
     "electric-shock",
     "poisoning-overdose",
-    "hypothermia"
+    "hypothermia",
+    "eye-injury",
+    "smoke-co"
   ],
   "sources": [
     {
