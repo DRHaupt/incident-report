@@ -478,6 +478,16 @@ public class AprsMessagingTests
     }
 
     [Fact]
+    public void AcknowledgesByRadioWhenTheInternetLoginCannotSend()
+    {
+        var radio = new Radio { Available = AprsVia.Radio };
+        var m = new AprsMessenger(radio.Transmit) { MyCall = "VE7ABC-9" };
+        m.Handle(Msg("VE7EOC", ":VE7ABC-9 :Report to staging{42"), AprsVia.Internet, T0);
+        var ack = Assert.Single(radio.Sent);
+        Assert.Equal((":VE7EOC   :ack42", AprsVia.Radio), ack);
+    }
+
+    [Fact]
     public void IgnoresMessagesForOtherStationsAndKeepsBulletins()
     {
         var radio = new Radio();

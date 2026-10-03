@@ -165,9 +165,14 @@ public sealed partial class AprsMessenger
             }
             _version++;
         }
-        // Every copy is acknowledged: the sender keeps retrying until an ack gets through.
+        // Every copy is acknowledged: the sender keeps retrying until an ack gets through. Ack on the link the
+        // message came in on; if that can't send (e.g. a receive-only APRS-IS login), on any link that can.
         if (p.MessageId != null && Acknowledge)
-            _transmit(":" + Pad(p.Source) + ":ack" + p.MessageId, via);
+        {
+            var ack = ":" + Pad(p.Source) + ":ack" + p.MessageId;
+            if (_transmit(ack, via) == AprsVia.None)
+                _transmit(ack, AprsVia.Radio | AprsVia.Internet);
+        }
         if (added != null)
             Received?.Invoke(this, Copy(added));
         return added;
