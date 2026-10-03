@@ -75,6 +75,7 @@ under the Open Government Licence – Alberta" (only the licences of installed l
 | BC evacuation orders/alerts | ✓ ArcGIS `https://services6.arcgis.com/ubm4tcTYICKBpist/arcgis/rest/services/Evacuation_Orders_and_Alerts/FeatureServer/0/query?where=1=1&outFields=*&f=geojson` | ✓ OGL – BC (EMCR) | |
 | Alberta Wildfire | ✓ Alberta Geospatial Services Platform (current perimeters) – ◻ exact feature-service URL to confirm; set in Settings | ✓ OGL – Alberta | Disabled until a URL is set |
 | Alberta emergency alerts | ✓ Alert Ready / NAAD CAP feed (Pelmorex) | ◻ Pelmorex NAAD terms of use must be accepted | Not enabled by default |
+| APRS stations (internet) | ✓ APRS-IS volunteer network, North America rotation `noam.aprs2.net:14580` (user-defined filter port; aprs2.net) | ✓ No licence; usage rules at aprs-is.net/connecting.aspx: use port 14580, passcode -1 for read-only maps, real passcode to send. Data is what amateur stations transmit publicly | Receive-only without call sign. Also from a radio TNC with no internet (see README) |
 | ECCC weather alerts | ✓ MSC GeoMet OGC API `https://api.weather.gc.ca/collections/weather-alerts/items?f=json&bbox=…` | ✓ OGL – Canada (MSC open data) | |
 
 Each live layer shows "LIVE DATA – fetched hh:mm", is cached on disk (last good result, with its time), and fails

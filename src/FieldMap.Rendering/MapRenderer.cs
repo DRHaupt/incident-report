@@ -1,6 +1,7 @@
 using FieldMap.Core.Build;
 using FieldMap.Core.Drawings;
 using FieldMap.Core.Layers;
+using FieldMap.Core.Aprs;
 using FieldMap.Core.Live;
 using FieldMap.Core.Routing;
 using SkiaSharp;
@@ -30,6 +31,15 @@ public sealed class MapScene
     public IReadOnlyList<GeoPoint>? Breadcrumbs { get; init; }
     public IReadOnlyList<LiveResult> Live { get; init; } = Array.Empty<LiveResult>();
     public GeoPoint? Marker { get; init; }
+
+    /// <summary>APRS stations to draw (already filtered to those recently heard).</summary>
+    public IReadOnlyList<AprsStation> Aprs { get; init; } = Array.Empty<AprsStation>();
+    public string? SelectedAprs { get; init; }
+    public bool AprsTracks { get; init; } = true;
+
+    /// <summary>Stations older than this are drawn faded.</summary>
+    public TimeSpan AprsFadeAfter { get; init; } = TimeSpan.FromMinutes(30);
+    public DateTime NowUtc { get; init; } = DateTime.UtcNow;
     public string Attribution { get; init; } = "";
     public bool Synchronous { get; init; }
     public bool ShowControls { get; init; } = true;
@@ -40,6 +50,7 @@ public sealed class MapScene
 public sealed class RenderResult
 {
     public List<(SKRect Rect, Poi Poi)> Pois { get; } = new();
+    public List<(SKRect Rect, string Key)> Aprs { get; } = new();
     public SKRect NorthArrow { get; set; }
     public bool TilesPending { get; set; }
 }
@@ -144,11 +155,13 @@ public static class MapRenderer
         var occupied = new List<SKRect>();
         DrawLive(canvas, vp, scene);
         DrawBreadcrumbsAndRoutes(canvas, vp, scene);
+        DrawAprsTracks(canvas, vp, scene);
         DrawDrawings(canvas, vp, scene, scene.Drawings, false);
         if (scene.Draft != null)
             DrawDrawings(canvas, vp, scene, new[] { scene.Draft }, true);
         DrawPlaceLabels(canvas, vp, scene, tiles, occupied, 1, 2); // cities and towns first
         DrawPois(canvas, vp, scene, occupied, result);
+        DrawAprs(canvas, vp, scene, occupied, result);
         DrawPlaceLabels(canvas, vp, scene, tiles, occupied, 3, 9);
         DrawRoadLabels(canvas, vp, scene, tiles, occupied);
         DrawMarkerAndGps(canvas, vp, scene);
@@ -539,6 +552,162 @@ public static class MapRenderer
         (LayerCatalog.Markers, "exit") => "Ex",
         _ => LayerCatalog.Find(layer)?.Glyph ?? "?"
     };
+
+
+    // ------------------------------------------------------------------ APRS stations
+
+    public static SKColor AprsColor(AprsSymbolGroup group) => group switch
+    {
+        AprsSymbolGroup.Emergency => new SKColor(0xD0, 0x10, 0x10),
+        AprsSymbolGroup.Vehicle => new SKColor(0x15, 0x65, 0xC0),
+        AprsSymbolGroup.Person => new SKColor(0x00, 0x89, 0x7B),
+        AprsSymbolGroup.Aircraft => new SKColor(0x7B, 0x1F, 0xA2),
+        AprsSymbolGroup.Boat => new SKColor(0x02, 0x77, 0xBD),
+        AprsSymbolGroup.Weather => new SKColor(0x00, 0x97, 0xA7),
+        AprsSymbolGroup.Infrastructure => new SKColor(0x61, 0x61, 0x61),
+        AprsSymbolGroup.Facility => new SKColor(0x8D, 0x4E, 0x2A),
+        _ => new SKColor(0x45, 0x5A, 0x64)
+    };
+
+    private static void DrawAprsTracks(SKCanvas canvas, Viewport vp, MapScene scene)
+    {
+        if (!scene.AprsTracks || scene.Aprs.Count == 0 || vp.Zoom < 8)
+            return;
+        var view = vp.VisibleBounds().Expand(2000);
+        using var line = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 2.5f * scene.UiScale, StrokeJoin = SKStrokeJoin.Round, StrokeCap = SKStrokeCap.Round };
+        using var dot = new SKPaint { IsAntialias = true };
+        foreach (var s in scene.Aprs)
+        {
+            if (s.Track.Count < 2 || !GeoBounds.Of(s.Track.Select(t => new GeoPoint(t.Lat, t.Lon))).Intersects(view))
+                continue;
+            var color = scene.Style.Symbol(AprsColor(s.Emergency ? AprsSymbolGroup.Emergency : AprsSymbols.Group(s.SymbolTable, s.SymbolCode)));
+            using var path = new SKPath();
+            for (var i = 0; i < s.Track.Count; i++)
+            {
+                var p = S(vp, new GeoPoint(s.Track[i].Lat, s.Track[i].Lon));
+                if (i == 0)
+                    path.MoveTo(p);
+                else
+                    path.LineTo(p);
+            }
+            if (s.Point is { } now)
+                path.LineTo(S(vp, now));
+            line.Color = color.WithAlpha(s.Key == scene.SelectedAprs ? (byte)230 : (byte)150);
+            canvas.DrawPath(path, line);
+            if (vp.Zoom >= 13)
+            {
+                dot.Color = color;
+                foreach (var t in s.Track)
+                    canvas.DrawCircle(S(vp, new GeoPoint(t.Lat, t.Lon)), 2.5f * scene.UiScale, dot);
+            }
+        }
+    }
+
+    private static void DrawAprs(SKCanvas canvas, Viewport vp, MapScene scene, List<SKRect> occupied, RenderResult result)
+    {
+        if (scene.Aprs.Count == 0 || vp.Zoom < 5)
+            return;
+        var st = scene.Style;
+        var u = scene.UiScale;
+        var view = vp.VisibleBounds().Expand(500);
+        var r = 12f * u;
+        using var font = Font(r * 0.85f, true);
+        using var small = Font(r * 0.66f, true);
+        using var labelFont = Font(11.5f * u, true);
+        using var fill = new SKPaint { IsAntialias = true };
+        using var ring = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 2f };
+        using var text = new SKPaint { IsAntialias = true };
+        var drawn = 0;
+        // Emergencies and the selected station last so they're on top; then most recently heard on top.
+        var ordered = scene.Aprs.Where(s => s.Point is { } p && view.Contains(p.Lat, p.Lon))
+            .OrderBy(s => s.Emergency).ThenBy(s => s.Key == scene.SelectedAprs).ThenBy(s => s.LastHeardUtc).ToList();
+        if (ordered.Count > 1500)
+            ordered = ordered.Skip(ordered.Count - 1500).ToList();
+        foreach (var s in ordered)
+        {
+            var p = S(vp, s.Point!.Value);
+            var group = s.Emergency ? AprsSymbolGroup.Emergency : AprsSymbols.Group(s.SymbolTable, s.SymbolCode);
+            var faded = scene.NowUtc - s.LastHeardUtc > scene.AprsFadeAfter;
+            var color = st.Symbol(AprsColor(group));
+            var alpha = faded ? (byte)120 : (byte)255;
+
+            if (s.Emergency)
+            {
+                ring.Color = st.Symbol(new SKColor(0xFF, 0x20, 0x20));
+                ring.StrokeWidth = 4;
+                canvas.DrawCircle(p, r + 7 * u, ring);
+                canvas.DrawCircle(p, r + 13 * u, ring);
+                ring.StrokeWidth = 2;
+            }
+
+            // Course arrow: a pointer sticking out of the symbol in the direction of travel.
+            var arrowDown = false;
+            if (s.CourseDegrees is { } course && s.Moving)
+            {
+                var a = (course - vp.Bearing) * Math.PI / 180;
+                var len = r + 17 * u;
+                var tip = new SKPoint(p.X + (float)Math.Sin(a) * len, p.Y - (float)Math.Cos(a) * len);
+                var left = new SKPoint(p.X + (float)Math.Sin(a - 0.6) * r * 0.8f, p.Y - (float)Math.Cos(a - 0.6) * r * 0.8f);
+                var right = new SKPoint(p.X + (float)Math.Sin(a + 0.6) * r * 0.8f, p.Y - (float)Math.Cos(a + 0.6) * r * 0.8f);
+                using var arrow = new SKPath();
+                arrow.MoveTo(tip);
+                arrow.LineTo(left);
+                arrow.LineTo(right);
+                arrow.Close();
+                fill.Color = color.WithAlpha(alpha);
+                canvas.DrawPath(arrow, fill);
+                ring.Color = (st == MapStyle.Night ? new SKColor(0x30, 0x30, 0x30) : st == MapStyle.Daylight ? SKColors.Black : SKColors.White).WithAlpha(alpha);
+                canvas.DrawPath(arrow, ring);
+                arrowDown = Math.Cos(a) < -0.3;
+            }
+
+            // Diamond-cornered square: distinct from the round facility symbols.
+            var rect = new SKRect(p.X - r, p.Y - r, p.X + r, p.Y + r);
+            fill.Color = color.WithAlpha(alpha);
+            canvas.DrawRoundRect(rect, r * 0.35f, r * 0.35f, fill);
+            ring.Color = (st == MapStyle.Night ? new SKColor(0x30, 0x30, 0x30) : st == MapStyle.Daylight ? SKColors.Black : SKColors.White).WithAlpha(alpha);
+            canvas.DrawRoundRect(rect, r * 0.35f, r * 0.35f, ring);
+            var glyph = AprsSymbols.Glyph(s.SymbolTable, s.SymbolCode);
+            var f = glyph.Length > 2 ? small : font;
+            text.Color = (st == MapStyle.Night ? new SKColor(0xC4, 0xB4, 0x96) : SKColors.White).WithAlpha(alpha);
+            canvas.DrawText(glyph, p.X, p.Y + f.Size / 2.8f, SKTextAlign.Center, f, text);
+            if (AprsSymbols.Overlay(s.SymbolTable) is { } overlay)
+            {
+                var o = new SKPoint(rect.Right - 2, rect.Bottom - 2);
+                fill.Color = SKColors.White;
+                canvas.DrawCircle(o, r * 0.42f, fill);
+                text.Color = SKColors.Black;
+                canvas.DrawText(overlay.ToString(), o.X, o.Y + small.Size / 2.8f, SKTextAlign.Center, small, text);
+            }
+            if (s.Key == scene.SelectedAprs)
+            {
+                ring.Color = st.Selection;
+                ring.StrokeWidth = 4;
+                canvas.DrawRoundRect(SKRect.Inflate(rect, 5, 5), r * 0.5f, r * 0.5f, ring);
+                ring.StrokeWidth = 2;
+            }
+            result.Aprs.Add((SKRect.Inflate(rect, 6, 6), s.Key));
+            occupied.Add(rect);
+            drawn++;
+
+            // Call sign label (always for emergencies and the selected station; otherwise if there's room).
+            if (vp.Zoom >= 9 || s.Emergency || s.Key == scene.SelectedAprs)
+            {
+                var label = s.Emergency ? $"{s.Key} EMERGENCY" : s.Key;
+                var tw = labelFont.MeasureText(label);
+                var top = p.Y + r + 3 + (arrowDown ? 17 * u : 0);
+                var lr = new SKRect(p.X - tw / 2 - 4, top, p.X + tw / 2 + 4, top + 4 + labelFont.Size);
+                if (Free(occupied, lr) || s.Emergency || s.Key == scene.SelectedAprs)
+                {
+                    occupied.Add(lr);
+                    fill.Color = (s.Emergency ? st.Symbol(new SKColor(0xD0, 0x10, 0x10)) : st.Overlay).WithAlpha(faded ? (byte)150 : (byte)230);
+                    canvas.DrawRoundRect(lr, 4, 4, fill);
+                    text.Color = s.Emergency ? SKColors.White : st.OverlayText;
+                    canvas.DrawText(label, p.X, lr.Bottom - 4 - labelFont.Size * 0.12f, SKTextAlign.Center, labelFont, text);
+                }
+            }
+        }
+    }
 
     // ------------------------------------------------------------------ live layers
 

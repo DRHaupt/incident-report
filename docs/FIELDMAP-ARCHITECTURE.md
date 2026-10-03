@@ -23,12 +23,12 @@ self-contained build; nothing is downloaded at run time.
 | **SkiaSharp 3.119** + SkiaSharp.Views.WindowsForms | Map drawing, PNG and PDF snapshot export | MIT (Skia itself: BSD-3-Clause) | Yes, native `libSkiaSharp.dll` is bundled |
 | **Microsoft.Data.Sqlite 8** (SQLitePCLRaw `e_sqlite3`) | MBTiles tile store, search index (FTS5 + trigram), R*Tree spatial index | MIT; SQLitePCLRaw Apache-2.0; SQLite public domain | Yes, native `e_sqlite3.dll` is bundled |
 | System.Speech | Spoken turn instructions (Windows SAPI voices installed with Windows) | MIT | Yes, SAPI voices are local |
-| System.IO.Ports | Serial (COM port) NMEA GPS (already used by Field Toolkit) | MIT | Yes |
+| System.IO.Ports | Serial (COM port) NMEA GPS (already used by Field Toolkit) and APRS KISS TNCs | MIT | Yes |
 | Windows.Devices.Geolocation (Windows SDK projection) | Built-in GNSS (already used by Field Toolkit) | Part of Windows / .NET SDK (MIT projections) | Yes |
 | xUnit | Tests | Apache-2.0 | n/a |
 
 Everything else (OSM PBF reader, vector-tile encoder/decoder, tile builder, router, geocoder, update manager,
-KML/GeoJSON/GPX) is our own code in `FieldMap.Core`, so there is nothing else to license and it all runs on Linux CI.
+KML/GeoJSON/GPX, APRS decoder, AX.25/KISS and APRS-IS client) is our own code in `FieldMap.Core`, so there is nothing else to license and it all runs on Linux CI.
 
 Considered and **not** chosen (licences checked on NuGet / upstream):
 
@@ -42,6 +42,7 @@ Considered and **not** chosen (licences checked on NuGet / upstream):
 | OSRM | BSD-2 | Very fast (contraction hierarchies) but closures need a graph rebuild, truck limits need Lua profiles, Windows builds are unofficial. |
 | Valhalla | MIT | Best truck model and dynamic avoid-polygons, but a C++ process with no official Windows binaries; we could not build or test it here. Good upgrade path if we outgrow our router. |
 | GraphHopper | Apache-2.0 | Good truck support, but needs a bundled Java runtime (~60 MB) and a second process. |
+| aprslib / javAPRSlib / libfap (APRS decoders) | MIT / GPL / GPL | Python, Java or GPL C; the APRS formats we need (positions, compressed, Mic-E, objects, items, status, weather) fit in ~600 lines of C# tested against the spec examples. |
 | tilemaker / planetiler | FTWPL / Apache-2.0 | Excellent tile generators, but they would be a C++ exe or a Java runtime on the vehicle for "Update map data", and we could not test them on Linux CI. |
 
 ---
@@ -184,7 +185,8 @@ src/Shared               net8.0-windows         Branding, UiMode (Touch, Dayligh
 src/FieldMap.Core        net8.0                 UI-free: OSM PBF/XML reader, tile builder, MVT, MBTiles, layer catalogue,
                                                 search index, geocoder, road graph & router, instructions, drawings &
                                                 KML/GeoJSON/GPX, hazmat geometry, AED import, region store, updater,
-                                                package export/install, live-feed parsers, navigation tracker
+                                                package export/install, live-feed parsers, navigation tracker,
+                                                APRS (packet decoder, AX.25/KISS, APRS-IS and TNC links, station tracker)
 src/FieldMap.Rendering   net8.0                 Skia renderer (map styles, viewport, tile cache, labels, symbols); also
                                                 used by the Linux tests that render the sample region to PNG
 src/FieldMap             net8.0-windows10.0.19041.0  The app: launcher, map windows, panels, data manager
@@ -216,3 +218,34 @@ A shared folder `%LOCALAPPDATA%\FieldSuite\exchange\` holds small JSON messages:
 Each app watches its inbox (`FileSystemWatcher` plus a poll), imports a message, then deletes it. Files are written
 as `*.tmp` and renamed so a reader never sees half a message. If the target app isn't running it picks the message up
 on its next start; "Open in map" also starts Field Map if it is installed next to the toolkit.
+
+## 6. APRS
+
+APRS stations are an optional live layer that also works with **no internet** when a radio TNC is connected.
+
+```
+APRS-IS server (TCP 14580, filtered) ─┐                    ┌─ map (every window): symbols, labels, tracks
+                                      ├─ TNC2 text lines ─► AprsParser ─► AprsStationTracker ─┼─ station list / details panels
+KISS TNC (COM port or TCP) ─ AX.25 ───┘                    └─ status bar, emergency alert, packet log
+                    ▲
+                    └── beacon (own position, optional) ◄── AprsBeacon ◄── GPS fix
+```
+
+* **`FieldMap.Core/Aprs`** (UI-free, tested on Linux): `AprsParser` (APRS 1.0.1 positions with/without timestamp,
+  compressed positions, ambiguity, Mic-E with message/emergency and altitude, objects, items, status, messages,
+  weather, third-party), `Ax25` + `KissDecoder` (UI frames ↔ TNC2 text, FEND/FESC framing), `AprsIsClient`
+  (login line `user CALL pass PASS vers FieldMap x.y filter r/lat/lon/km`, `#filter` updates, 90 s idle timeout,
+  reconnect with back-off), `KissTncClient` (any stream: serial or TCP), `AprsStationTracker` (merges the same
+  packet heard by radio and internet within 30 s, keeps tracks, removes killed objects, purges, keeps a packet log;
+  thread-safe snapshots for the UI thread), `AprsBeacon` (position and object encoders, call-sign check).
+* **`AprsService`** (app): owns the links from the settings, moves the APRS-IS range filter with the GPS (or the map
+  when there's no fix) once it has moved a quarter of the range, raises change/emergency events on the UI thread
+  from the app clock, and sends the beacon.
+* **Receiving** needs nothing: without a call sign the APRS-IS login is a unique read-only name with passcode -1.
+* **Sending** is off by default and needs a valid call sign. By radio the packet goes to the TNC as an AX.25 UI frame
+  with the chosen path; by internet it needs the APRS-IS passcode (the server must answer "verified"). The
+  destination `APZFMP` is in the experimental block; register a permanent tocall before wide use.
+* **Etiquette and rules** followed: filtered port only, software name and version in the login, default beacon
+  every 10 min (2 min moving), `WIDE1-1,WIDE2-1` default path. APRS is public and unencrypted; ISED's amateur radio
+  rules limit use for business, so organisations should decide whether staff may transmit as part of their job.
+

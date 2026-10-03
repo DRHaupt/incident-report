@@ -7,6 +7,7 @@ using FieldMap.Map;
 using FieldMap.Panels;
 using Shared;
 using Shared.Core.Interop;
+using Shared.Core.Radio;
 using Shared.Location;
 using Shared.UI;
 
@@ -31,7 +32,7 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
     private readonly TextBox _searchBox = new() { Width = 260 };
     private readonly Button _follow, _heading, _zoomIn, _zoomOut;
     private readonly FlowLayoutPanel _status = new() { Dock = DockStyle.Bottom, Height = 58, WrapContents = true, Padding = new Padding(6, 4, 6, 2) };
-    private readonly Label _gpsLabel = StatusLabel(), _decLabel = StatusLabel(), _dmsLabel = StatusLabel(), _mgrsLabel = StatusLabel(), _utmLabel = StatusLabel(), _dataLabel = StatusLabel(), _themeLabel = StatusLabel();
+    private readonly Label _gpsLabel = StatusLabel(), _decLabel = StatusLabel(), _dmsLabel = StatusLabel(), _mgrsLabel = StatusLabel(), _utmLabel = StatusLabel(), _dataLabel = StatusLabel(), _themeLabel = StatusLabel(), _aprsLabel = StatusLabel();
     private readonly NavBanner _nav;
     private SidePanel? _panel;
     private bool _following;
@@ -76,8 +77,16 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         _map.Resize += (_, _) => LayoutOverlay();
 
         // Status bar
-        foreach (var l in new[] { _gpsLabel, _decLabel, _dmsLabel, _mgrsLabel, _utmLabel, _dataLabel, _themeLabel })
+        foreach (var l in new[] { _gpsLabel, _aprsLabel, _decLabel, _dmsLabel, _mgrsLabel, _utmLabel, _dataLabel, _themeLabel })
             _status.Controls.Add(l);
+        _aprsLabel.Cursor = Cursors.Hand;
+        _aprsLabel.Click += (_, _) =>
+        {
+            if (AppServices.Aprs.ActiveEmergencies.FirstOrDefault() is { } key)
+                SelectAprs(key, center: true);
+            else
+                ShowPanel(new AprsPanel(this));
+        };
         foreach (var l in new[] { _decLabel, _dmsLabel, _mgrsLabel, _utmLabel })
         {
             var label = l;
@@ -103,10 +112,16 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         _map.ViewChanged += (_, _) => UpdateStatus();
         AppServices.ClockTick += OnClock;
         AppServices.PointReceived += OnPointReceived;
+        AppServices.Aprs.StatusChanged += OnAprsStatus;
+        AppServices.Aprs.Changed += OnAprsStatus;
+        AppServices.Aprs.EmergencyHeard += OnAprsEmergency;
         FormClosed += (_, _) =>
         {
             AppServices.ClockTick -= OnClock;
             AppServices.PointReceived -= OnPointReceived;
+            AppServices.Aprs.StatusChanged -= OnAprsStatus;
+            AppServices.Aprs.Changed -= OnAprsStatus;
+            AppServices.Aprs.EmergencyHeard -= OnAprsEmergency;
             AppServices.Location.Changed -= OnLocationChanged;
             if (_locationAcquired)
                 AppServices.Location.Release();
@@ -269,6 +284,8 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         menu.Items.Add(new ToolStripMenuItem("Touch Mode (Ctrl+T)", null, (_, _) => UiMode.SetTouch(!UiMode.Touch)) { Checked = UiMode.Touch });
         menu.Items.Add(new ToolStripMenuItem("Spoken directions", null, (_, _) => { _voice = !_voice; AppServices.Settings.Voice = _voice; AppServices.Settings.Save(); }) { Checked = _voice });
         menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add("APRS stations", null, (_, _) => ShowPanel(new AprsPanel(this)));
+        menu.Items.Add("APRS settings…", null, (_, _) => { using var d = new AprsSettingsDialog(); d.ShowDialog(this); });
         menu.Items.Add("Incidents & drawings", null, (_, _) => AppServices.Windows.Open(DrawingsWindow.ToolId));
         menu.Items.Add("Data & updates", null, (_, _) => AppServices.Windows.Open(DataWindow.ToolId));
         menu.Items.Add("About & data sources", null, (_, _) => AppServices.Windows.Open(AboutWindow.ToolId));
@@ -339,6 +356,11 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
             TapHandler(e.Point);
             return;
         }
+        if (_map.HitAprs(e.Screen) is { } aprs)
+        {
+            SelectAprs(aprs, center: false);
+            return;
+        }
         if (_map.HitPoi(e.Screen) is { } poi)
         {
             SelectPoi(poi);
@@ -349,18 +371,38 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
             SelectDrawing(drawing);
             return;
         }
-        if (_map.SelectedPoi != null || _map.SelectedDrawing != null)
+        if (_map.SelectedPoi != null || _map.SelectedDrawing != null || _map.SelectedAprs != null)
         {
             _map.SelectedPoi = null;
             _map.SelectedDrawing = null;
+            _map.SelectedAprs = null;
             _map.Invalidate();
         }
+    }
+
+    /// <summary>Selects an APRS station and shows its details (optionally moving the map to it).</summary>
+    public void SelectAprs(string key, bool center)
+    {
+        _map.SelectedAprs = key;
+        _map.SelectedPoi = null;
+        _map.SelectedDrawing = null;
+        if (center && AppServices.Aprs.Tracker.Find(key)?.Point is { } p)
+            CenterOn(p);
+        _map.Invalidate();
+        ShowPanel(new AprsStationPanel(this, key));
+    }
+
+    public void CenterOn(GeoPoint p)
+    {
+        SetFollowing(false);
+        _map.Center = p;
     }
 
     public void SelectPoi(Poi poi)
     {
         _map.SelectedPoi = poi;
         _map.SelectedDrawing = null;
+        _map.SelectedAprs = null;
         _map.Invalidate();
         ShowPanel(new PoiDetailsPanel(this, poi));
     }
@@ -661,6 +703,38 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         var data = AppServices.Data;
         _dataLabel.Text = !data.HasData ? "No map data" : data.IsSample ? "SAMPLE DATA" : $"Data {data.DataDate:yyyy-MM-dd}";
         _themeLabel.Text = $"Theme: {UiMode.ThemeName}";
+        UpdateAprsStatus();
+    }
+
+    // ------------------------------------------------------------------ APRS
+
+    private void OnAprsStatus(object? sender, EventArgs e) => UpdateAprsStatus();
+
+    public void UpdateAprsStatus()
+    {
+        var aprs = AppServices.Aprs;
+        var emergency = aprs.ActiveEmergencies.FirstOrDefault();
+        _aprsLabel.Visible = aprs.Active || emergency != null;
+        if (emergency != null)
+        {
+            _aprsLabel.Text = $"⚠ APRS EMERGENCY: {emergency}";
+            UiMode.SetColors(_aprsLabel, Brand.Danger, Color.White);
+        }
+        else
+        {
+            _aprsLabel.Text = aprs.ShortStatus();
+            var color = aprs.AnyLinkFailed ? Brand.Amber : Brand.Navy;
+            UiMode.SetColors(_aprsLabel, color, color == Brand.Amber ? Brand.Navy : Color.White);
+        }
+    }
+
+    private void OnAprsEmergency(object? sender, Core.Aprs.AprsStation station)
+    {
+        UpdateAprsStatus();
+        _map.Invalidate();
+        // Speak once, from the first map window.
+        if (_voice && AppServices.Windows.Windows.OfType<MapWindow>().FirstOrDefault(w => !w.IsDisposed) == this)
+            AppServices.Speech.Say($"A P R S emergency from {Phonetic.Spell(station.Key)}.");
     }
 
     private static string ShortStatus(string s) => s.Length > 40 ? s[..40] + "…" : s;

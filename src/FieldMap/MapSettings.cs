@@ -37,6 +37,9 @@ public sealed class MapSettings : ILocationSettings
     public Dictionary<string, bool> LiveFeeds { get; set; } = new();
     public string Ab511Key { get; set; } = "";
 
+    /// <summary>APRS (amateur radio position reporting) by internet and/or a TNC.</summary>
+    public AprsSettings Aprs { get; set; } = new();
+
     // Routing
     public string Profile { get; set; } = "Car";
     public double TruckHeight { get; set; } = 4.15;
@@ -82,4 +85,61 @@ public sealed class MapSettings : ILocationSettings
             // Not persisted; settings still apply for this session.
         }
     }
+}
+
+public enum TncConnection
+{
+    Serial,
+    Tcp
+}
+
+public sealed class AprsSettings
+{
+    /// <summary>Draw APRS stations on the map.</summary>
+    public bool Show { get; set; } = true;
+    public bool ShowTracks { get; set; } = true;
+
+    /// <summary>Stations not heard for this long are hidden.</summary>
+    public int ShowMinutes { get; set; } = 60;
+
+    /// <summary>Length of the drawn tracks.</summary>
+    public int TrackMinutes { get; set; } = 120;
+
+    // Internet (APRS-IS)
+    public bool InternetEnabled { get; set; }
+    public string Server { get; set; } = "noam.aprs2.net";
+    public int ServerPort { get; set; } = 14580;
+    public int RangeKm { get; set; } = 100;
+
+    /// <summary>Extra APRS-IS filter terms, e.g. "b/VE7ABC*" (buddy) or "t/poimqstunw" (types).</summary>
+    public string ExtraFilter { get; set; } = "";
+
+    // Radio (KISS TNC)
+    public bool RadioEnabled { get; set; }
+    public TncConnection Connection { get; set; } = TncConnection.Serial;
+    public string ComPort { get; set; } = "";
+    public int Baud { get; set; } = 9600;
+    public string TcpHost { get; set; } = "localhost";
+    public int TcpPort { get; set; } = 8001;
+
+    /// <summary>Text sent before KISS starts, for radios/TNCs that need a command (e.g. "KISS ON\rRESTART\r").</summary>
+    public string InitText { get; set; } = "";
+
+    // Identity and transmitting
+    public string Callsign { get; set; } = "";
+
+    /// <summary>APRS-IS passcode; only needed to send your position over the internet.</summary>
+    public string Passcode { get; set; } = "";
+
+    public bool BeaconEnabled { get; set; }
+    public bool BeaconRadio { get; set; } = true;
+    public bool BeaconInternet { get; set; } = true;
+    public string BeaconSymbol { get; set; } = "/>";
+    public string BeaconComment { get; set; } = "";
+    public string BeaconPath { get; set; } = "WIDE1-1,WIDE2-1";
+    public int BeaconMinutes { get; set; } = 10;
+    public int BeaconMovingMinutes { get; set; } = 2;
+
+    public char SymbolTable => BeaconSymbol.Length >= 2 ? BeaconSymbol[0] : '/';
+    public char SymbolCode => BeaconSymbol.Length >= 2 ? BeaconSymbol[1] : '>';
 }

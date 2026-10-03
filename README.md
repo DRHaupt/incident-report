@@ -277,6 +277,29 @@ from distance and wind direction), units and notes. Every drawing is time-stampe
 dispatch and exportable/importable as KML, GeoJSON or GPX. Map snapshots export to PNG/PDF or print, with
 scale, north arrow, date and source footer.
 
+## APRS (amateur radio positions)
+
+Field Map can show **APRS** stations (other responders' vehicles, search teams, weather stations, objects such as
+staging areas) on every map, from the internet, from a radio, or both:
+
+* **Internet (APRS-IS)**: connects to the volunteer APRS-IS network (`noam.aprs2.net:14580`) and asks only for
+  stations within a chosen range of your position or the map. No licence or account is needed to receive.
+* **Radio (TNC)**: any **KISS** TNC on a COM port (hardware TNC, radio with a built-in TNC in KISS mode,
+  Bluetooth TNC paired as a COM port) or on TCP (e.g. Direwolf on port 8001). Works with no internet at all.
+  Optional text to switch the TNC into KISS mode.
+* Stations heard on both are merged. Each shows its symbol, call sign, direction of travel and recent **track**;
+  stations fade after half the display time and disappear after it. Tap one for details (status, comment,
+  speed, altitude, weather, path, last heard, radio/internet), **Directions here**, **Copy for dispatch** and
+  *Send to Field Toolkit*.
+* **Emergencies** (Mic-E "Emergency" or the emergency symbol) turn the APRS status red, are listed first and are
+  spoken once.
+* **Beacon** (off by default): send your own position by radio and/or internet at set intervals (shorter
+  while moving) with a chosen symbol and comment. Needs an **amateur radio licence** and your call sign; sending
+  by internet also needs your APRS-IS passcode. APRS is public and unencrypted, and ISED's amateur rules limit
+  use for business: check your organisation's policy before transmitting as part of your job.
+* Open from the status bar (*APRS 12 · IS ✓ · TNC ✓*), *More → APRS stations / APRS settings*, the Layers panel
+  or Settings. A packet log shows the raw packets for checking a TNC.
+
 ## Map data and updates
 
 *Data & updates* shows each installed region (version, data date, sources per layer) and:

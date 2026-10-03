@@ -52,6 +52,7 @@ public sealed class MapView : SKControl
         AppServices.DrawingsChanged += OnRedraw;
         AppServices.Breadcrumbs.Changed += OnRedraw;
         AppServices.Live.Changed += OnRedraw;
+        AppServices.Aprs.Changed += OnRedraw;
         UiMode.Changed += OnRedraw;
         Disposed += (_, _) =>
         {
@@ -60,6 +61,7 @@ public sealed class MapView : SKControl
             AppServices.DrawingsChanged -= OnRedraw;
             AppServices.Breadcrumbs.Changed -= OnRedraw;
             AppServices.Live.Changed -= OnRedraw;
+            AppServices.Aprs.Changed -= OnRedraw;
             UiMode.Changed -= OnRedraw;
         };
     }
@@ -153,6 +155,7 @@ public sealed class MapView : SKControl
     public Drawing? Draft { get; set; }
     public Guid? SelectedDrawing { get; set; }
     public Poi? SelectedPoi { get; set; }
+    public string? SelectedAprs { get; set; }
     public GeoPoint? Marker { get; set; }
     public GeoFix? Fix { get; set; }
     public bool FixStale { get; set; }
@@ -176,6 +179,11 @@ public sealed class MapView : SKControl
         Breadcrumbs = AppServices.Settings.ShowBreadcrumbs ? AppServices.Breadcrumbs.Items.Select(c => new GeoPoint(c.Lat, c.Lon)).ToList() : null,
         Live = AppServices.Settings.ShowLiveData ? AppServices.Live.ActiveFeeds.Select(f => AppServices.Live.Results.GetValueOrDefault(f.Id)).OfType<Core.Live.LiveResult>().ToList() : Array.Empty<Core.Live.LiveResult>(),
         Marker = Marker,
+        Aprs = AppServices.Settings.Aprs.Show ? AppServices.Aprs.VisibleStations() : Array.Empty<Core.Aprs.AprsStation>(),
+        AprsTracks = AppServices.Settings.Aprs.ShowTracks,
+        AprsFadeAfter = TimeSpan.FromMinutes(Math.Max(1, AppServices.Settings.Aprs.ShowMinutes) / 2.0),
+        SelectedAprs = SelectedAprs,
+        NowUtc = DateTime.UtcNow,
         Attribution = AppServices.Data.Attribution,
         Synchronous = synchronous,
         ShowControls = ShowControls,
@@ -214,6 +222,7 @@ public sealed class MapView : SKControl
             Regions = scene.Regions, Tiles = scene.Tiles, Style = scene.Style, LayerOn = scene.LayerOn, Pois = scene.Pois, SelectedPoi = null,
             Drawings = scene.Drawings, Route = scene.Route, Alternatives = scene.Alternatives, Fix = scene.Fix, FixStale = scene.FixStale,
             Breadcrumbs = scene.Breadcrumbs, Live = scene.Live, Marker = scene.Marker, Attribution = scene.Attribution, Synchronous = true,
+            Aprs = scene.Aprs, AprsTracks = scene.AprsTracks, AprsFadeAfter = scene.AprsFadeAfter, NowUtc = scene.NowUtc,
             ShowControls = true, UiScale = UiScale * factor
         });
         return bmp;
@@ -236,6 +245,17 @@ public sealed class MapView : SKControl
         foreach (var (rect, poi) in Enumerable.Reverse(_last.Pois))
             if (rect.Contains(p.X, p.Y))
                 return poi;
+        return null;
+    }
+
+    /// <summary>The APRS station (key) drawn under a screen point, if any.</summary>
+    public string? HitAprs(Point p)
+    {
+        if (_last == null)
+            return null;
+        foreach (var (rect, key) in Enumerable.Reverse(_last.Aprs))
+            if (rect.Contains(p.X, p.Y))
+                return key;
         return null;
     }
 

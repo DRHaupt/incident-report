@@ -4,7 +4,7 @@ using Shared.UI;
 
 namespace FieldMap.Views;
 
-/// <summary>App settings: name for drawings, window restore, Alberta 511 key, default range rings, position source.</summary>
+/// <summary>App settings: name for drawings, window restore, Alberta 511 key, default range rings, position source, APRS.</summary>
 public sealed class SettingsDialog : Form
 {
     private readonly TextBox _name = new() { Width = 420 };
@@ -42,6 +42,9 @@ public sealed class SettingsDialog : Form
         Field("Alberta 511 developer key (optional)", _key, "Free key from 511.alberta.ca/developers; without it the Alberta 511 live layer stays off.");
         var gps = Ui.Button("Position source (GPS)…", ButtonStyle.Secondary, () => { using var d = new SourceDialog(AppServices.Location); d.ShowDialog(this); });
         stack.Controls.Add(gps);
+        var aprs = Ui.Button("APRS (amateur radio positions)…", ButtonStyle.Secondary, () => { using var d = new AprsSettingsDialog(); d.ShowDialog(this); });
+        aprs.Margin = new Padding(0, 6, 0, 0);
+        stack.Controls.Add(aprs);
         foreach (var c in new Control[] { _name, _key, _rings, _restore })
             c.Styled(FontRole.Large);
         var ok = Ui.Button("Save", ButtonStyle.Primary, Accept);

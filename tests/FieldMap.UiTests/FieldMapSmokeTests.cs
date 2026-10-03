@@ -1,4 +1,7 @@
+using System.Net;
+using System.Net.Sockets;
 using FieldMap;
+using FieldMap.Core.Aprs;
 using FieldMap.Core.Drawings;
 using FieldMap.Core.Layers;
 using FieldMap.Core.Sample;
@@ -148,6 +151,9 @@ public class FieldMapSmokeTests
         follow.MapView.Refresh();
         Pump(200);
 
+        // APRS: a fake APRS-IS server and a fake KISS TNC on loopback feed stations into the map.
+        RunAprs(follow);
+
         // Snapshot export.
         var dir = Path.Combine(Path.GetTempPath(), "fieldmap-ui-" + Guid.NewGuid().ToString("N")[..6]);
         Directory.CreateDirectory(dir);
@@ -193,10 +199,119 @@ public class FieldMapSmokeTests
         foreach (var d in drawings)
             AppServices.Drawings.Items.Remove(d);
         AppServices.NotifyDrawingsChanged();
+        AppServices.Settings.Aprs.InternetEnabled = false;
+        AppServices.Settings.Aprs.RadioEnabled = false;
+        AppServices.Aprs.Apply();
         AppServices.Windows.CloseAll();
         Pump(100);
         launcher.Close();
         Pump(100);
         Directory.Delete(dir, true);
     });
+
+    private static void RunAprs(MapWindow map)
+    {
+        string Packet(string call, GeoPoint p, char table, char code, double? course, double? kmh, string comment) =>
+            AprsBeacon.Packet(call, "WIDE1-1", AprsBeacon.Position(p.Lat, p.Lon, table, code, course, kmh, null, comment));
+        var internetLines = new[]
+        {
+            Packet("VE7MED-9", SampleRegion.At(-100, 400), '/', 'a', 70, 60, "Medic 12"),
+            Packet("VE7HKR-7", SampleRegion.At(300, 650), '\\', '!', null, null, "Injured hiker")
+        };
+        var radioFrame = KissDecoder.Encode(Ax25.Encode(Packet("VE7FD-1", SampleRegion.At(250, 420), '/', 'f', 180, 40, "Engine 3")));
+
+        var isListener = new TcpListener(IPAddress.Loopback, 0);
+        isListener.Start();
+        var tncListener = new TcpListener(IPAddress.Loopback, 0);
+        tncListener.Start();
+        using var stop = new CancellationTokenSource();
+        var isServer = Task.Run(async () =>
+        {
+            using var c = await isListener.AcceptTcpClientAsync(stop.Token);
+            using var s = c.GetStream();
+            using var r = new StreamReader(s);
+            var w = new StreamWriter(s) { NewLine = "\r\n", AutoFlush = true };
+            await w.WriteLineAsync("# aprsc test");
+            await r.ReadLineAsync(stop.Token);
+            await w.WriteLineAsync("# logresp FMAP unverified, server TEST");
+            foreach (var line in internetLines)
+                await w.WriteLineAsync(line);
+            while (!stop.IsCancellationRequested)
+            {
+                await w.WriteLineAsync("# keepalive");
+                await Task.Delay(1000, stop.Token);
+            }
+        });
+        var tncServer = Task.Run(async () =>
+        {
+            using var c = await tncListener.AcceptTcpClientAsync(stop.Token);
+            using var s = c.GetStream();
+            await s.WriteAsync(radioFrame, stop.Token);
+            await Task.Delay(Timeout.Infinite, stop.Token);
+        });
+
+        var a = AppServices.Settings.Aprs;
+        a.Show = true;
+        a.InternetEnabled = true;
+        a.Server = "127.0.0.1";
+        a.ServerPort = ((IPEndPoint)isListener.LocalEndpoint).Port;
+        a.RadioEnabled = true;
+        a.Connection = TncConnection.Tcp;
+        a.TcpHost = "127.0.0.1";
+        a.TcpPort = ((IPEndPoint)tncListener.LocalEndpoint).Port;
+        AppServices.Aprs.Apply();
+        PumpUntil(() => AppServices.Aprs.Tracker.Count >= 3, 30000, "APRS stations from APRS-IS and the TNC");
+        PumpUntil(() => AppServices.Aprs.ActiveEmergencies.Contains("VE7HKR-7"), 10000, "APRS emergency alert");
+        Assert.Equal(AprsVia.Radio, AppServices.Aprs.Tracker.Find("VE7FD-1")!.Via);
+        Assert.Equal(AprsVia.Internet, AppServices.Aprs.Tracker.Find("VE7MED-9")!.Via);
+
+        map.ShowPanel(new AprsPanel(map));
+        PumpUntil(() => PanelText(map).Contains("VE7MED-9") && PanelText(map).Contains("VE7FD-1"), 10000, "APRS station list");
+        Assert.Contains("EMERGENCY", PanelText(map));
+        map.SelectAprs("VE7MED-9", center: true);
+        Pump(200);
+        Assert.Contains("Ambulance", PanelText(map));
+        Assert.Contains("Medic 12", PanelText(map));
+
+        // Tapping the drawn symbol finds the station.
+        map.MapView.SetView(SampleRegion.At(100, 500), 15.5, 0);
+        map.MapView.Refresh();
+        Pump(300);
+        var pt = map.MapView.GeoToScreen(SampleRegion.At(250, 420));
+        Assert.Equal("VE7FD-1", map.MapView.HitAprs(Point.Round(pt)));
+
+        map.ShowPanel(new LayersPanel(map));
+        Pump(100);
+        Assert.Contains("APRS stations", PanelText(map));
+
+        using (var settings = new AprsSettingsDialog())
+        {
+            settings.Show(map);
+            Pump(200);
+            settings.Close();
+        }
+        AprsLogWindow.ShowSingle(map);
+        Pump(1500);
+        foreach (var f in Application.OpenForms.OfType<AprsLogWindow>().ToList())
+        {
+            Assert.Contains("VE7FD-1", All(f).OfType<TextBox>().First().Text);
+            f.Close();
+        }
+        map.ClosePanel();
+
+        stop.Cancel();
+        a.InternetEnabled = false;
+        a.RadioEnabled = false;
+        AppServices.Aprs.Apply();
+        isListener.Stop();
+        tncListener.Stop();
+        try
+        {
+            Task.WaitAll(new[] { isServer, tncServer }, 3000);
+        }
+        catch (AggregateException)
+        {
+            // Servers stop when cancelled.
+        }
+    }
 }

@@ -7,6 +7,9 @@ internal static class Branding
 {
     public const string ProductName = "Field Map";
 
+    /// <summary>Version shown to APRS-IS servers and in About.</summary>
+    public static string Version => typeof(Branding).Assembly.GetName().Version is { } v ? $"{v.Major}.{v.Minor}.{v.Build}" : "0.1.0";
+
     public const string Disclaimer =
         "Field Map supports, and does not replace, official CAD and dispatch systems. Map data may be incomplete or out of date: " +
         "confirm locations, road status and facility details with dispatch.";

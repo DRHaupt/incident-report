@@ -26,6 +26,7 @@ public static class AppServices
     public static Speech Speech { get; } = new();
     public static ExchangeWatcher? Exchange { get; private set; }
     public static LiveDataService Live { get; private set; } = null!;
+    public static AprsService Aprs { get; private set; } = null!;
     public static RegionCatalog Catalog { get; private set; } = new();
 
     /// <summary>Problems found at start-up (data folder unavailable, damaged data) to show once.</summary>
@@ -109,7 +110,19 @@ public static class AppServices
             StartupMessages.Add("Field Toolkit hand-over is unavailable: " + ex.Message);
         }
 
-        Clock.Tick += (_, _) => ClockTick?.Invoke(null, EventArgs.Empty);
+        Aprs = new AprsService(Settings)
+        {
+            CurrentFix = () => _location is { State: LocationState.Ready } l ? l.Fix : null,
+            AreaCenter = () => Windows.Windows.OfType<Views.MapWindow>().FirstOrDefault(w => !w.IsDisposed)?.MapView.Center
+                               ?? (Data.HasData ? Data.Bounds.Center : null)
+        };
+        Aprs.Apply();
+
+        Clock.Tick += (_, _) =>
+        {
+            Aprs.Tick();
+            ClockTick?.Invoke(null, EventArgs.Empty);
+        };
         Clock.Start();
     }
 
@@ -146,6 +159,7 @@ public static class AppServices
     {
         Breadcrumbs.Save();
         Live.Dispose();
+        Aprs.Dispose();
         Exchange?.Dispose();
         Speech.Dispose();
         Data.Dispose();

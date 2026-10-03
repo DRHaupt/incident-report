@@ -44,6 +44,14 @@ public sealed class LayersPanel : SidePanel
                     (src != null ? $" · {src.Licence}" : ""), FontRole.Normal, Brand.Muted);
         }
 
+        AddText("APRS (amateur radio positions)", FontRole.Heading);
+        var aprs = AppServices.Aprs;
+        AddToggle($"APRS stations ({aprs.VisibleStations().Count})", s.Aprs.Show, on => { s.Aprs.Show = on; Save(); },
+            aprs.Active ? aprs.ShortStatus() + " · positions are sent by the stations themselves" : "Off – turn on the internet feed or a radio TNC in APRS settings.");
+        AddToggle("APRS tracks", s.Aprs.ShowTracks, on => { s.Aprs.ShowTracks = on; Save(); }, $"Last {s.Aprs.TrackMinutes} minutes of movement");
+        AddButtons(Btn("APRS stations", ButtonStyle.Secondary, () => Map.ShowPanel(new AprsPanel(Map))),
+                   Btn("APRS settings…", ButtonStyle.Secondary, () => { using var d = new Views.AprsSettingsDialog(); d.ShowDialog(FindForm()); }));
+
         AddText("Live data (only when connected)", FontRole.Heading);
         AddToggle("Show live data", s.ShowLiveData, on =>
         {
@@ -68,28 +76,5 @@ public sealed class LayersPanel : SidePanel
     {
         AppServices.Settings.Save();
         Map.MapView.Invalidate();
-    }
-
-    private void AddToggle(string title, bool on, Action<bool> changed, string detail)
-    {
-        var box = new CheckBox
-        {
-            Text = title, Checked = on, AutoSize = false, Height = Ui.TargetHeight, Appearance = Appearance.Button, TextAlign = ContentAlignment.MiddleLeft,
-            FlatStyle = FlatStyle.Flat, UseMnemonic = false, Margin = new Padding(0, 4, 0, 0), Padding = new Padding(10, 0, 0, 0)
-        }.Styled(FontRole.Bold);
-        box.FixedSize();
-        void Sync()
-        {
-            box.Text = (box.Checked ? "✓  " : "○  ") + title;
-            UiMode.SetColors(box, box.Checked ? Brand.Navy : Color.White, box.Checked ? Color.White : Brand.Navy);
-        }
-        box.CheckedChanged += (_, _) =>
-        {
-            Sync();
-            changed(box.Checked);
-        };
-        Sync();
-        Stack.Controls.Add(box);
-        AddText(detail, FontRole.Normal, Brand.Muted);
     }
 }

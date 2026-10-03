@@ -109,6 +109,32 @@ public abstract class SidePanel : Panel
         return row;
     }
 
+    /// <summary>A big on/off toggle with a detail line under it.</summary>
+    protected CheckBox AddToggle(string title, bool on, Action<bool> changed, string detail)
+    {
+        var box = new CheckBox
+        {
+            Text = title, Checked = on, AutoSize = false, Height = Ui.TargetHeight, Appearance = Appearance.Button, TextAlign = ContentAlignment.MiddleLeft,
+            FlatStyle = FlatStyle.Flat, UseMnemonic = false, Margin = new Padding(0, 4, 0, 0), Padding = new Padding(10, 0, 0, 0)
+        }.Styled(FontRole.Bold);
+        box.FixedSize();
+        void Sync()
+        {
+            box.Text = (box.Checked ? "✓  " : "○  ") + title;
+            UiMode.SetColors(box, box.Checked ? Brand.Navy : Color.White, box.Checked ? Color.White : Brand.Navy);
+        }
+        box.CheckedChanged += (_, _) =>
+        {
+            Sync();
+            changed(box.Checked);
+        };
+        Sync();
+        Stack.Controls.Add(box);
+        if (detail.Length > 0)
+            AddText(detail, FontRole.Normal, Brand.Muted);
+        return box;
+    }
+
     protected void Refit() => UiMode.Apply(this);
 
     protected static void Copy(IWin32Window owner, string text)

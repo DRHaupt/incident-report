@@ -1,3 +1,4 @@
+using FieldMap.Core.Aprs;
 using FieldMap.Core.Data;
 using FieldMap.Core.Geo;
 using FieldMap.Core.Drawings;
@@ -40,7 +41,9 @@ public class RenderingTests
             Fix = withExtras ? new GeoFix(SampleRegion.Origin.Lat - 0.0005, SampleRegion.Origin.Lon + 0.001, 25, null, DateTime.UtcNow, "Test", CourseDegrees: 45, SpeedMetersPerSecond: 12) : null,
             Attribution = "SAMPLE DATA – fictitious",
             Synchronous = true,
-            UiScale = 1.3f
+            UiScale = 1.3f,
+            Aprs = withExtras ? SampleAprs() : Array.Empty<AprsStation>(),
+            SelectedAprs = withExtras ? "VE7MED-9" : null
         };
         var vp = Viewport.At(SampleRegion.At(0, 560), zoom, bearing, 1000, 760);
         var bmp = new SKBitmap(vp.Width, vp.Height);
@@ -52,6 +55,50 @@ public class RenderingTests
         using (var fs = File.Create(Path.Combine(OutputDir, name + ".png")))
             data.SaveTo(fs);
         return bmp;
+    }
+
+    /// <summary>A few fictitious APRS stations around the sample town (an ambulance with a track, an emergency, an object…).</summary>
+    public static List<AprsStation> SampleAprs()
+    {
+        var t = new AprsStationTracker();
+        var now = DateTime.UtcNow;
+        void Pos(string call, GeoPoint p, char table, char code, double? course, double? kmh, string comment, int minutesAgo = 0) =>
+            t.Process(AprsParser.Parse(AprsBeacon.Packet(call, "WIDE1-1", AprsBeacon.Position(p.Lat, p.Lon, table, code, course, kmh, null, comment))), AprsVia.Radio, now.AddMinutes(-minutesAgo));
+        for (var i = 0; i < 5; i++)
+            Pos("VE7MED-9", SampleRegion.At(-450 + i * 90, 300 + i * 40), '/', 'a', 70, 60, "Medic 12", 10 - i * 2);
+        Pos("VE7FD-1", SampleRegion.At(250, 420), '/', 'f', 180, 40, "Engine 3");
+        Pos("VE7WX", SampleRegion.At(-300, 900), '/', '_', null, null, "", 50);
+        Pos("VE7HKR-7", SampleRegion.At(520, 650), '\\', '!', null, null, "Injured hiker");
+        Pos("VA7DIG", SampleRegion.At(-150, 1000), 'S', '#', null, null, "");
+        t.Process(AprsParser.Parse("VE7EOC>APZFMP:" + AprsBeacon.Object("STAGING", now, SampleRegion.At(80, 760).Lat, SampleRegion.At(80, 760).Lon, '/', 'c', "Staging area")), AprsVia.Internet, now);
+        return t.Snapshot();
+    }
+
+    [Fact]
+    public void Draws_aprs_stations_and_reports_their_hit_areas()
+    {
+        using var tiles = new MbTilesReader(Path.Combine(_f.Dir, RegionBuilder.TilesFile));
+        var scene = new MapScene
+        {
+            Regions = new[] { new TileSource(tiles, new GeoBounds(_f.Manifest.MinLat, _f.Manifest.MinLon, _f.Manifest.MaxLat, _f.Manifest.MaxLon)) },
+            Tiles = new TileCache(),
+            Synchronous = true,
+            Aprs = SampleAprs()
+        };
+        var vp = Viewport.At(SampleRegion.At(0, 560), 15, 0, 1000, 760);
+        using var bmp = new SKBitmap(vp.Width, vp.Height);
+        using var canvas = new SKCanvas(bmp);
+        var result = MapRenderer.Render(canvas, vp, scene);
+        var keys = result.Aprs.Select(a => a.Key).ToList();
+        Assert.Contains("VE7MED-9", keys);
+        Assert.Contains("VE7HKR-7", keys);
+        Assert.Contains("STAGING", keys);
+        Assert.Equal(6, keys.Count);
+        // The emergency is drawn last (on top).
+        Assert.Equal("VE7HKR-7", keys[^1]);
+        var hiker = result.Aprs.First(a => a.Key == "VE7HKR-7").Rect;
+        var (hx, hy) = vp.GeoToScreen(SampleRegion.At(520, 650));
+        Assert.True(hiker.Contains((float)hx, (float)hy));
     }
 
     [Theory]
