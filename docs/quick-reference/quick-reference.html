@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Field Suite quick reference</title>
+<style>
+  /* One US Letter page per app, readable at arm's length; prints well in black and white. */
+  @page { size: letter portrait; margin: 0.45in; }
+  :root { --navy: #1b2a41; --amber: #f2a900; --red: #c62828; --muted: #555; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: #111; margin: 0; font-size: 11.5pt; line-height: 1.32; }
+  .card { page-break-after: always; break-after: page; padding: 0.1in 0; }
+  .card:last-child { page-break-after: auto; break-after: auto; }
+  header { display: flex; align-items: center; gap: 14px; border-bottom: 4px solid var(--navy); padding-bottom: 8px; margin-bottom: 10px; }
+  header img { width: 64px; height: 64px; }
+  header h1 { margin: 0; font-size: 24pt; color: var(--navy); }
+  header p { margin: 2px 0 0; color: var(--muted); font-size: 10.5pt; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+  section { break-inside: avoid; }
+  h2 { font-size: 13pt; margin: 8px 0 4px; color: #fff; background: var(--navy); padding: 3px 8px; border-radius: 3px; }
+  ol, ul { margin: 0 0 4px 0; padding-left: 20px; }
+  li { margin: 1px 0; }
+  .warn { border: 3px solid var(--red); border-radius: 4px; padding: 6px 9px; margin-top: 10px; font-weight: 600; }
+  .warn strong { color: var(--red); }
+  table { border-collapse: collapse; width: 100%; font-size: 10.5pt; }
+  td { border-bottom: 1px solid #ccc; padding: 2px 4px; vertical-align: top; }
+  td:first-child { white-space: nowrap; font-weight: 700; width: 34%; }
+  kbd { font-family: Consolas, monospace; border: 1px solid #888; border-bottom-width: 2px; border-radius: 3px; padding: 0 4px; font-size: 9.5pt; background: #f3f3f3; }
+  b.tile { background: var(--amber); color: #000; padding: 0 5px; border-radius: 3px; }
+  footer { margin-top: 8px; font-size: 8.5pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ============================================================== FIELD MAP -->
+<div class="card">
+  <header>
+    <img src="../../assets/fieldmap/fieldmap-512.png" alt="">
+    <div><h1>Field Map</h1><p>Offline map for BC and Alberta · works with no signal once map data is installed</p></div>
+  </header>
+  <div class="cols">
+    <section>
+      <h2>Find a place</h2>
+      <ol>
+        <li>Type in the search box at the top: an address, <i>Main St &amp; 5th Ave</i>, a facility, <i>Hwy 97 km 120</i>, or coordinates (decimal, DMS, MGRS, UTM).</li>
+        <li>Tap a result to centre the map on it.</li>
+        <li>Press and hold anywhere (right-click) → <b>What's here?</b> for the nearest address and every coordinate format.</li>
+      </ol>
+      <h2>Directions</h2>
+      <ol>
+        <li>Tap a place → <b>Directions here</b> (or toolbar <b>Directions</b>).</li>
+        <li>Choose <b>Car</b>, <b>Emergency</b>, <b>Truck</b> (enter height/weight/length) or <b>Walking</b>.</li>
+        <li><b>Start</b> for turn-by-turn with spoken prompts; it re-routes if you leave the route.</li>
+        <li>Drawn road closures are avoided. Turn restrictions are obeyed.</li>
+      </ol>
+      <h2>Nearest help</h2>
+      <ul>
+        <li>Toolbar <b>Nearest</b> → AEDs, hospitals with ED, fire halls… sorted by <b>drive time</b> (AEDs also show walking time).</li>
+        <li>Tap a facility for details, source and last-verified date.</li>
+      </ul>
+      <h2>Copy a location for dispatch</h2>
+      <ul>
+        <li>Any details panel → <b>Copy for dispatch</b>; paste into CAD, e-mail or text.</li>
+        <li>Status bar: tap a coordinate to copy it.</li>
+      </ul>
+    </section>
+    <section>
+      <h2>Mark up the incident</h2>
+      <ul>
+        <li>Toolbar <b>Draw</b>: incident pin, staging, rendezvous, landing zone, cordon, perimeter, <b>road closure</b>, range rings, measure, <b>hazmat zone</b> (isolation + downwind).</li>
+        <li>More ▾ → <b>Incidents &amp; drawings</b> to list, export (KML/GeoJSON/GPX) or import.</li>
+        <li>More ▾ → <b>Export map as PNG/PDF</b> or <b>Print map</b>.</li>
+      </ul>
+      <h2>Map files from an event</h2>
+      <ul>
+        <li>Drag a KML, KMZ, GPX, GeoJSON or CSV onto the map (or More ▾ → <b>Import map file</b>).</li>
+        <li>Layers → <b>Event layers</b>: show/hide, zoom to, fade the site plan, remove.</li>
+      </ul>
+      <h2>Map controls</h2>
+      <table>
+        <tr><td>+ / − / Me / N↑</td><td>Zoom, follow my GPS, north-up / heading-up</td></tr>
+        <tr><td>Map / Sat / Hyb</td><td>Map, imagery, imagery with roads (if imagery is installed)</td></tr>
+        <tr><td>Pinch / two fingers</td><td>Zoom / rotate; two-finger tap zooms out</td></tr>
+        <tr><td>Layers</td><td>AEDs, hydrants, gates, live feeds, APRS…</td></tr>
+        <tr><td>APRS label (status bar)</td><td>Stations list, messages; turns <b style="color:var(--red)">red</b> for an APRS emergency</td></tr>
+      </table>
+      <h2>Keys</h2>
+      <table>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Search</td></tr>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>T</kbd> / <kbd>D</kbd> / <kbd>N</kbd></td><td>Touch Mode / Daylight / Night</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Close the side panel</td></tr>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>H</kbd></td><td>Launcher</td></tr>
+      </table>
+    </section>
+  </div>
+  <div class="warn"><strong>Field Map supports, and does not replace, CAD and dispatch.</strong> Map data, AED locations and event files can be wrong or out of date: confirm with dispatch. A red <b>SAMPLE DATA</b> banner means the map is fictitious.</div>
+  <footer>Map data © OpenStreetMap contributors (ODbL) and Open Government Licence sources listed in About &amp; data sources.</footer>
+</div>
+
+<!-- ============================================================== FIELD TOOLKIT -->
+<div class="card">
+  <header>
+    <img src="../../assets/fieldtoolkit/toolkit-512.png" alt="">
+    <div><h1>Field Toolkit</h1><p>First aid, CPR, hazmat, location, timers, checklists, kit and radio · works offline</p></div>
+  </header>
+  <div class="cols">
+    <section>
+      <h2><b class="tile">First Aid</b></h2>
+      <ul>
+        <li>Type what you see (<i>not breathing</i>, <i>bleeding</i>, <i>bee sting</i>) or pick a topic. <b>Start here: scene safety</b> comes first.</li>
+        <li>One step per screen: <kbd>←</kbd> / <kbd>→</kbd> or the big buttons. Red banner = when to call 911.</li>
+      </ul>
+      <h2><b class="tile">CPR Helper</b></h2>
+      <ul>
+        <li>Pick Adult / Child / Infant → <b>Start</b> (or <kbd>Space</kbd>). Push to the beat (100–120/min); follow <b>GIVE 2 BREATHS</b> prompts; swap compressors every 2 min.</li>
+        <li>Starting it records "CPR started" in Timers.</li>
+      </ul>
+      <h2><b class="tile">Hazmat (ERG 2024)</b></h2>
+      <ul>
+        <li>Enter the 4-digit <b>UN number</b> on the keypad, a name, or "guide 128"; or tap a <b>placard</b>.</li>
+        <li>Green = Table 1 material: read isolation and protective-action distances (day/night, small/large spill).</li>
+      </ul>
+      <h2><b class="tile">Location</b></h2>
+      <ul>
+        <li>Lat/long, DMS, <b>MGRS</b>, UTM; tap a line to copy.</li>
+        <li><b>Read out on the radio</b> spells the grid in radio figures.</li>
+        <li><b>Copy for dispatch</b>; <b>Save point</b> for the incident or rendezvous (live distance and bearing).</li>
+        <li><b>Open in map</b> shows it in Field Map.</li>
+      </ul>
+    </section>
+    <section>
+      <h2><b class="tile">Timers</b></h2>
+      <ul>
+        <li>Tap <b>Tourniquet</b>, <b>CPR</b>, <b>Road closure</b>, <b>Crew on duty</b>… Timers keep running when the window or app is closed.</li>
+        <li>An alert flashes and turns red until someone taps it.</li>
+      </ul>
+      <h2><b class="tile">Checklists</b> · <b class="tile">Kit</b></h2>
+      <ul>
+        <li>Run a checklist (vehicle pre-trip, medical kit, shift handover): <b>OK / Fault / N/A</b> per item, timed; a fault asks for a note. <b>Copy report</b> lists faults.</li>
+        <li>Kit: expiry or service dates for kits, meds, AED pads, O₂, extinguishers. <b style="color:var(--red)">Red</b> = expired, amber = due soon; <b>Checked today</b> / <b>Replaced…</b>.</li>
+      </ul>
+      <h2><b class="tile">Radio &amp; Comms</b></h2>
+      <ul>
+        <li>Phonetic alphabet and live speller, procedure words, <b>METHANE</b> report.</li>
+        <li>Channel plan and call signs; time-stamped <b>radio log</b> (<b>+ My location</b> adds your grid); copy or save it.</li>
+      </ul>
+      <h2>Windows</h2>
+      <ul>
+        <li>Every tool opens its own window; <b>+ Window</b> opens another of the same tool.</li>
+        <li>Launcher <b>Arrange</b>: side by side, stacked, grid. <b>Pin on top</b> keeps a window in front.</li>
+      </ul>
+      <h2>Keys</h2>
+      <table>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>T</kbd> / <kbd>D</kbd> / <kbd>N</kbd></td><td>Touch Mode / Daylight / Night</td></tr>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>L</kbd></td><td>Launcher</td></tr>
+        <tr><td><kbd>Space</kbd></td><td>Start/stop CPR metronome</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Back to the list</td></tr>
+      </table>
+    </section>
+  </div>
+  <div class="warn"><strong>The first aid guide supports training; it does not replace it.</strong> Follow your training, your protocols and the dispatcher. Use the hazmat guide with the printed ERG for Table 3 large spills.</div>
+</div>
+
+<!-- ============================================================== INCIDENT REPORT MANAGER -->
+<div class="card">
+  <header>
+    <img src="../../assets/logo-512.png" alt="">
+    <div><h1>Incident Report Manager</h1><p>Record, track and print incident reports · 96 forms · stored on this computer</p></div>
+  </header>
+  <div class="cols">
+    <section>
+      <h2>Write a report</h2>
+      <ol>
+        <li><b>File → New Report</b> (<kbd>Ctrl</kbd>+<kbd>N</kbd>) → pick the category and form.</li>
+        <li>Fill in the sections. Fields marked <b>*</b> are required to submit.</li>
+        <li><b>Save</b> (<kbd>Ctrl</kbd>+<kbd>S</kbd>) as you go – it stays a <b>Draft</b>.</li>
+        <li><b>Submit Report</b> when complete. Reviewers use <b>Begin Review</b> and <b>Close Report</b>; <b>Reopen</b> to change a closed report.</li>
+      </ol>
+      <h2>Add to a report</h2>
+      <ul>
+        <li><b>Attachments</b>: photos, statements, documents (kept inside the database).</li>
+        <li><b>Create Follow-Up Report</b> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>): investigation, corrective action, witness statement… with the incident details copied in.</li>
+        <li><b>Linked Reports</b> shows the original and its follow-ups.</li>
+      </ul>
+      <h2>Find a report</h2>
+      <ul>
+        <li>Filter by status, date and category; <kbd>Ctrl</kbd>+<kbd>F</kbd> searches every field.</li>
+        <li>Click a column header to sort; the preview pane shows the selected report.</li>
+      </ul>
+    </section>
+    <section>
+      <h2>Print and export</h2>
+      <ul>
+        <li><b>File → Print</b> (<kbd>Ctrl</kbd>+<kbd>P</kbd>) or <b>Print Preview</b>; blank forms can be printed to fill in by hand.</li>
+        <li><b>Export Report as HTML</b>; <b>Export List to CSV</b>.</li>
+      </ul>
+      <h2>Look after the data</h2>
+      <ul>
+        <li><b>File → Back Up Database</b> regularly (works while the app is open). Keep backups somewhere safe.</li>
+        <li><b>Tools → Options</b>: organisation name, default reporter, report-number prefix, database location.</li>
+        <li>Closed reports are read-only; every change is in the audit history.</li>
+      </ul>
+      <h2>Keys</h2>
+      <table>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>N</kbd></td><td>New report</td></tr>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>Open selected report</td></tr>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Save (in a report)</td></tr>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>P</kbd></td><td>Print</td></tr>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Search</td></tr>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>T</kbd> / <kbd>D</kbd></td><td>Touch Mode / Daylight</td></tr>
+      </table>
+    </section>
+  </div>
+  <div class="warn"><strong>Reports can contain personal and health information.</strong> Lock the laptop when you step away, don't copy reports to personal devices, and follow your organisation's privacy and retention rules.</div>
+</div>
+
+</body>
+</html>

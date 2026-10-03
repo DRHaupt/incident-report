@@ -1,0 +1,48 @@
+Field Suite (Incident Report Manager, Field Toolkit, Field Map) – third-party software and data
+==========================================================================================
+
+The three applications include the following third-party components. The full licence texts are in this folder.
+
+SOFTWARE
+
+.NET 8 runtime and Windows Forms (self-contained in each application)
+  Copyright (c) .NET Foundation and Contributors. MIT licence – dotnet-LICENSE.txt.
+  Third-party notices for the runtime – dotnet-THIRD-PARTY-NOTICES.txt.
+
+System.IO.Ports, System.Speech
+  Copyright (c) .NET Foundation and Contributors. MIT licence – dotnet-LICENSE.txt.
+
+Microsoft.Data.Sqlite
+  Copyright (c) .NET Foundation and Contributors. MIT licence – dotnet-LICENSE.txt.
+
+SQLitePCLRaw (bundle_e_sqlite3, core, provider, lib)
+  Copyright (c) Eric Sink / SourceGear. Apache License 2.0 – Apache-2.0.txt.
+
+SQLite (e_sqlite3)
+  Public domain. https://www.sqlite.org/copyright.html
+
+SkiaSharp, SkiaSharp.Views.WindowsForms (Field Map)
+  Copyright (c) 2015-2016 Xamarin, Inc.; Copyright (c) 2017-2018 Microsoft Corporation. MIT licence –
+  SkiaSharp-LICENSE.txt.
+  Skia and its bundled libraries (BSD-3-Clause and others) – SkiaSharp-THIRD-PARTY-NOTICES.txt.
+
+DATA (Field Map and Field Toolkit)
+
+OpenStreetMap
+  Map data © OpenStreetMap contributors, available under the Open Database Licence (ODbL) 1.0.
+  https://www.openstreetmap.org/copyright – shown on the map and on exported maps.
+
+Open Government Licence – Canada / British Columbia / Alberta
+  Contains information licensed under the Open Government Licence – Canada, – British Columbia and – Alberta
+  (address points, health and school facilities, live feeds, where installed). The sources and dates of each
+  installed layer are listed in Field Map under Layers and About & data sources.
+
+Emergency Response Guidebook 2024 (Field Toolkit hazmat data)
+  U.S. Department of Transportation, Pipeline and Hazardous Materials Safety Administration, with Transport
+  Canada and the Secretariat of Communications and Transportation of Mexico. Work of the U.S. Government.
+
+APRS
+  APRS is a registered trademark of APRS Software and Bob Bruninga, WB4APR (SK).
+
+Imagery, AED registries and event map files are installed by the user under the terms of their own sources;
+Field Map records the source with each layer.
