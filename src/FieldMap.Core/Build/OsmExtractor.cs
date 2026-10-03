@@ -21,6 +21,69 @@ public sealed class OsmExtractor
 
     private readonly Dictionary<long, (OsmTags Tags, OsmMember[] Members)> _areaRelations = new();
     private readonly HashSet<long> _relationWays = new();
+    private readonly Dictionary<long, OsmRestriction> _restrictions = new();
+
+    private static readonly string[] RestrictionKinds =
+    {
+        "no_left_turn", "no_right_turn", "no_straight_on", "no_u_turn", "no_entry", "no_exit",
+        "only_left_turn", "only_right_turn", "only_straight_on", "only_u_turn"
+    };
+
+    /// <summary>
+    /// Reads a restriction relation. restriction=* applies to all motor vehicles, restriction:hgv to trucks,
+    /// restriction:motorcar to cars (and emergency vehicles, which are cars); except=emergency/hgv/motorcar exempts
+    /// those. Time-dependent (restriction:conditional) and bus/bicycle-only restrictions are not used.
+    /// </summary>
+    internal static OsmRestriction? ParseRestriction(long id, IReadOnlyList<OsmMember> members, OsmTags tags)
+    {
+        string? kind = null;
+        var vehicles = RestrictionVehicles.None;
+        if (tags["restriction"] is { } all)
+        {
+            kind = all;
+            vehicles = RestrictionVehicles.All;
+        }
+        else if (tags["restriction:hgv"] is { } hgv)
+        {
+            kind = hgv;
+            vehicles = RestrictionVehicles.Truck;
+        }
+        else if ((tags["restriction:motorcar"] ?? tags["restriction:motor_vehicle"]) is { } car)
+        {
+            kind = car;
+            vehicles = tags["restriction:motor_vehicle"] != null ? RestrictionVehicles.All : RestrictionVehicles.Car | RestrictionVehicles.Emergency;
+        }
+        if (kind == null || !RestrictionKinds.Contains(kind))
+            return null;
+        foreach (var e in (tags["except"] ?? "").Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            vehicles &= e switch
+            {
+                "emergency" => ~RestrictionVehicles.Emergency,
+                "hgv" => ~RestrictionVehicles.Truck,
+                "motorcar" => ~(RestrictionVehicles.Car | RestrictionVehicles.Emergency),
+                "motor_vehicle" => RestrictionVehicles.None,
+                _ => RestrictionVehicles.All
+            };
+        if (vehicles == RestrictionVehicles.None)
+            return null;
+        var from = members.Where(m => m.Type == OsmMemberType.Way && m.Role == "from").ToList();
+        var to = members.Where(m => m.Type == OsmMemberType.Way && m.Role == "to").ToList();
+        var viaNodes = members.Where(m => m.Type == OsmMemberType.Node && m.Role == "via").ToList();
+        var viaWays = members.Where(m => m.Type == OsmMemberType.Way && m.Role == "via").Select(m => m.Id).ToArray();
+        if (from.Count != 1 || to.Count != 1 || viaNodes.Count + (viaWays.Length > 0 ? 1 : 0) != 1 || viaNodes.Count > 1)
+            return null;
+        return new OsmRestriction
+        {
+            Id = id,
+            From = from[0].Id,
+            To = to[0].Id,
+            ViaNode = viaNodes.Count == 1 ? viaNodes[0].Id : null,
+            ViaWays = viaWays,
+            Kind = kind,
+            Vehicles = vehicles
+        };
+    }
+
     private readonly HashSet<long> _seenWays = new();
     private readonly HashSet<long> _seenTaggedNodes = new();
     private readonly HashSet<long> _boundaryWays = new();
@@ -105,6 +168,12 @@ public sealed class OsmExtractor
         public void Relation(long id, IReadOnlyList<OsmMember> members, OsmTags tags)
         {
             var type = tags["type"];
+            if (type == "restriction" || type?.StartsWith("restriction:", StringComparison.Ordinal) == true)
+            {
+                if (ParseRestriction(id, members, tags) is { } r)
+                    _x._restrictions[id] = r;
+                return;
+            }
             if (type == "boundary" && tags.Is("boundary", "administrative") && tags.IsAny("admin_level", "2", "4"))
             {
                 foreach (var m in members)
@@ -277,6 +346,7 @@ public sealed class OsmExtractor
                 continue;
             AddArea(new MapArea { Id = way.Id, Kind = kind, Name = way.Tags["name"] }, way.Tags, ring, null);
         }
+        d.Restrictions.AddRange(_restrictions.Values);
         foreach (var (id, (tags, members)) in _areaRelations)
         {
             var outers = AssembleRings(members.Where(m => m.Role != "inner").Select(m => _memberWays.GetValueOrDefault(m.Id)).OfType<MapWay>());

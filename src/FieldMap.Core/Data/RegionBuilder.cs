@@ -100,6 +100,8 @@ public static class RegionBuilder
             ["roads"] = data.Roads.Count,
             ["routingNodes"] = graph.NodeCount,
             ["routingSegments"] = graph.SegmentCount,
+            ["turnRestrictions"] = graph.TurnRestrictionCount,
+            ["turnRestrictionsNotUsed"] = graph.UnresolvedRestrictions,
             ["pois"] = data.Pois.Count,
             ["addresses"] = data.Addresses.Count,
             ["places"] = data.Places.Count,

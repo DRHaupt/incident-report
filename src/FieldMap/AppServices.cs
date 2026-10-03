@@ -94,13 +94,21 @@ public static class AppServices
         Windows = new WindowManager(Path.Combine(MapSettings.AppFolder, "session.json"));
 
         Data.Load();
+        var dataMessages = StartupMessages.Count;
         StartupMessages.AddRange(Data.Messages);
-        if (!Data.HasData && !Store.InstalledRegions().Any())
+        var installed = Store.InstalledRegions().ToList();
+        if (!Data.HasData && (installed.Count == 0 || installed.All(r => r == Core.Sample.SampleRegion.RegionId)))
         {
+            // No data, or only a sample built by an older version (data format changed): rebuild the sample.
             // First run without data: install the fictitious sample so every screen can be tried (red SAMPLE banner).
             var result = new UpdateService(Store).InstallSample();
             if (result.Success)
+            {
                 Data.Load();
+                // The old sample's "built by a different version" message no longer applies.
+                StartupMessages.RemoveRange(dataMessages, StartupMessages.Count - dataMessages);
+                StartupMessages.AddRange(Data.Messages);
+            }
         }
 
         Live = new LiveDataService(LiveFeedCatalog.LoadOrEmpty(Path.Combine(ContentFolder, "live-feeds.json")), Path.Combine(Store.CacheDir, "live"), Settings);

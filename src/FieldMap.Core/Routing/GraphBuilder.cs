@@ -278,8 +278,145 @@ public static class GraphBuilder
             SegWayId = segWay.ToArray(),
             Strings = strings.OrderBy(kv => kv.Value).Select(kv => kv.Key).ToArray()
         };
+        ResolveRestrictions(data, g, nodeIds);
         BuildAdjacency(g);
         return Compact(g);
+    }
+
+    /// <summary>
+    /// Turns OSM restriction relations into forbidden moves between graph segments. Via-node restrictions need the
+    /// from and to ways to start or end at the via node (as OSM requires); via-way restrictions are supported when the
+    /// via is one way that forms a single graph segment (the usual short connector, e.g. a median opening). Anything
+    /// else is counted in <see cref="RoadGraph.UnresolvedRestrictions"/> and left out.
+    /// </summary>
+    private static void ResolveRestrictions(MapData data, RoadGraph g, long[] nodeIds)
+    {
+        if (data.Restrictions.Count == 0)
+            return;
+        var waySegs = new Dictionary<long, List<int>>();
+        for (var s = 0; s < g.SegmentCount; s++)
+        {
+            if (!waySegs.TryGetValue(g.SegWayId[s], out var list))
+                waySegs[g.SegWayId[s]] = list = new List<int>();
+            list.Add(s);
+        }
+        List<int> At(long way, int node) =>
+            waySegs.TryGetValue(way, out var segs) ? segs.Where(s => g.SegFrom[s] == node || g.SegTo[s] == node).ToList() : new List<int>();
+        // Segments at each node involved, for "only" restrictions.
+        var nodeSegs = new Dictionary<int, List<int>>();
+        List<int> AllAt(int node)
+        {
+            if (!nodeSegs.TryGetValue(node, out var list))
+            {
+                list = new List<int>();
+                for (var s = 0; s < g.SegmentCount; s++)
+                    if (g.SegFrom[s] == node || g.SegTo[s] == node)
+                        list.Add(s);
+                nodeSegs[node] = list;
+            }
+            return list;
+        }
+        // Collect the nodes first so AllAt can be filled in one pass.
+        var viaIndex = new HashSet<int>();
+        foreach (var r in data.Restrictions)
+            if (r.ViaNode is { } vn && Array.BinarySearch(nodeIds, vn) is var vi and >= 0)
+                viaIndex.Add(vi);
+        foreach (var r in data.Restrictions.Where(r => r.ViaWays.Length == 1))
+            if (waySegs.TryGetValue(r.ViaWays[0], out var vs) && vs.Count == 1)
+            {
+                viaIndex.Add(g.SegFrom[vs[0]]);
+                viaIndex.Add(g.SegTo[vs[0]]);
+            }
+        foreach (var n in viaIndex)
+            nodeSegs[n] = new List<int>();
+        for (var s = 0; s < g.SegmentCount; s++)
+        {
+            if (nodeSegs.TryGetValue(g.SegFrom[s], out var a))
+                a.Add(s);
+            if (g.SegTo[s] != g.SegFrom[s] && nodeSegs.TryGetValue(g.SegTo[s], out var b))
+                b.Add(s);
+        }
+
+        var turns = new HashSet<(int Node, int From, int To, byte Vehicles)>();
+        var vias = new HashSet<(int From, int Entry, int To, byte Vehicles)>();
+        var unresolved = 0;
+        foreach (var r in data.Restrictions)
+        {
+            var vehicles = (byte)r.Vehicles;
+            if (r.ViaNode is { } viaNode)
+            {
+                var v = Array.BinarySearch(nodeIds, viaNode);
+                if (v < 0)
+                {
+                    unresolved++;
+                    continue;
+                }
+                var from = At(r.From, v);
+                var to = At(r.To, v);
+                if (r.From == r.To)
+                {
+                    // A U-turn ban on one way: no turning back onto the same piece of road at this node.
+                    if (r.Kind == "no_u_turn" && from.Count > 0)
+                        foreach (var f in from)
+                            turns.Add((v, f, f, vehicles));
+                    else
+                        unresolved++;
+                    continue;
+                }
+                if (from.Count != 1 || to.Count != 1)
+                {
+                    unresolved++;
+                    continue;
+                }
+                if (r.IsOnly)
+                {
+                    foreach (var x in AllAt(v).Where(x => x != to[0]))
+                        turns.Add((v, from[0], x, vehicles));
+                }
+                else
+                {
+                    turns.Add((v, from[0], to[0], vehicles));
+                }
+                continue;
+            }
+            // Via way.
+            if (r.ViaWays.Length != 1 || !waySegs.TryGetValue(r.ViaWays[0], out var viaSegs) || viaSegs.Count != 1)
+            {
+                unresolved++;
+                continue;
+            }
+            var w = viaSegs[0];
+            int v1, v2, entry;
+            if (At(r.From, g.SegFrom[w]).Count == 1 && At(r.To, g.SegTo[w]).Count == 1)
+                (v1, v2, entry) = (g.SegFrom[w], g.SegTo[w], w * 2);
+            else if (At(r.From, g.SegTo[w]).Count == 1 && At(r.To, g.SegFrom[w]).Count == 1)
+                (v1, v2, entry) = (g.SegTo[w], g.SegFrom[w], w * 2 + 1);
+            else
+            {
+                unresolved++;
+                continue;
+            }
+            var f1 = At(r.From, v1)[0];
+            var t2 = At(r.To, v2)[0];
+            if (r.IsOnly)
+            {
+                foreach (var x in AllAt(v2).Where(x => x != t2))
+                    vias.Add((f1, entry, x, vehicles));
+            }
+            else
+            {
+                vias.Add((f1, entry, t2, vehicles));
+            }
+        }
+        g.TurnNode = turns.Select(t => t.Node).ToArray();
+        g.TurnFrom = turns.Select(t => t.From).ToArray();
+        g.TurnTo = turns.Select(t => t.To).ToArray();
+        g.TurnVehicles = turns.Select(t => t.Vehicles).ToArray();
+        g.ViaFrom = vias.Select(t => t.From).ToArray();
+        g.ViaEntry = vias.Select(t => t.Entry).ToArray();
+        g.ViaTo = vias.Select(t => t.To).ToArray();
+        g.ViaVehicles = vias.Select(t => t.Vehicles).ToArray();
+        g.UnresolvedRestrictions = unresolved;
     }
 
     private static void BuildAdjacency(RoadGraph g)
@@ -326,6 +463,8 @@ public static class GraphBuilder
             g.SegFrom[s] = map[g.SegFrom[s]];
             g.SegTo[s] = map[g.SegTo[s]];
         }
+        for (var i = 0; i < g.TurnNode.Length; i++)
+            g.TurnNode[i] = map[g.TurnNode[i]];
         g.NodeCount = n;
         BuildAdjacency(g);
         return g;

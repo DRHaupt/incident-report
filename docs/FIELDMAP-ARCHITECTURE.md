@@ -99,7 +99,16 @@ Considered and **not** chosen (licences checked on NuGet / upstream):
   exits), with distances and ETA; the route can be copied as text.
 * Turn-by-turn tracking (`NavigationTracker`): progress along the route, next maneuver, prompts at 600/200/40 m
   (2000/800/250/40 m at highway speed), off-route after 3 fixes beyond max(45 m, 1.5 × GPS accuracy).
-* Not in v1: turn restrictions (`type=restriction` relations) and time-dependent traffic. Documented as known gaps.
+* **Turn restrictions** (`type=restriction` relations): no_left/right/straight/u_turn, no_entry/exit and only_*;
+  `restriction:hgv` applies to trucks, `restriction:motorcar` to cars and emergency vehicles, `except=emergency/hgv/
+  motorcar` exempts them; `restriction:conditional` (time-dependent) is not used; walking ignores them. The builder
+  expands each into forbidden moves between graph segments (graph format 2): at a via node (from/to ways must start
+  or end there, as OSM requires), or through a via way that is one graph segment (median openings, slip roads).
+  Other forms are counted in the manifest (`turnRestrictionsNotUsed`) and left out. The router keeps one label per
+  arriving segment at restricted junctions, and one per via-way rule, so the best *legal* route is found (a plain
+  per-node label would discard a slower arrival that is allowed to turn). Applies to A*, alternatives, nearest-N and
+  re-routing.
+* Not in v1: time-dependent traffic and time-dependent restrictions. Documented as known gaps.
 
 ### 2.4 Geocoding and search → **SQLite FTS5 (trigram) + R*Tree index per region** (recommended)
 

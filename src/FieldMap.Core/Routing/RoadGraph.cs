@@ -57,7 +57,7 @@ public enum RoadClass : byte
 public sealed class RoadGraph
 {
     private const uint Magic = 0x47524D46; // "FMRG"
-    public const int FormatVersion = 1;
+    public const int FormatVersion = 2;
 
     // Nodes
     public int NodeCount { get; internal set; }
@@ -88,6 +88,26 @@ public sealed class RoadGraph
     internal int[] AdjEntry = Array.Empty<int>();
 
     internal string[] Strings = { "" };
+
+    // Turn restrictions, expanded to forbidden moves ("only" restrictions become the moves they rule out).
+    // At a node: arriving on TurnFrom, leaving on TurnTo is not allowed for the vehicles in TurnVehicles.
+    internal int[] TurnNode = Array.Empty<int>();
+    internal int[] TurnFrom = Array.Empty<int>();
+    internal int[] TurnTo = Array.Empty<int>();
+    internal byte[] TurnVehicles = Array.Empty<byte>();
+
+    // Through a short connecting road (via way): arriving on ViaFrom, then along ViaEntry (segment*2 + direction),
+    // then leaving on ViaTo is not allowed.
+    internal int[] ViaFrom = Array.Empty<int>();
+    internal int[] ViaEntry = Array.Empty<int>();
+    internal int[] ViaTo = Array.Empty<int>();
+    internal byte[] ViaVehicles = Array.Empty<byte>();
+
+    /// <summary>Restriction relations the builder couldn't apply (malformed, or a via of several roads). Not saved.</summary>
+    public int UnresolvedRestrictions { get; internal set; }
+
+    /// <summary>Forbidden moves at junctions plus forbidden moves through connecting roads.</summary>
+    public int TurnRestrictionCount => TurnNode.Length + ViaFrom.Length;
 
     private SpatialIndex? _index;
 
@@ -159,6 +179,10 @@ public sealed class RoadGraph
         Write(w, ShapeLat); Write(w, ShapeLon);
         foreach (var v in SegWayId) w.Write(v);
         Write(w, AdjStart); Write(w, AdjEntry);
+        w.Write(TurnNode.Length);
+        Write(w, TurnNode); Write(w, TurnFrom); Write(w, TurnTo); w.Write(TurnVehicles);
+        w.Write(ViaFrom.Length);
+        Write(w, ViaFrom); Write(w, ViaEntry); Write(w, ViaTo); w.Write(ViaVehicles);
         w.Write(Magic);
     }
 
@@ -219,6 +243,10 @@ public sealed class RoadGraph
         g.SegWayId = new long[segs];
         for (var i = 0; i < segs; i++) g.SegWayId[i] = r.ReadInt64();
         g.AdjStart = ReadInts(r, nodes + 1); g.AdjEntry = ReadInts(r, adj);
+        var turns = r.ReadInt32();
+        g.TurnNode = ReadInts(r, turns); g.TurnFrom = ReadInts(r, turns); g.TurnTo = ReadInts(r, turns); g.TurnVehicles = r.ReadBytes(turns);
+        var vias = r.ReadInt32();
+        g.ViaFrom = ReadInts(r, vias); g.ViaEntry = ReadInts(r, vias); g.ViaTo = ReadInts(r, vias); g.ViaVehicles = r.ReadBytes(vias);
         if (r.ReadUInt32() != Magic)
             throw new InvalidDataException("Routing graph file is corrupt (bad trailer).");
         return g;

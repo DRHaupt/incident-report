@@ -76,6 +76,34 @@ public sealed class Poi
     public string KindLabel => LayerCatalog.Find(Layer)?.KindLabel(Kind) ?? Kind;
 }
 
+/// <summary>Which vehicles a turn restriction applies to.</summary>
+[Flags]
+public enum RestrictionVehicles : byte
+{
+    None = 0,
+    Car = 1,
+    Truck = 2,
+    Emergency = 4,
+    All = Car | Truck | Emergency
+}
+
+/// <summary>An OSM turn restriction relation (type=restriction): from way, via node or ways, to way.</summary>
+public sealed class OsmRestriction
+{
+    public long Id { get; init; }
+    public long From { get; init; }
+    public long To { get; init; }
+    public long? ViaNode { get; init; }
+    public long[] ViaWays { get; init; } = Array.Empty<long>();
+
+    /// <summary>no_left_turn, no_right_turn, no_straight_on, no_u_turn, no_entry, no_exit, only_left_turn, only_right_turn, only_straight_on, only_u_turn.</summary>
+    public string Kind { get; init; } = "";
+
+    public RestrictionVehicles Vehicles { get; init; } = RestrictionVehicles.All;
+
+    public bool IsOnly => Kind.StartsWith("only_", StringComparison.Ordinal);
+}
+
 /// <summary>Everything the builders need from one OSM extract.</summary>
 public sealed class MapData
 {
@@ -90,6 +118,9 @@ public sealed class MapData
     public List<Place> Places { get; } = new();
     public List<Poi> Pois { get; } = new();
     public List<AddressPoint> Addresses { get; } = new();
+
+    /// <summary>Turn restrictions (no left turn, only straight on…), for routing.</summary>
+    public List<OsmRestriction> Restrictions { get; } = new();
 
     /// <summary>Tags of barrier nodes (gates, bollards) that lie on roads, for routing.</summary>
     public Dictionary<long, OsmTags> Barriers { get; } = new();
