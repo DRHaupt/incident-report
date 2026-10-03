@@ -222,9 +222,12 @@ public class FieldMapSmokeTests
         var internetLines = new[]
         {
             Packet("VE7MED-9", SampleRegion.At(-100, 400), '/', 'a', 70, 60, "Medic 12"),
-            Packet("VE7HKR-7", SampleRegion.At(300, 650), '\\', '!', null, null, "Injured hiker"),
-            "VE7EOC>APRS,TCPIP*,qAC,TEST::VE7ABC-9 :Report to staging{42"
+            Packet("VE7HKR-7", SampleRegion.At(300, 650), '\\', '!', null, null, "Injured hiker")
         };
+        // Sent only once the TNC is open, so the acknowledgement (which must go by radio: the internet login is
+        // receive-only) has a link to go out on.
+        var sendMessage = new TaskCompletionSource();
+        const string messageLine = "VE7EOC>APRS,TCPIP*,qAC,TEST::VE7ABC-9 :Report to staging{42";
         var fromApp = new System.Collections.Concurrent.ConcurrentQueue<string>();
         var radioFrame = KissDecoder.Encode(Ax25.Encode(Packet("VE7FD-1", SampleRegion.At(250, 420), '/', 'f', 180, 40, "Engine 3")));
 
@@ -244,6 +247,8 @@ public class FieldMapSmokeTests
             await w.WriteLineAsync("# logresp FMAP unverified, server TEST");
             foreach (var line in internetLines)
                 await w.WriteLineAsync(line);
+            await sendMessage.Task.WaitAsync(stop.Token);
+            await w.WriteLineAsync(messageLine);
             while (!stop.IsCancellationRequested)
             {
                 await w.WriteLineAsync("# keepalive");
@@ -278,6 +283,8 @@ public class FieldMapSmokeTests
         a.TcpHost = "127.0.0.1";
         a.TcpPort = ((IPEndPoint)tncListener.LocalEndpoint).Port;
         a.Callsign = "VE7ABC-9";
+        // Messages are kept between runs; start this conversation fresh so the test message counts as new.
+        AppServices.Aprs.Messenger.ClearConversation("VE7EOC");
         a.MessagingEnabled = true;
         a.BeaconEnabled = false;
         AppServices.Aprs.Apply();
@@ -305,7 +312,9 @@ public class FieldMapSmokeTests
         Pump(100);
         Assert.Contains("APRS stations", PanelText(map));
 
-        // Messaging: the message from VE7EOC arrived, was acknowledged by radio, and a reply goes out by radio.
+        // Messaging: the message from VE7EOC arrives, is acknowledged by radio, and a reply goes out by radio.
+        PumpUntil(() => AppServices.Aprs.Radio is { CanTransmit: true }, 10000, "TNC open");
+        sendMessage.TrySetResult();
         PumpUntil(() => AppServices.Aprs.Messenger.Unread == 1, 10000, "APRS message");
         PumpUntil(() => fromApp.Any(x => x.Contains(":VE7EOC   :ack42")), 10000, "acknowledgement sent to the TNC");
         map.ShowPanel(new AprsMessagesPanel(map, "VE7EOC"));
