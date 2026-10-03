@@ -94,6 +94,7 @@ public sealed class TileBuilder
 
     public int TileCount { get; private set; }
 
+
     public static int BuildMbTiles(MapData data, string path, IDictionary<string, string> metadata, IProgress<double>? progress = null, CancellationToken cancel = default)
     {
         var b = new TileBuilder();
@@ -229,52 +230,171 @@ public sealed class TileBuilder
 
     // ------------------------------------------------------------------ tiles
 
+    /// <summary>Zoom whose tiles are the units of progress (fine enough that the bar visibly moves on a province).</summary>
+    private const int ProgressZoom = 9;
+
+    /// <summary>Zoom from which subtrees are built in parallel.</summary>
+    private const int ParallelZoom = 6;
+
     private void Generate(MbTilesWriter writer, IProgress<double>? progress, CancellationToken cancel)
     {
-        // Progress: count of z7 subtrees finished out of those that have any content.
+        // Progress: z9 tiles finished, out of the z9 tiles touched by small features. Big features (a province boundary,
+        // a large lake) span thousands of cells, so they'd make the estimate meaningless; they are left out of it.
+        var n = 1 << ProgressZoom;
         var cells = new HashSet<(int, int)>();
         foreach (var f in _features)
         {
-            var n = 1 << 7;
-            for (var x = (int)(f.MinX * n); x <= Math.Min(n - 1, (int)(f.MaxX * n)); x++)
-                for (var y = (int)(f.MinY * n); y <= Math.Min(n - 1, (int)(f.MaxY * n)); y++)
-                    if (cells.Count < 100000)
-                        cells.Add((x, y));
+            int x0 = Cell(f.MinX), x1 = Cell(f.MaxX), y0 = Cell(f.MinY), y1 = Cell(f.MaxY);
+            if (x1 - x0 > 2 || y1 - y0 > 2)
+                continue;
+            for (var x = x0; x <= x1 && cells.Count < 2_000_000; x++)
+                for (var y = y0; y <= y1; y++)
+                    cells.Add((x, y));
         }
+        int Cell(double v) => Math.Clamp((int)(v * n), 0, n - 1);
         var total = Math.Max(1, cells.Count);
         var done = 0;
-        void Tile(int z, int x, int y, List<Feature> candidates)
+        var gate = new object();
+
+        // Reported under the lock so the bar only ever moves forward, whichever thread finishes first.
+        void Advance()
         {
-            cancel.ThrowIfCancellationRequested();
-            var (minX, minY, maxX, maxY) = WebMercator.TileBounds(z, x, y);
-            var size = maxX - minX;
-            var buffer = size * 64 / TileSchema.Extent;
-            var inTile = new List<Feature>();
-            foreach (var f in candidates)
-                if (f.MaxX >= minX - buffer && f.MinX <= maxX + buffer && f.MaxY >= minY - buffer && f.MinY <= maxY + buffer)
-                    inTile.Add(f);
-            if (inTile.Count == 0)
+            lock (gate)
+                progress?.Report(Math.Min(1, (double)++done / total));
+        }
+
+        void Write(int z, int x, int y, List<Feature> inTile)
+        {
+            var tile = BuildTile(z, WebMercator.TileBounds(z, x, y), inTile);
+            if (tile.Layers.Count == 0)
                 return;
-            var tile = BuildTile(z, minX, minY, size, inTile);
-            if (tile.Layers.Count > 0)
+            var bytes = VectorTile.Gzip(tile.Encode());
+            lock (gate)
             {
-                writer.Add(z, x, y, VectorTile.Gzip(tile.Encode()));
+                writer.Add(z, x, y, bytes);
                 TileCount++;
             }
-            if (z == 7)
-                progress?.Report(Math.Min(1, (double)++done / total));
-            if (z >= TileSchema.MaxZoom)
-                return;
-            for (var dy = 0; dy < 2; dy++)
-                for (var dx = 0; dx < 2; dx++)
-                    Tile(z + 1, x * 2 + dx, y * 2 + dy, inTile);
         }
-        Tile(0, 0, 0, _features);
+
+        // Each tile only sees its parent's features clipped to the parent tile, so the work per tile follows the
+        // geometry inside it – not the full size of every big feature whose bounding box happens to cover it.
+        void Tile(int z, int x, int y, List<Feature> candidates, List<(int X, int Y, List<Feature> Features)>? defer)
+        {
+            cancel.ThrowIfCancellationRequested();
+            var inTile = Clip(z, x, y, candidates);
+            if (inTile.Count == 0)
+            {
+                if (z == ProgressZoom && cells.Contains((x, y)))
+                    Advance();
+                return;
+            }
+            if (defer != null && z == ParallelZoom)
+            {
+                defer.Add((x, y, inTile));
+                return;
+            }
+            Write(z, x, y, inTile);
+            if (z < TileSchema.MaxZoom)
+                for (var dy = 0; dy < 2; dy++)
+                    for (var dx = 0; dx < 2; dx++)
+                        Tile(z + 1, x * 2 + dx, y * 2 + dy, inTile, defer);
+            if (z == ProgressZoom && cells.Contains((x, y)))
+                Advance();
+        }
+
+        // z0–z5 in order, then the z6 subtrees on all but one core (the app stays responsive).
+        var subtrees = new List<(int X, int Y, List<Feature> Features)>();
+        Tile(0, 0, 0, _features, subtrees);
+        Parallel.ForEach(subtrees,
+            new ParallelOptions { CancellationToken = cancel, MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount - 1) },
+            s =>
+            {
+                Write(ParallelZoom, s.X, s.Y, s.Features);
+                for (var dy = 0; dy < 2; dy++)
+                    for (var dx = 0; dx < 2; dx++)
+                        Tile(ParallelZoom + 1, s.X * 2 + dx, s.Y * 2 + dy, s.Features, null);
+            });
         progress?.Report(1);
     }
 
-    private static VectorTile BuildTile(int z, double minX, double minY, double size, List<Feature> features)
+    /// <summary>The features that reach into tile z/x/y (plus its buffer), cut down to that area.</summary>
+    private static List<Feature> Clip(int z, int x, int y, List<Feature> candidates)
     {
+        var (minX, minY, maxX, maxY) = WebMercator.TileBounds(z, x, y);
+        var buffer = (maxX - minX) * 64 / TileSchema.Extent;
+        double bx0 = minX - buffer, by0 = minY - buffer, bx1 = maxX + buffer, by1 = maxY + buffer;
+        var result = new List<Feature>();
+        foreach (var f in candidates)
+        {
+            if (f.MaxX < bx0 || f.MinX > bx1 || f.MaxY < by0 || f.MinY > by1)
+                continue;
+            if (f.MinX >= bx0 && f.MaxX <= bx1 && f.MinY >= by0 && f.MaxY <= by1)
+            {
+                result.Add(f); // entirely inside: share it, no copy
+                continue;
+            }
+            var c = new Feature { Layer = f.Layer, Type = f.Type, Props = f.Props, MinZoom = f.MinZoom, MaxZoom = f.MaxZoom };
+            switch (f.Type)
+            {
+                case GeomType.Point:
+                    foreach (var part in f.Parts)
+                        if (part[0].X >= bx0 && part[0].X <= bx1 && part[0].Y >= by0 && part[0].Y <= by1)
+                            c.Parts.Add(part);
+                    break;
+                case GeomType.Line:
+                    foreach (var part in f.Parts)
+                        foreach (var piece in Geometry.ClipLine(part, bx0, by0, bx1, by1))
+                            if (piece.Count >= 2)
+                                c.Parts.Add(piece.ToArray());
+                    break;
+                case GeomType.Polygon:
+                {
+                    var outers = 0;
+                    for (var i = 0; i < f.OuterCount && i < f.Parts.Count; i++)
+                        if (Geometry.ClipPolygon(f.Parts[i], bx0, by0, bx1, by1) is { Count: >= 3 } ring)
+                        {
+                            c.Parts.Add(ring.ToArray());
+                            outers++;
+                        }
+                    if (outers == 0)
+                        continue;
+                    var holes = new List<Vec[]>();
+                    var boxArea = (bx1 - bx0) * (by1 - by0);
+                    bool Covers(Vec[] ring) => Math.Abs(Geometry.SignedArea(ring)) >= boxArea * 0.999;
+                    for (var i = f.OuterCount; i < f.Parts.Count; i++)
+                        if (Geometry.ClipPolygon(f.Parts[i], bx0, by0, bx1, by1) is { Count: >= 3 } hole)
+                        {
+                            var h = hole.ToArray();
+                            if (!Covers(h))
+                            {
+                                holes.Add(h);
+                                continue;
+                            }
+                            // The whole tile is inside this hole (an island in a lake): the outer ring around it
+                            // contributes nothing here, so drop both rather than carry a cancelled-out square.
+                            var before = c.Parts.Count;
+                            c.Parts.RemoveAll(Covers);
+                            outers -= before - c.Parts.Count;
+                        }
+                    if (outers == 0)
+                        continue;
+                    c.OuterCount = outers;
+                    c.Parts.AddRange(holes);
+                    break;
+                }
+            }
+            if (c.Parts.Count == 0)
+                continue;
+            c.ComputeBounds();
+            result.Add(c);
+        }
+        return result;
+    }
+
+    private static VectorTile BuildTile(int z, (double MinX, double MinY, double MaxX, double MaxY) bounds, List<Feature> features)
+    {
+        var (minX, minY, maxX, _) = bounds;
+        var size = maxX - minX;
         var tile = new VectorTile();
         var layers = new Dictionary<string, VectorLayer>();
         var scale = TileSchema.Extent / size;
