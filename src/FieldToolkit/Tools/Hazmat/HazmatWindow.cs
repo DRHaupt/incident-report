@@ -85,6 +85,7 @@ public sealed class HazmatWindow : ToolWindow
         {
             var parts = state["material:".Length..].Split('|');
             var material = _data.Materials.FirstOrDefault(m => m.Id == parts[0] && (parts.Length < 2 || m.Name == parts[1]))
+                           ?? (parts.Length > 1 ? _data.Materials.FirstOrDefault(m => m.Name == parts[1]) : null)
                            ?? _data.Materials.FirstOrDefault(m => m.Id == parts[0]);
             if (material != null)
                 ShowMaterial(material);
@@ -234,7 +235,7 @@ public sealed class HazmatWindow : ToolWindow
 
     private Button MaterialButton(ErgMaterial m)
     {
-        var text = $"{m.Id}   {m.Name}   ·   Guide {m.GuideLabel}" + (m.Highlighted ? "   ·   ISOLATION DISTANCES" : "");
+        var text = $"{m.IdLabel}   {m.Name}   ·   Guide {m.GuideLabel}" + (m.Highlighted ? "   ·   ISOLATION DISTANCES" : "");
         var b = Ui.Button(text, m.Highlighted ? ButtonStyle.Success : ButtonStyle.Secondary, () => ShowMaterial(m), FontRole.Bold);
         b.TextAlign = ContentAlignment.MiddleLeft;
         b.Padding = new Padding(8, 0, 0, 0);
@@ -289,17 +290,18 @@ public sealed class HazmatWindow : ToolWindow
     private void ShowMaterial(ErgMaterial m)
     {
         _state = $"material:{m.Id}|{m.Name}";
-        SetTitle($"{m.Id} {m.Name}");
-        var stack = NewDetail($"{m.Id} – {m.Name}");
+        SetTitle($"{m.IdLabel} {m.Name}");
+        var stack = NewDetail($"{m.IdLabel} – {m.Name}");
 
-        var facts = new List<string> { $"ID {m.Id}", $"Guide {m.GuideLabel}" };
+        var facts = new List<string> { m.Id.Length > 0 ? $"ID {m.Id}" : "No ID number", $"Guide {m.GuideLabel}" };
         if (m.HazardClass.Length > 0)
             facts.Add($"Class {m.HazardClass}");
         stack.Controls.Add(Ui.Text(string.Join("   ·   ", facts), FontRole.Heading));
         if (m.Polymerizable)
             stack.Controls.Add(Notice("P – this material may polymerize explosively when heated or involved in a fire (see guide).", Brand.Amber, Brand.Navy));
         if (m.WaterReactive)
-            stack.Controls.Add(Notice("Water-reactive: produces toxic gas when spilled in water (ERG Table 2).", Brand.Amber, Brand.Navy));
+            stack.Controls.Add(Notice("Water-reactive: produces toxic gas when spilled in water (ERG Table 2)" +
+                                      (m.WaterReactiveGases.Length > 0 ? $": {m.WaterReactiveGases}." : "."), Brand.Amber, Brand.Navy));
         if (_data.IsSample)
             stack.Controls.Add(Notice("SAMPLE DATA – fictitious entry for testing. Not ERG content.", Brand.Danger, Color.White));
 
@@ -371,7 +373,7 @@ public sealed class HazmatWindow : ToolWindow
         return box;
     }
 
-    private static void AddGuide(FlowLayoutPanel stack, ErgGuide g)
+    private void AddGuide(FlowLayoutPanel stack, ErgGuide g)
     {
         var header = new VStack { BackColor = Brand.Amber, Padding = new Padding(10, 6, 10, 6), Margin = new Padding(0, 12, 0, 4) };
         header.Controls.Add(Ui.Text($"GUIDE {g.Number}", FontRole.Title, Brand.Navy));
@@ -387,9 +389,20 @@ public sealed class HazmatWindow : ToolWindow
                 if (sub.Heading.Length > 0)
                     stack.Controls.Add(Ui.Text(sub.Heading, FontRole.Heading, Brand.Navy, new Padding(0, 8, 0, 2)));
                 foreach (var item in sub.Items)
-                    stack.Controls.Add(Ui.Text("•  " + item, FontRole.Large, padding: new Padding(6, 2, 0, 2)));
+                    stack.Controls.Add(Ui.Text(item.StartsWith("– ", StringComparison.Ordinal) ? "      " + item : "•  " + item, FontRole.Large, padding: new Padding(6, 2, 0, 2)));
+                // Every guide's FIRST AID refers to the guidebook's General First Aid section: show it right here.
+                if (sub.Heading == "FIRST AID" && _data.GeneralFirstAid is { } general)
+                {
+                    var box = new VStack { BackColor = Brand.Panel, Padding = new Padding(10, 6, 10, 8), Margin = new Padding(0, 6, 0, 6) };
+                    box.Controls.Add(Ui.Text("General First Aid" + (_data.GeneralFirstAidPage.Length > 0 ? $"  (ERG page {_data.GeneralFirstAidPage})" : ""), FontRole.Heading, Brand.Navy));
+                    foreach (var item in general.Subsections.SelectMany(s => s.Items))
+                        box.Controls.Add(Ui.Text(item.StartsWith("– ", StringComparison.Ordinal) ? "      " + item : "•  " + item, FontRole.Large, Brand.Navy));
+                    stack.Controls.Add(box);
+                }
             }
         }
+        foreach (var note in g.Notes)
+            stack.Controls.Add(Notice(note, Brand.Amber, Brand.Navy));
         if (g.Pages.Length > 0)
             stack.Controls.Add(Ui.Text($"ERG page(s) {g.Pages}", fore: Brand.Muted, padding: new Padding(0, 8, 0, 0)));
     }

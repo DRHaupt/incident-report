@@ -39,7 +39,7 @@ public static class ErgRepository
             yield return $"Guide {g.Number} has no sections.";
         foreach (var m in d.Materials)
         {
-            if (!IsIdNumber(m.Id))
+            if (m.Id.Length > 0 && !IsIdNumber(m.Id))
                 yield return $"Material '{m.Name}' has an invalid ID number '{m.Id}'.";
             if (!guides.Contains(m.Guide))
                 yield return $"Material {m.Id} '{m.Name}' refers to guide {m.Guide}, which is not in the dataset.";

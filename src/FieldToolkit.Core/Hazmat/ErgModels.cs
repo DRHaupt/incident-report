@@ -30,6 +30,15 @@ public sealed class ErgDataset
     /// <summary>Table of placards and the initial response guide to use on-scene.</summary>
     public List<ErgPlacard> Placards { get; set; } = new();
 
+    /// <summary>The guidebook's "General First Aid" section, which every guide's FIRST AID section refers to.</summary>
+    public ErgSection? GeneralFirstAid { get; set; }
+
+    /// <summary>Guide numbers printed as "Intentionally left blank" (no materials refer to them).</summary>
+    public List<string> BlankGuides { get; set; } = new();
+
+    /// <summary>Source page of the General First Aid section.</summary>
+    public string GeneralFirstAidPage { get; set; } = "";
+
     [JsonIgnore]
     public string FilePath { get; set; } = "";
 
@@ -54,6 +63,9 @@ public sealed class ErgGuide
 
     /// <summary>Source page(s) in the ERG, for verification.</summary>
     public string Pages { get; set; } = "";
+
+    /// <summary>Boxed notes printed at the foot of the guide, e.g. the Canadian ERAP notice.</summary>
+    public List<string> Notes { get; set; } = new();
 }
 
 public sealed class ErgSection
@@ -72,7 +84,8 @@ public sealed class ErgSubsection
 
 public sealed class ErgMaterial
 {
-    /// <summary>Four-digit UN/NA identification number, e.g. "1203".</summary>
+    /// <summary>Four-digit UN/NA identification number, e.g. "1203". Empty for the few entries the guidebook lists without
+    /// an ID (printed "— —", e.g. blasting agents).</summary>
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
 
@@ -88,6 +101,9 @@ public sealed class ErgMaterial
     /// <summary>Produces toxic gases when spilled in water (Table 2).</summary>
     public bool WaterReactive { get; set; }
 
+    /// <summary>The toxic gases Table 2 lists for this material when spilled in water, e.g. "HCl".</summary>
+    public string WaterReactiveGases { get; set; } = "";
+
     /// <summary>Hazard class/division if the source provides it (the ERG lists do not; optional extra column).</summary>
     public string HazardClass { get; set; } = "";
 
@@ -96,6 +112,10 @@ public sealed class ErgMaterial
 
     [JsonIgnore]
     public string GuideLabel => Guide + (Polymerizable ? "P" : "");
+
+    /// <summary>The ID as printed: the number, or "—" for entries without one.</summary>
+    [JsonIgnore]
+    public string IdLabel => Id.Length > 0 ? Id : "—";
 }
 
 public sealed class ErgIsolationEntry

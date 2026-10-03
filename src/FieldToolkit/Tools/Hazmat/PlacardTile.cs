@@ -43,6 +43,8 @@ internal sealed class PlacardTile : Control
         "1" or "1.1" or "1.2" or "1.3" or "1.4" or "1.5" or "1.6" => (Orange, Orange, Color.Black, false),
         "2.1" or "3" => (Red, Red, Color.White, false),
         "2.2" => (Green, Green, Color.White, false),
+        "OXYGEN" => (Yellow, Yellow, Color.Black, false),
+        "DANGEROUS" => (Red, Red, Color.White, false),
         "4.1" => (Red, Red, Color.Black, true),
         "4.2" => (Color.White, Red, Color.Black, false),
         "4.3" => (Blue, Blue, Color.White, false),
@@ -50,7 +52,7 @@ internal sealed class PlacardTile : Control
         "5.2" => (Red, Yellow, Color.Black, false),
         "7" => (Yellow, Color.White, Color.Black, false),
         "8" => (Color.White, Color.Black, Color.Black, false),
-        "9" => (Color.White, Color.White, Color.Black, true),
+        "9" or "LITHIUM-ION" or "LITHIUM-METAL" => (Color.White, Color.White, Color.Black, true),
         _ => (Color.White, Color.White, Color.Black, false)
     };
 
@@ -101,6 +103,8 @@ internal sealed class PlacardTile : Control
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak);
         var codeColor = _placard.Code == "8" ? Color.White : text;
         var codeRect = new Rectangle((int)(cx - half * 0.4f), (int)(cy + half * 0.38f), (int)(half * 0.8f), (int)(half * 0.42f));
-        TextRenderer.DrawText(g, _placard.Code, codeFont, codeRect, codeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+        // Class numbers sit in the bottom corner; named placards (DANGEROUS, HOT…) show their class there instead.
+        var corner = _placard.Code switch { "LITHIUM-ION" or "LITHIUM-METAL" => "9", "OXYGEN" => "2", var c when c.Length <= 4 => c, _ => "" };
+        TextRenderer.DrawText(g, corner, codeFont, codeRect, codeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
     }
 }
