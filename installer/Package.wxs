@@ -39,7 +39,7 @@
       </Directory>
     </StandardDirectory>
     <StandardDirectory Id="ProgramMenuFolder">
-      <Directory Id="StartMenuFolder" Name="Field Suite" />
+      <Directory Id="SuiteMenuFolder" Name="Field Suite" />
     </StandardDirectory>
     <StandardDirectory Id="DesktopFolder" />
 
@@ -80,19 +80,19 @@
 
     <!-- ============================================================ shortcuts -->
     <!-- Shortcut components use a registry key path (Windows Installer validation, ICE38/ICE43, expects HKCU). -->
-    <Component Id="IrmStartMenu" Directory="StartMenuFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a01">
+    <Component Id="IrmStartMenu" Directory="SuiteMenuFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a01">
       <Shortcut Id="IrmStartShortcut" Name="Incident Report Manager" Target="[IrmFolder]IncidentReporting.exe" WorkingDirectory="IrmFolder" />
       <RegistryValue Root="HKCU" Key="Software\Field Suite\Shortcuts" Name="IncidentReportManager" Type="integer" Value="1" KeyPath="yes" />
     </Component>
-    <Component Id="ToolkitStartMenu" Directory="StartMenuFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a02">
+    <Component Id="ToolkitStartMenu" Directory="SuiteMenuFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a02">
       <Shortcut Id="ToolkitStartShortcut" Name="Field Toolkit" Target="[ToolkitFolder]FieldToolkit.exe" WorkingDirectory="ToolkitFolder" />
       <RegistryValue Root="HKCU" Key="Software\Field Suite\Shortcuts" Name="FieldToolkit" Type="integer" Value="1" KeyPath="yes" />
     </Component>
-    <Component Id="MapStartMenu" Directory="StartMenuFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a03">
+    <Component Id="MapStartMenu" Directory="SuiteMenuFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a03">
       <Shortcut Id="MapStartShortcut" Name="Field Map" Target="[MapFolder]FieldMap.exe" WorkingDirectory="MapFolder" />
       <RegistryValue Root="HKCU" Key="Software\Field Suite\Shortcuts" Name="FieldMap" Type="integer" Value="1" KeyPath="yes" />
     </Component>
-    <Component Id="DocsStartMenu" Directory="StartMenuFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a04">
+    <Component Id="DocsStartMenu" Directory="SuiteMenuFolder" Guid="2d6a4f4a-3b9e-4f2e-9a11-6f1c2e7d0a04">
       <Shortcut Id="DocsStartShortcut" Name="Field Suite quick reference" Target="[DocsFolder]FieldSuite-Quick-Reference.pdf" />
       <!-- Always installed, so it removes the Start menu folder. -->
       <RemoveFolder Id="RemoveStartMenuFolder" On="uninstall" />
