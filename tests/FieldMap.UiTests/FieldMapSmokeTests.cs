@@ -154,6 +154,9 @@ public class FieldMapSmokeTests
         // APRS: a fake APRS-IS server and a fake KISS TNC on loopback feed stations into the map.
         RunAprs(follow);
 
+        // Imagery: install a small synthetic package, switch to Imagery and Hybrid, and back.
+        RunImagery(follow);
+
         // Snapshot export.
         var dir = Path.Combine(Path.GetTempPath(), "fieldmap-ui-" + Guid.NewGuid().ToString("N")[..6]);
         Directory.CreateDirectory(dir);
@@ -343,4 +346,47 @@ public class FieldMapSmokeTests
             // Servers stop when cancelled.
         }
     }
+
+    private static void RunImagery(MapWindow map)
+    {
+        var area = AppServices.Data.Bounds;
+        var file = Path.Combine(Path.GetTempPath(), "fieldmap-ui-imagery-" + Guid.NewGuid().ToString("N")[..6] + ".mbtiles");
+        using (var store = new FieldMap.Core.Imagery.RasterTileStore(file))
+        {
+            foreach (var z in new[] { 13, 14 })
+                foreach (var (tz, x, y) in FieldMap.Core.Imagery.ImageryMath.Tiles(area, z))
+                {
+                    using var bmp = new SkiaSharp.SKBitmap(256, 256);
+                    using (var c = new SkiaSharp.SKCanvas(bmp))
+                        c.Clear(new SkiaSharp.SKColor(0x4A, 0x6B, 0x3A));
+                    using var img = SkiaSharp.SKImage.FromBitmap(bmp);
+                    using var data = img.Encode(SkiaSharp.SKEncodedImageFormat.Jpeg, 70);
+                    store.Put(tz, x, y, data.ToArray());
+                }
+            store.SetMetadata(new Dictionary<string, string> { ["name"] = "UI test imagery", ["attribution"] = "TEST IMAGERY" });
+        }
+        var package = AppServices.Imagery.Install(file);
+        File.Delete(file);
+        AppServices.Imagery.Apply();
+        Assert.Contains(AppServices.Imagery.Available(), s => s.Name == "UI test imagery");
+        AppServices.Imagery.Select(AppServices.Imagery.Available().First(s => s.Name == "UI test imagery"));
+        foreach (var mode in new[] { FieldMap.Map.BaseMapMode.Imagery, FieldMap.Map.BaseMapMode.Hybrid })
+        {
+            AppServices.Imagery.SetMode(mode);
+            map.MapView.SetView(SampleRegion.At(0, 560), 14.5, 0);
+            map.MapView.Refresh();
+            Pump(200);
+            Assert.NotNull(AppServices.Imagery.Tiles);
+        }
+        map.ShowPanel(new LayersPanel(map));
+        Pump(100);
+        Assert.Contains("UI test imagery", PanelText(map));
+        AppServices.Windows.Open(DataWindow.ToolId);
+        Pump(200);
+        AppServices.Imagery.SetMode(FieldMap.Map.BaseMapMode.Map);
+        AppServices.Imagery.Delete(AppServices.Imagery.Packages().First(p => p.Name == "UI test imagery"));
+        Assert.DoesNotContain(AppServices.Imagery.Available(), s => s.Name == "UI test imagery");
+        map.ClosePanel();
+    }
 }
+

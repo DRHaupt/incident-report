@@ -137,6 +137,33 @@ public sealed class DataWindow : ToolWindow
         Row(Button("Install from USB…", ButtonStyle.Primary, () => _ = InstallPackageAsync()),
             Button("Build from files…", ButtonStyle.Secondary, () => _ = BuildFromFilesAsync()));
 
+        Line("Imagery (satellite / aerial)", FontRole.Heading);
+        Line("Imagery packages are MBTiles files of JPEG/PNG tiles (e.g. made with MapBuilder imagery, or exported from a service your organisation is licensed for). They work offline and show under Layers → Base map.", FontRole.Normal, Brand.Muted);
+        var packages = AppServices.Imagery.Packages();
+        if (packages.Count == 0)
+            Line("No imagery packages installed.", FontRole.Normal, Brand.Muted);
+        foreach (var pkg in packages)
+        {
+            var package = pkg;
+            var bytes = File.Exists(pkg.FilePath) ? new FileInfo(pkg.FilePath!).Length : 0;
+            Line($"{pkg.Name} – {bytes / 1_000_000.0:N0} MB, zoom {pkg.MinZoom}–{pkg.MaxZoom}" + (pkg.Attribution.Length > 0 ? $" · {pkg.Attribution}" : "") + (pkg.Licence.Length > 0 ? $" · {pkg.Licence}" : ""), FontRole.Bold);
+            Row(Button("Remove", ButtonStyle.Danger, () =>
+            {
+                if (MessageBox.Show(this, $"Remove the imagery package {package.Name}?", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                    return;
+                try
+                {
+                    AppServices.Imagery.Delete(package);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    MessageBox.Show(this, ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                Build();
+            }));
+        }
+        Row(Button("Install imagery package…", ButtonStyle.Secondary, InstallImagery));
+
         Line("AEDs", FontRole.Heading);
         var aeds = UpdateService.AedImports(store);
         Line(aeds.Count == 0 ? "No AED registry imported. OpenStreetMap AEDs are always included." :
@@ -160,6 +187,24 @@ public sealed class DataWindow : ToolWindow
     }
 
     // ------------------------------------------------------------------ operations
+
+    private void InstallImagery()
+    {
+        using var d = new OpenFileDialog { Filter = "Imagery package (*.mbtiles)|*.mbtiles", Title = "Install imagery package" };
+        if (d.ShowDialog(this) != DialogResult.OK)
+            return;
+        try
+        {
+            var pkg = AppServices.Imagery.Install(d.FileName);
+            AppServices.Imagery.Apply();
+            _log = $"Installed imagery {pkg.Name} (zoom {pkg.MinZoom}–{pkg.MaxZoom}). Choose it under Layers → Base map.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or Microsoft.Data.Sqlite.SqliteException)
+        {
+            _log = "Could not install the imagery package: " + ex.Message;
+        }
+        Build();
+    }
 
     private void SetBusy(bool busy, string stage = "")
     {

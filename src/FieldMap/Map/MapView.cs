@@ -53,6 +53,7 @@ public sealed class MapView : SKControl
         AppServices.Breadcrumbs.Changed += OnRedraw;
         AppServices.Live.Changed += OnRedraw;
         AppServices.Aprs.Changed += OnRedraw;
+        AppServices.Imagery.Changed += OnRedraw;
         UiMode.Changed += OnRedraw;
         Disposed += (_, _) =>
         {
@@ -62,6 +63,7 @@ public sealed class MapView : SKControl
             AppServices.Breadcrumbs.Changed -= OnRedraw;
             AppServices.Live.Changed -= OnRedraw;
             AppServices.Aprs.Changed -= OnRedraw;
+            AppServices.Imagery.Changed -= OnRedraw;
             UiMode.Changed -= OnRedraw;
         };
     }
@@ -184,7 +186,10 @@ public sealed class MapView : SKControl
         AprsFadeAfter = TimeSpan.FromMinutes(Math.Max(1, AppServices.Settings.Aprs.ShowMinutes) / 2.0),
         SelectedAprs = SelectedAprs,
         NowUtc = DateTime.UtcNow,
-        Attribution = AppServices.Data.Attribution,
+        Imagery = AppServices.Imagery.Tiles,
+        BaseMode = AppServices.Imagery.Tiles != null ? AppServices.Settings.BaseMode : BaseMapMode.Map,
+        Attribution = AppServices.Imagery.Tiles != null && AppServices.Imagery.Current is { Attribution.Length: > 0 } img
+            ? $"{img.Attribution} · {AppServices.Data.Attribution}" : AppServices.Data.Attribution,
         Synchronous = synchronous,
         ShowControls = ShowControls,
         UiScale = UiScale
@@ -223,6 +228,7 @@ public sealed class MapView : SKControl
             Drawings = scene.Drawings, Route = scene.Route, Alternatives = scene.Alternatives, Fix = scene.Fix, FixStale = scene.FixStale,
             Breadcrumbs = scene.Breadcrumbs, Live = scene.Live, Marker = scene.Marker, Attribution = scene.Attribution, Synchronous = true,
             Aprs = scene.Aprs, AprsTracks = scene.AprsTracks, AprsFadeAfter = scene.AprsFadeAfter, NowUtc = scene.NowUtc,
+            Imagery = scene.Imagery, BaseMode = scene.BaseMode,
             ShowControls = true, UiScale = UiScale * factor
         });
         return bmp;

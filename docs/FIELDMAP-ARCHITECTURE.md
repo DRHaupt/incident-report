@@ -256,3 +256,29 @@ KISS TNC (COM port or TCP) ─ AX.25 ───┘                    └─ stat
 * **Etiquette and rules** followed: filtered port only, software name and version in the login, default SmartBeaconing (20 min stopped, 3 min at speed), `WIDE1-1,WIDE2-1` default path. APRS is public and unencrypted; ISED's amateur radio
   rules limit use for business, so organisations should decide whether staff may transmit as part of their job.
 
+## 7. Imagery
+
+```
+installed package (imagery\*.mbtiles) ─────────────────────────────┐
+saved areas (imagery\<id>-saved.mbtiles) ─┐                          ├─► RasterTileCache (decoded SKImages, LRU 300)
+online source (xyz / WMS 1.1.1 EPSG:3857) ─┴─► cache (imagery\cache) ┘         │
+                         ▲ fetch missing tiles (4 at a time, offline-aware)    ▼
+                                                  MapRenderer: Imagery / Hybrid base under the overlays
+```
+
+* **`FieldMap.Core/Imagery`**: `ImagerySource` (XYZ template with `{z} {x} {y} {-y} {key}` or WMS GetMap per tile in
+  EPSG:3857), `ImageryCatalog` (`Content/imagery-sources.json`), `RasterTileStore` (read/write MBTiles of JPEG/PNG,
+  WAL while writing, a single self-contained file when closed, trim oldest for the cache), `ImageryFetcher`
+  (identifies itself, rejects error pages that aren't images, seeds an area resumably, refuses sources whose terms
+  don't allow offline use and areas over a tile limit).
+* **Renderer**: `BaseMapMode` Map / Imagery / Hybrid. Imagery replaces the land-use and water fills and waterway lines;
+  Hybrid draws roads at 65 % opacity plus place and road labels; Imagery mode leaves out roads and labels.
+  Facilities, drawings, routes, APRS and GPS draw on top in both. Missing tiles show the nearest lower zoom tile
+  stretched (also beyond the package's last zoom). Night lays a dark veil over the photo.
+* **`ImageryService`** (app): picks the selected source, reads saved areas → cache → (memory for sources that don't
+  allow keeping tiles), fetches the rest online, marks itself offline after repeated failures and retries every
+  two minutes, trims the cache to ≈ 40,000 tiles, installs/removes packages, saves the area on screen.
+* **Licences decide**: every online source ships disabled with its licence and terms; the user accepts the terms
+  once before first use; "Save this area" and the on-disk cache only exist for sources marked `allowOffline`.
+  `MapBuilder imagery` needs `--accept-terms`.
+

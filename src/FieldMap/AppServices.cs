@@ -27,6 +27,7 @@ public static class AppServices
     public static ExchangeWatcher? Exchange { get; private set; }
     public static LiveDataService Live { get; private set; } = null!;
     public static AprsService Aprs { get; private set; } = null!;
+    public static ImageryService Imagery { get; private set; } = null!;
     public static RegionCatalog Catalog { get; private set; } = new();
 
     /// <summary>Problems found at start-up (data folder unavailable, damaged data) to show once.</summary>
@@ -118,9 +119,13 @@ public static class AppServices
         };
         Aprs.Apply();
 
+        Imagery = new ImageryService(Settings, Core.Imagery.ImageryCatalog.LoadOrEmpty(Path.Combine(ContentFolder, "imagery-sources.json")), () => Store.Root);
+        Imagery.Apply();
+
         Clock.Tick += (_, _) =>
         {
             Aprs.Tick();
+            Imagery.Tick();
             ClockTick?.Invoke(null, EventArgs.Empty);
         };
         Clock.Start();
@@ -149,6 +154,7 @@ public static class AppServices
         Settings.Save();
         Store = store;
         Data.UseStore(store);
+        Imagery.Apply();
     }
 
     public static void ReloadData() => Data.Load();
@@ -160,6 +166,7 @@ public static class AppServices
         Breadcrumbs.Save();
         Live.Dispose();
         Aprs.Dispose();
+        Imagery.Dispose();
         Exchange?.Dispose();
         Speech.Dispose();
         Data.Dispose();

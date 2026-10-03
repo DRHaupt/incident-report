@@ -30,7 +30,7 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
     private readonly Panel _sideHost = new() { Dock = DockStyle.Right, Width = 430, Visible = false };
     private readonly Splitter _splitter = new() { Dock = DockStyle.Right, Width = 6, Visible = false };
     private readonly TextBox _searchBox = new() { Width = 260 };
-    private readonly Button _follow, _heading, _zoomIn, _zoomOut;
+    private readonly Button _follow, _heading, _zoomIn, _zoomOut, _base;
     private readonly FlowLayoutPanel _status = new() { Dock = DockStyle.Bottom, Height = 58, WrapContents = true, Padding = new Padding(6, 4, 6, 2) };
     private readonly Label _gpsLabel = StatusLabel(), _decLabel = StatusLabel(), _dmsLabel = StatusLabel(), _mgrsLabel = StatusLabel(), _utmLabel = StatusLabel(), _dataLabel = StatusLabel(), _themeLabel = StatusLabel(), _aprsLabel = StatusLabel();
     private readonly NavBanner _nav;
@@ -72,7 +72,8 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         _zoomOut = OverlayButton("−", () => { _map.ZoomBy(-1); });
         _follow = OverlayButton("Me", ToggleFollow);
         _heading = OverlayButton("N↑", ToggleHeadingUp);
-        foreach (var b in new[] { _zoomIn, _zoomOut, _follow, _heading })
+        _base = OverlayButton("Map", CycleBaseMap);
+        foreach (var b in new[] { _zoomIn, _zoomOut, _follow, _heading, _base })
             _map.Controls.Add(b);
         _map.Resize += (_, _) => LayoutOverlay();
 
@@ -119,6 +120,7 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         AppServices.Aprs.EmergencyHeard += OnAprsEmergency;
         AppServices.Aprs.MessageReceived += OnAprsMessage;
         AppServices.Aprs.MessagesChanged += OnAprsStatus;
+        AppServices.Imagery.Changed += OnImageryChanged;
         FormClosed += (_, _) =>
         {
             AppServices.ClockTick -= OnClock;
@@ -128,6 +130,7 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
             AppServices.Aprs.EmergencyHeard -= OnAprsEmergency;
             AppServices.Aprs.MessageReceived -= OnAprsMessage;
             AppServices.Aprs.MessagesChanged -= OnAprsStatus;
+            AppServices.Imagery.Changed -= OnImageryChanged;
             AppServices.Location.Changed -= OnLocationChanged;
             if (_locationAcquired)
                 AppServices.Location.Release();
@@ -253,7 +256,11 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         var size = (int)(64 * (UiMode.Touch ? 1.25 : 1) * DeviceDpi / 96f);
         var gap = size / 6;
         var x = _map.ClientSize.Width - size - gap * 2;
-        var buttons = new[] { _zoomIn, _zoomOut, _follow, _heading };
+        var buttons = new[] { _zoomIn, _zoomOut, _follow, _heading, _base };
+        UpdateBaseButton();
+        // Short windows: shrink the buttons so all of them fit.
+        size = Math.Max(36, Math.Min(size, (_map.ClientSize.Height - gap * (buttons.Length + 1)) / buttons.Length));
+        x = _map.ClientSize.Width - size - gap * 2;
         var total = buttons.Length * size + (buttons.Length - 1) * gap;
         var y = Math.Max(gap, (_map.ClientSize.Height - total) / 2);
         foreach (var b in buttons)
@@ -262,6 +269,40 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
             b.BringToFront();
             y += size + gap;
         }
+    }
+
+    private void UpdateBaseButton()
+    {
+        var text = AppServices.Imagery.Tiles == null ? "Map" : AppServices.Settings.BaseMode == BaseMapMode.Hybrid ? "Hyb" : "Sat";
+        if (_base.Text != text)
+            _base.Text = text;
+    }
+
+    private void OnImageryChanged(object? sender, EventArgs e) => UpdateBaseButton();
+
+    /// <summary>Map → Imagery → Hybrid → Map. Without imagery set up, explains and opens the Layers panel.</summary>
+    private void CycleBaseMap()
+    {
+        var imagery = AppServices.Imagery;
+        if (imagery.Current == null)
+        {
+            ShowPanel(new LayersPanel(this));
+            Flash(imagery.Status.Length > 0 ? imagery.Status : "No imagery set up");
+            return;
+        }
+        imagery.SetMode(AppServices.Settings.BaseMode switch
+        {
+            BaseMapMode.Map => BaseMapMode.Imagery,
+            BaseMapMode.Imagery => BaseMapMode.Hybrid,
+            _ => BaseMapMode.Map
+        });
+        LayoutOverlay();
+        Flash(AppServices.Settings.BaseMode switch
+        {
+            BaseMapMode.Imagery => $"Imagery: {imagery.Current.Name}",
+            BaseMapMode.Hybrid => $"Imagery with roads and labels: {imagery.Current.Name}",
+            _ => "Map"
+        });
     }
 
     private void ShowMoreMenu()

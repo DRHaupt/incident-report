@@ -1,3 +1,4 @@
+using FieldMap.Core.Imagery;
 using FieldMap.Core.Data;
 using FieldMap.Core.Sample;
 
@@ -104,6 +105,8 @@ internal static class Program
                     Console.WriteLine(result.Message);
                     return result.Success ? 0 : 1;
                 }
+                case "imagery":
+                    return Imagery(opts);
                 default:
                     Console.Error.WriteLine($"Unknown command '{args[0]}'.\n\n{Usage}");
                     return 2;
@@ -133,6 +136,52 @@ internal static class Program
         return 0;
     }
 
+    /// <summary>Saves imagery tiles of an area into an MBTiles package for offline use.</summary>
+    private static int Imagery(Options opts)
+    {
+        ImagerySource source;
+        if (opts.Get("source") is { } id)
+        {
+            var catalog = ImageryCatalog.LoadOrEmpty(opts.Get("catalog") ?? Path.Combine(AppContext.BaseDirectory, "imagery-sources.json"));
+            source = catalog.Sources.FirstOrDefault(s => s.Id == id) ?? throw new ArgumentException($"Imagery source '{id}' is not in the catalogue.");
+        }
+        else
+        {
+            var url = opts.Get("url") ?? opts.Get("wms") ?? throw new ArgumentException("--source, --url or --wms is required.");
+            source = new ImagerySource
+            {
+                Id = "custom", Name = opts.Get("name") ?? "Imagery", Kind = opts.Get("wms") != null ? "wms" : "xyz", Url = url,
+                Layers = opts.Get("layers") ?? "", Format = opts.Get("format") ?? "image/jpeg",
+                Attribution = opts.Get("attribution") ?? "", Licence = opts.Get("licence") ?? "", AllowOffline = true, MaxZoom = 22
+            };
+        }
+        if (opts.Get("accept-terms") == null)
+            throw new ArgumentException($"Saving imagery for offline use must be allowed by the source's terms. Check them, then add --accept-terms.\nSource: {source.Name}\nLicence: {source.Licence}\n{source.Terms}");
+        if (opts.Get("source") != null && !source.AllowOffline)
+            throw new ArgumentException($"The catalogue says the terms of {source.Name} don't allow offline use (\"allowOffline\": false).");
+        source.AllowOffline = true;
+        var bbox = opts.Require("bbox").Split(',').Select(v => double.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+        if (bbox.Length != 4)
+            throw new ArgumentException("--bbox is minLon,minLat,maxLon,maxLat");
+        var area = new FieldMap.Core.Geo.GeoBounds(bbox[1], bbox[0], bbox[3], bbox[2]);
+        var zoom = opts.Require("zoom").Split('-');
+        var minZoom = int.Parse(zoom[0], System.Globalization.CultureInfo.InvariantCulture);
+        var maxZoom = int.Parse(zoom[^1], System.Globalization.CultureInfo.InvariantCulture);
+        var maxTiles = long.Parse(opts.Get("max-tiles") ?? "500000", System.Globalization.CultureInfo.InvariantCulture);
+        var total = ImageryMath.CountTiles(area, Math.Max(minZoom, source.MinZoom), Math.Min(maxZoom, source.MaxZoom));
+        Console.WriteLine($"{total:N0} tiles (about {total * 25 / 1024.0:N0} MB) from {source.Name}, zoom {minZoom}–{maxZoom}.");
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        var fetcher = new ImageryFetcher(http, "FieldMap-MapBuilder/1.0") { Concurrency = int.Parse(opts.Get("concurrency") ?? "2", System.Globalization.CultureInfo.InvariantCulture) };
+        using var store = new RasterTileStore(opts.Require("out"));
+        var result = fetcher.SeedAsync(source, area, minZoom, maxZoom, store, opts.Get("key") ?? "",
+            new Progress<SeedProgress>(p => Console.Error.Write($"\r{p.Done:N0}/{p.Total:N0} tiles, {p.Failed:N0} not available   ")), CancellationToken.None, maxTiles).GetAwaiter().GetResult();
+        if (opts.Get("name") is { } name)
+            store.SetMetadata(new Dictionary<string, string> { ["name"] = name });
+        Console.Error.WriteLine();
+        Console.WriteLine($"Saved {result.Fetched:N0} new tiles ({result.Skipped:N0} already there, {result.Failed:N0} not available) to {opts.Get("out")}. Install it in Field Map under Data & updates → Install imagery package.");
+        return 0;
+    }
+
     private static string DefaultCatalog() => Path.Combine(AppContext.BaseDirectory, "regions.json");
 
     private const string Usage = """
@@ -150,6 +199,10 @@ internal static class Program
                                                        Write an offline update package (for USB)
           install --package <file.fmupdate> --data <folder>
                                                        Verify and install an update package
+          imagery (--source <id> [--catalog imagery-sources.json] | --url <xyz template> | --wms <url> --layers <names>)
+                  --bbox minLon,minLat,maxLon,maxLat --zoom 10-17 --out <file.mbtiles> --accept-terms
+                  [--key <token>] [--name <text>] [--attribution <text>] [--licence <text>] [--max-tiles 500000]
+                                                       Save imagery of an area as an offline package (resumable)
         """;
 }
 

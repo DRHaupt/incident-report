@@ -14,6 +14,7 @@
     <Using Include="Shared.Core" />
     <ProjectReference Include="..\..\src\FieldMap.Core\FieldMap.Core.csproj" />
     <None Include="..\..\src\FieldMap\Content\regions.json" Link="regions.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <None Include="..\..\src\FieldMap\Content\imagery-sources.json" Link="imagery-sources.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
 
 </Project>
