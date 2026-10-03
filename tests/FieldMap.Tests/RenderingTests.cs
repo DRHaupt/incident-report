@@ -1,5 +1,6 @@
 using FieldMap.Core.Aprs;
 using FieldMap.Core.Data;
+using FieldMap.Core.Imagery;
 using FieldMap.Core.Geo;
 using FieldMap.Core.Drawings;
 using FieldMap.Core.Routing;
@@ -99,6 +100,103 @@ public class RenderingTests
         var hiker = result.Aprs.First(a => a.Key == "VE7HKR-7").Rect;
         var (hx, hy) = vp.GeoToScreen(SampleRegion.At(520, 650));
         Assert.True(hiker.Contains((float)hx, (float)hy));
+    }
+
+    /// <summary>A synthetic "imagery" package for the sample area: textured fields with the tile number on each tile.</summary>
+    private string SyntheticImagery()
+    {
+        var path = Path.Combine(_f.Dir, "..", "synthetic-imagery.mbtiles");
+        if (File.Exists(path))
+            return path;
+        var area = new GeoBounds(_f.Manifest.MinLat, _f.Manifest.MinLon, _f.Manifest.MaxLat, _f.Manifest.MaxLon);
+        using var store = new RasterTileStore(path);
+        var rnd = new Random(7);
+        foreach (var z in new[] { 12, 13, 14, 15 })
+            foreach (var (tz, x, y) in ImageryMath.Tiles(area, z))
+            {
+                using var bmp = new SKBitmap(256, 256);
+                using (var c = new SKCanvas(bmp))
+                {
+                    c.Clear(new SKColor(0x4A, 0x6B, 0x3A));
+                    using var p = new SKPaint { IsAntialias = true };
+                    for (var i = 0; i < 40; i++)
+                    {
+                        p.Color = new SKColor((byte)rnd.Next(40, 140), (byte)rnd.Next(70, 150), (byte)rnd.Next(30, 90));
+                        c.DrawRect(rnd.Next(0, 230), rnd.Next(0, 230), rnd.Next(10, 60), rnd.Next(10, 60), p);
+                    }
+                    p.Color = SKColors.White;
+                    using var f = new SKFont(SKTypeface.Default, 16);
+                    c.DrawText($"{tz}/{x}/{y}", 8, 24, f, p);
+                }
+                using var img = SKImage.FromBitmap(bmp);
+                using var data = img.Encode(SKEncodedImageFormat.Jpeg, 80);
+                store.Put(tz, x, y, data.ToArray());
+            }
+        store.SetMetadata(new Dictionary<string, string> { ["name"] = "Synthetic test imagery", ["attribution"] = "SYNTHETIC IMAGERY (test)" });
+        return path;
+    }
+
+    [Theory]
+    [InlineData(BaseMapMode.Imagery, "standard")]
+    [InlineData(BaseMapMode.Hybrid, "standard")]
+    [InlineData(BaseMapMode.Hybrid, "night")]
+    public void Draws_imagery_and_hybrid_base_maps(BaseMapMode mode, string theme)
+    {
+        var path = SyntheticImagery();
+        var desc = RasterTileStore.Describe(path);
+        Assert.Equal("Synthetic test imagery", desc.Name);
+        Assert.Equal(12, desc.MinZoom);
+        Assert.Equal(15, desc.MaxZoom);
+        using var store = new RasterTileStore(path, readOnly: true);
+        var requested = new List<(int, int, int)>();
+        using var cache = new RasterTileCache(desc.MinZoom, desc.MaxZoom, store.Get, (z, x, y) => requested.Add((z, x, y)));
+        using var tiles = new MbTilesReader(Path.Combine(_f.Dir, RegionBuilder.TilesFile));
+        var style = theme == "night" ? MapStyle.Night : MapStyle.Standard;
+        var scene = new MapScene
+        {
+            Regions = new[] { new TileSource(tiles, new GeoBounds(_f.Manifest.MinLat, _f.Manifest.MinLon, _f.Manifest.MaxLat, _f.Manifest.MaxLon)) },
+            Tiles = new TileCache(),
+            Style = style,
+            Pois = new PoiIndex(_f.Search.LoadPois()),
+            Synchronous = true,
+            UiScale = 1.3f,
+            Imagery = cache,
+            BaseMode = mode,
+            Aprs = SampleAprs(),
+            Attribution = "SAMPLE DATA – fictitious · SYNTHETIC IMAGERY (test)"
+        };
+        // Zoom 16.4 is past the package's last level (15): tiles are stretched, nothing is missing.
+        var vp = Viewport.At(SampleRegion.At(0, 560), 16.4, 0, 1000, 760);
+        using var bmp = new SKBitmap(vp.Width, vp.Height);
+        using (var canvas = new SKCanvas(bmp))
+            MapRenderer.Render(canvas, vp, scene);
+        Directory.CreateDirectory(OutputDir);
+        using (var img = SKImage.FromBitmap(bmp))
+        using (var data = img.Encode(SKEncodedImageFormat.Png, 90))
+        using (var fs = File.Create(Path.Combine(OutputDir, $"imagery-{mode}-{theme}.png".ToLowerInvariant())))
+            data.SaveTo(fs);
+        Assert.Empty(requested);
+        // Most of the frame is the (green) imagery, not the map background.
+        var green = 0;
+        for (var y = 0; y < bmp.Height; y += 8)
+            for (var x = 0; x < bmp.Width; x += 8)
+            {
+                var c = bmp.GetPixel(x, y);
+                if (c.Green > c.Blue && c.Green >= c.Red)
+                    green++;
+            }
+        Assert.True(green > (bmp.Width / 8) * (bmp.Height / 8) / 3, $"only {green} imagery samples");
+
+        // Outside the package: the missing tile is requested once.
+        var far = Viewport.At(new GeoPoint(SampleRegion.Origin.Lat + 1, SampleRegion.Origin.Lon), 13, 0, 400, 300);
+        using var bmp2 = new SKBitmap(far.Width, far.Height);
+        using (var canvas = new SKCanvas(bmp2))
+            MapRenderer.Render(canvas, far, scene);
+        Assert.NotEmpty(requested);
+        var count = requested.Count;
+        using (var canvas = new SKCanvas(bmp2))
+            MapRenderer.Render(canvas, far, scene);
+        Assert.Equal(count, requested.Count);
     }
 
     [Theory]

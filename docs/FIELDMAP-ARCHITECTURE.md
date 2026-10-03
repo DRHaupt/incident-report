@@ -245,7 +245,40 @@ KISS TNC (COM port or TCP) ─ AX.25 ───┘                    └─ stat
 * **Sending** is off by default and needs a valid call sign. By radio the packet goes to the TNC as an AX.25 UI frame
   with the chosen path; by internet it needs the APRS-IS passcode (the server must answer "verified"). The
   destination `APZFMP` is in the experimental block; register a permanent tocall before wide use.
-* **Etiquette and rules** followed: filtered port only, software name and version in the login, default beacon
-  every 10 min (2 min moving), `WIDE1-1,WIDE2-1` default path. APRS is public and unencrypted; ISED's amateur radio
+* **Messaging** (`AprsMessenger`, APRS 1.0.1 ch. 14 + 1.1 reply-acks): outgoing messages get a number (`{n`), are
+  sent on every link that can send and retried after 30 s, 1, 2, 4 and 8 min until an `ack`/`rej` (or a reply-ack
+  `{MM}AA`) arrives. Messages to our call sign are acknowledged on the link they came in on, every copy (so the
+  sender stops retrying), but listed once. Bulletins (`BLN*`, `NWS*`) are kept; telemetry definitions ignored.
+  Persisted to `aprs-messages.json`. The beacon starts with `=` (messaging capable) when messaging is on.
+* **SmartBeaconing** (`SmartBeacon`): interval = slow rate below the low speed, fast rate above the high speed,
+  fast × high ÷ speed in between; plus "corner pegging": beacon early when the heading has changed by more than
+  min-angle + slope ÷ speed(mph) since the last beacon, at most once per min-turn-time.
+* **Etiquette and rules** followed: filtered port only, software name and version in the login, default SmartBeaconing (20 min stopped, 3 min at speed), `WIDE1-1,WIDE2-1` default path. APRS is public and unencrypted; ISED's amateur radio
   rules limit use for business, so organisations should decide whether staff may transmit as part of their job.
+
+## 7. Imagery
+
+```
+installed package (imagery\*.mbtiles) ─────────────────────────────┐
+saved areas (imagery\<id>-saved.mbtiles) ─┐                          ├─► RasterTileCache (decoded SKImages, LRU 300)
+online source (xyz / WMS 1.1.1 EPSG:3857) ─┴─► cache (imagery\cache) ┘         │
+                         ▲ fetch missing tiles (4 at a time, offline-aware)    ▼
+                                                  MapRenderer: Imagery / Hybrid base under the overlays
+```
+
+* **`FieldMap.Core/Imagery`**: `ImagerySource` (XYZ template with `{z} {x} {y} {-y} {key}` or WMS GetMap per tile in
+  EPSG:3857), `ImageryCatalog` (`Content/imagery-sources.json`), `RasterTileStore` (read/write MBTiles of JPEG/PNG,
+  WAL while writing, a single self-contained file when closed, trim oldest for the cache), `ImageryFetcher`
+  (identifies itself, rejects error pages that aren't images, seeds an area resumably, refuses sources whose terms
+  don't allow offline use and areas over a tile limit).
+* **Renderer**: `BaseMapMode` Map / Imagery / Hybrid. Imagery replaces the land-use and water fills and waterway lines;
+  Hybrid draws roads at 65 % opacity plus place and road labels; Imagery mode leaves out roads and labels.
+  Facilities, drawings, routes, APRS and GPS draw on top in both. Missing tiles show the nearest lower zoom tile
+  stretched (also beyond the package's last zoom). Night lays a dark veil over the photo.
+* **`ImageryService`** (app): picks the selected source, reads saved areas → cache → (memory for sources that don't
+  allow keeping tiles), fetches the rest online, marks itself offline after repeated failures and retries every
+  two minutes, trims the cache to ≈ 40,000 tiles, installs/removes packages, saves the area on screen.
+* **Licences decide**: every online source ships disabled with its licence and terms; the user accepts the terms
+  once before first use; "Save this area" and the on-disk cache only exist for sources marked `allowOffline`.
+  `MapBuilder imagery` needs `--accept-terms`.
 

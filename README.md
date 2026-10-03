@@ -255,6 +255,29 @@ how to install real data: [docs/FIELDMAP-DATA-SOURCES.md](docs/FIELDMAP-DATA-SOU
 * Several map windows at once (e.g. one following the GPS, one on the incident), with arrange, pin on top
   and session restore.
 
+## Imagery (satellite / aerial)
+
+The **Map / Sat / Hyb** button on every map (and *Layers → Base map*) switches between the map, **imagery**, and
+imagery with roads and labels (**hybrid**). Facilities, drawings, routes, APRS units and the GPS stay on top; Night
+dims the photo.
+
+Field Map **ships without imagery**: we found no free imagery that is current, detailed, covers all of BC and
+Alberta and may be kept offline (see [docs/FIELDMAP-DATA-SOURCES.md](docs/FIELDMAP-DATA-SOURCES.md#imagery)).
+Imagery comes from:
+
+* **Imagery packages** (MBTiles of JPEG/PNG tiles), fully offline: *Data & updates → Install imagery package*. Make
+  them from a source you're licensed for with `MapBuilder imagery …` on a connected PC, or export them from your
+  organisation's GIS.
+* An **online source** your administrator enables in `Content\imagery-sources.json` (BC Government imagery WMS,
+  Sentinel-2 cloudless 2016 and Esri World Imagery for Export are listed, all **off** until their terms are
+  confirmed). Its terms are shown before first use; tiles are cached as you view them when the terms allow, and
+  *Save imagery of this area for offline use* stores the area on screen before you lose signal.
+
+```
+MapBuilder imagery --source esri-world-imagery-export --key <ArcGIS token> --accept-terms ^
+  --bbox -120.40,50.64,-120.25,50.72 --zoom 12-18 --out Kamloops-imagery.mbtiles --name "Kamloops 2026"
+```
+
 ## Layers
 
 Big toggles, each showing its data source and date: AEDs (with source, last-verified date and an
@@ -306,10 +329,19 @@ staging areas) on every map, from the internet, from a radio, or both:
   *Send to Field Toolkit*.
 * **Emergencies** (Mic-E "Emergency" or the emergency symbol) turn the APRS status red, are listed first and are
   spoken once.
-* **Beacon** (off by default): send your own position by radio and/or internet at set intervals (shorter
-  while moving) with a chosen symbol and comment. Needs an **amateur radio licence** and your call sign; sending
-  by internet also needs your APRS-IS passcode. APRS is public and unencrypted, and ISED's amateur rules limit
-  use for business: check your organisation's policy before transmitting as part of your job.
+* **Messages**: send and receive APRS text messages (up to 67 characters) with your call sign. Sent messages are
+  numbered and retried (30 s, 1, 2, 4, 8 min) until the other station acknowledges them; each shows *Sending (try
+  n)*, *✓ Received*, *Rejected* or *Not acknowledged* (tap to send again). Messages to you are acknowledged
+  automatically (reply-acks understood), shown once even if heard several times, announced, and counted in the
+  status bar (✉). Conversations by station, quick phrases for gloves (*Copy*, *On scene*, *En route*…), bulletins,
+  and *Send message* from any station's details. Kept in `%LOCALAPPDATA%\FieldMap\aprs-messages.json`.
+* **Beacon** (off by default): send your own position by radio and/or internet with a chosen symbol and comment,
+  either by **SmartBeaconing** (default: every 20 min stopped, faster with speed down to every 3 min at 90 km/h,
+  and straight after a turn, so tracks follow the road without crowding the channel; all values adjustable) or at
+  a fixed interval. The beacon tells others you can receive messages.
+* Sending anything (beacon, messages, acknowledgements) needs an **amateur radio licence** and your call sign;
+  sending by internet also needs your APRS-IS passcode. APRS is public and unencrypted, and ISED's amateur rules
+  limit use for business: check your organisation's policy before transmitting as part of your job.
 * Open from the status bar (*APRS 12 · IS ✓ · TNC ✓*), *More → APRS stations / APRS settings*, the Layers panel
   or Settings. A packet log shows the raw packets for checking a TNC.
 
@@ -332,6 +364,7 @@ MapBuilder build --region bc --data E:\FieldMapData --pbf british-columbia-lates
 MapBuilder update --region ab --data E:\FieldMapData
 MapBuilder export --region bc --data E:\FieldMapData --out F:\
 MapBuilder install --package F:\FieldMap-bc-2026-10-02_1.fmupdate --data E:\FieldMapData
+MapBuilder imagery --wms <url> --layers <name> --bbox <minLon,minLat,maxLon,maxLat> --zoom 12-17 --out area.mbtiles --accept-terms
 ```
 
 ## Field Toolkit hand-over
@@ -346,7 +379,9 @@ MapBuilder install --package F:\FieldMap-bc-2026-10-02_1.fmupdate --data E:\Fiel
 |---|---|
 | Settings, drawings, breadcrumbs, last session | `%LOCALAPPDATA%\FieldMap\` (`settings.json`, `drawings.json`, `breadcrumbs.json`, `session.json`) |
 | Map data (versions, downloads, imports, live cache) | the folder chosen under *Data & updates* (default `%LOCALAPPDATA%\FieldMap\MapData`) |
-| Region sources and live feeds (editable) | `Content\regions.json`, `Content\live-feeds.json` next to `FieldMap.exe` |
+| Imagery packages, saved areas, online cache | `imagery\` in the map data folder |
+| APRS messages | `%LOCALAPPDATA%\FieldMap\aprs-messages.json` |
+| Region sources, live feeds, imagery sources (editable) | `Content\regions.json`, `Content\live-feeds.json`, `Content\imagery-sources.json` next to `FieldMap.exe` |
 
 ## Keyboard
 

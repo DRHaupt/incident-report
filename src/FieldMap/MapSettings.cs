@@ -1,5 +1,6 @@
 using FieldMap.Core.Drawings;
 using FieldMap.Core.Layers;
+using FieldMap.Map;
 using Shared.Location;
 using Shared.Settings;
 
@@ -36,6 +37,18 @@ public sealed class MapSettings : ILocationSettings
     public bool ShowLiveData { get; set; } = true;
     public Dictionary<string, bool> LiveFeeds { get; set; } = new();
     public string Ab511Key { get; set; } = "";
+
+    /// <summary>Map, aerial imagery, or imagery with roads and labels.</summary>
+    public BaseMapMode BaseMode { get; set; } = BaseMapMode.Map;
+
+    /// <summary>Selected imagery source id (an installed package "file:name" or an online source id).</summary>
+    public string ImageryId { get; set; } = "";
+
+    /// <summary>Keys or tokens for imagery sources that need one (by source id).</summary>
+    public Dictionary<string, string> ImageryKeys { get; set; } = new();
+
+    /// <summary>Online imagery sources whose terms the user has accepted.</summary>
+    public List<string> AcceptedImageryTerms { get; set; } = new();
 
     /// <summary>APRS (amateur radio position reporting) by internet and/or a TNC.</summary>
     public AprsSettings Aprs { get; set; } = new();
@@ -93,6 +106,12 @@ public enum TncConnection
     Tcp
 }
 
+public enum BeaconMode
+{
+    Smart,
+    Fixed
+}
+
 public sealed class AprsSettings
 {
     /// <summary>Draw APRS stations on the map.</summary>
@@ -131,7 +150,12 @@ public sealed class AprsSettings
     /// <summary>APRS-IS passcode; only needed to send your position over the internet.</summary>
     public string Passcode { get; set; } = "";
 
+    /// <summary>Receive messages to my call sign and acknowledge them; advertise messaging in the beacon.</summary>
+    public bool MessagingEnabled { get; set; } = true;
+
     public bool BeaconEnabled { get; set; }
+    public BeaconMode BeaconMode { get; set; } = BeaconMode.Smart;
+    public FieldMap.Core.Aprs.SmartBeaconSettings Smart { get; set; } = new();
     public bool BeaconRadio { get; set; } = true;
     public bool BeaconInternet { get; set; } = true;
     public string BeaconSymbol { get; set; } = "/>";

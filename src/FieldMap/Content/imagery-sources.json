@@ -1,0 +1,60 @@
+{
+  // Online imagery sources for Layers → Base map. Every source is OFF ("enabled": false) until an administrator has
+  // checked that its terms allow the intended use (operational/commercial use, keeping tiles offline) and set it on.
+  // "kind": "xyz" uses {z}/{x}/{y} (and {key} for a key entered in the app); "wms" requests WMS 1.1.1 GetMap in
+  // EPSG:3857 with "layers". "allowOffline": true enables caching tiles on disk and "Save this area for offline use".
+  // Installed MBTiles packages in <data folder>\imagery\ need no entry here.
+  "sources": [
+    {
+      "id": "bc-imagery-wms",
+      "name": "BC Government imagery (orthophotos)",
+      "kind": "wms",
+      "url": "https://openmaps.gov.bc.ca/imagex/ecw_wms.dll",
+      "layers": "",
+      "format": "image/jpeg",
+      "minZoom": 6,
+      "maxZoom": 18,
+      "bounds": [ -139.1, 48.2, -114.0, 60.1 ],
+      "attribution": "Imagery © Province of British Columbia",
+      "licence": "To confirm: the BC Data Catalogue lists the Imagery Web Map Service as \"Access Only\"; GeoBC states orthophotos are under the Open Government Licence – British Columbia",
+      "terms": "Province of British Columbia imagery web map service. Confirm with GeoBC that operational use and caching tiles for offline use are permitted before enabling.",
+      "allowOffline": false,
+      "enabled": false,
+      "verified": "unverified – service and URL found by web search (Oct 2026); set \"layers\" from the service's GetCapabilities (e.g. the current orthophoto mosaic) and confirm the licence",
+      "notes": "BC only; resolution from 0.5 m to 30 m depending on area."
+    },
+    {
+      "id": "s2cloudless-2016",
+      "name": "Sentinel-2 cloudless 2016 (EOX)",
+      "kind": "xyz",
+      "url": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg",
+      "format": "image/jpeg",
+      "minZoom": 0,
+      "maxZoom": 13,
+      "attribution": "Sentinel-2 cloudless – https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016 & 2017)",
+      "licence": "Data CC BY 4.0 (2016 version); later years are CC BY-NC-SA 4.0. Use of EOX's tile servers: see cloudless.eox.at/pricing",
+      "terms": "10 m satellite mosaic from 2016–2017: good for terrain, forest and clearings, not street detail. The 2016 data is CC BY 4.0; confirm that using EOX's tile service fits your use (commercial use may need a subscription).",
+      "allowOffline": false,
+      "enabled": false,
+      "verified": "licence checked by web search (Oct 2026); tile URL pattern to confirm",
+      "notes": "Worldwide."
+    },
+    {
+      "id": "esri-world-imagery-export",
+      "name": "Esri World Imagery (for Export)",
+      "kind": "xyz",
+      "url": "https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token={key}",
+      "format": "image/jpeg",
+      "minZoom": 0,
+      "maxZoom": 19,
+      "attribution": "Imagery: Esri, Maxar, Earthstar Geographics and the GIS User Community",
+      "licence": "Esri Master License Agreement; requires an ArcGIS Online subscription",
+      "terms": "Only for organisations with an ArcGIS subscription. Esri limits offline export to small areas (150,000 tiles per export). Enter your ArcGIS token as the key.",
+      "needsKey": true,
+      "allowOffline": true,
+      "enabled": false,
+      "verified": "terms checked by web search (Oct 2026); confirm the endpoint and token use with your Esri agreement",
+      "notes": "High-resolution worldwide imagery."
+    }
+  ]
+}

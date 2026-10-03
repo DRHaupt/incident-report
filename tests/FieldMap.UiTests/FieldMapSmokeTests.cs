@@ -154,6 +154,9 @@ public class FieldMapSmokeTests
         // APRS: a fake APRS-IS server and a fake KISS TNC on loopback feed stations into the map.
         RunAprs(follow);
 
+        // Imagery: install a small synthetic package, switch to Imagery and Hybrid, and back.
+        RunImagery(follow);
+
         // Snapshot export.
         var dir = Path.Combine(Path.GetTempPath(), "fieldmap-ui-" + Guid.NewGuid().ToString("N")[..6]);
         Directory.CreateDirectory(dir);
@@ -216,8 +219,10 @@ public class FieldMapSmokeTests
         var internetLines = new[]
         {
             Packet("VE7MED-9", SampleRegion.At(-100, 400), '/', 'a', 70, 60, "Medic 12"),
-            Packet("VE7HKR-7", SampleRegion.At(300, 650), '\\', '!', null, null, "Injured hiker")
+            Packet("VE7HKR-7", SampleRegion.At(300, 650), '\\', '!', null, null, "Injured hiker"),
+            "VE7EOC>APRS,TCPIP*,qAC,TEST::VE7ABC-9 :Report to staging{42"
         };
+        var fromApp = new System.Collections.Concurrent.ConcurrentQueue<string>();
         var radioFrame = KissDecoder.Encode(Ax25.Encode(Packet("VE7FD-1", SampleRegion.At(250, 420), '/', 'f', 180, 40, "Engine 3")));
 
         var isListener = new TcpListener(IPAddress.Loopback, 0);
@@ -247,7 +252,17 @@ public class FieldMapSmokeTests
             using var c = await tncListener.AcceptTcpClientAsync(stop.Token);
             using var s = c.GetStream();
             await s.WriteAsync(radioFrame, stop.Token);
-            await Task.Delay(Timeout.Infinite, stop.Token);
+            var decoder = new KissDecoder();
+            var buf = new byte[2048];
+            while (!stop.IsCancellationRequested)
+            {
+                var n = await s.ReadAsync(buf, stop.Token);
+                if (n == 0)
+                    break;
+                foreach (var (_, data) in decoder.Push(buf.AsSpan(0, n)))
+                    if (Ax25.Decode(data) is { } text)
+                        fromApp.Enqueue(text);
+            }
         });
 
         var a = AppServices.Settings.Aprs;
@@ -259,6 +274,9 @@ public class FieldMapSmokeTests
         a.Connection = TncConnection.Tcp;
         a.TcpHost = "127.0.0.1";
         a.TcpPort = ((IPEndPoint)tncListener.LocalEndpoint).Port;
+        a.Callsign = "VE7ABC-9";
+        a.MessagingEnabled = true;
+        a.BeaconEnabled = false;
         AppServices.Aprs.Apply();
         PumpUntil(() => AppServices.Aprs.Tracker.Count >= 3, 30000, "APRS stations from APRS-IS and the TNC");
         PumpUntil(() => AppServices.Aprs.ActiveEmergencies.Contains("VE7HKR-7"), 10000, "APRS emergency alert");
@@ -284,6 +302,19 @@ public class FieldMapSmokeTests
         Pump(100);
         Assert.Contains("APRS stations", PanelText(map));
 
+        // Messaging: the message from VE7EOC arrived, was acknowledged by radio, and a reply goes out by radio.
+        PumpUntil(() => AppServices.Aprs.Messenger.Unread == 1, 10000, "APRS message");
+        PumpUntil(() => fromApp.Any(x => x.Contains(":VE7EOC   :ack42")), 10000, "acknowledgement sent to the TNC");
+        map.ShowPanel(new AprsMessagesPanel(map, "VE7EOC"));
+        Pump(200);
+        Assert.Contains("Report to staging", PanelText(map));
+        Assert.Equal(0, AppServices.Aprs.Messenger.Unread);
+        var reply = AppServices.Aprs.Messenger.Send("VE7EOC", "On my way", DateTime.UtcNow);
+        PumpUntil(() => fromApp.Any(x => x.StartsWith("VE7ABC-9>APZFMP,WIDE1-1,WIDE2-1::VE7EOC   :On my way{" + reply.MessageId)), 10000, "message sent to the TNC");
+        map.ShowPanel(new AprsMessagesPanel(map, "VE7EOC"));
+        Pump(200);
+        Assert.Contains("On my way", PanelText(map));
+
         using (var settings = new AprsSettingsDialog())
         {
             settings.Show(map);
@@ -302,6 +333,7 @@ public class FieldMapSmokeTests
         stop.Cancel();
         a.InternetEnabled = false;
         a.RadioEnabled = false;
+        a.Callsign = "";
         AppServices.Aprs.Apply();
         isListener.Stop();
         tncListener.Stop();
@@ -314,4 +346,47 @@ public class FieldMapSmokeTests
             // Servers stop when cancelled.
         }
     }
+
+    private static void RunImagery(MapWindow map)
+    {
+        var area = AppServices.Data.Bounds;
+        var file = Path.Combine(Path.GetTempPath(), "fieldmap-ui-imagery-" + Guid.NewGuid().ToString("N")[..6] + ".mbtiles");
+        using (var store = new FieldMap.Core.Imagery.RasterTileStore(file))
+        {
+            foreach (var z in new[] { 13, 14 })
+                foreach (var (tz, x, y) in FieldMap.Core.Imagery.ImageryMath.Tiles(area, z))
+                {
+                    using var bmp = new SkiaSharp.SKBitmap(256, 256);
+                    using (var c = new SkiaSharp.SKCanvas(bmp))
+                        c.Clear(new SkiaSharp.SKColor(0x4A, 0x6B, 0x3A));
+                    using var img = SkiaSharp.SKImage.FromBitmap(bmp);
+                    using var data = img.Encode(SkiaSharp.SKEncodedImageFormat.Jpeg, 70);
+                    store.Put(tz, x, y, data.ToArray());
+                }
+            store.SetMetadata(new Dictionary<string, string> { ["name"] = "UI test imagery", ["attribution"] = "TEST IMAGERY" });
+        }
+        var package = AppServices.Imagery.Install(file);
+        File.Delete(file);
+        AppServices.Imagery.Apply();
+        Assert.Contains(AppServices.Imagery.Available(), s => s.Name == "UI test imagery");
+        AppServices.Imagery.Select(AppServices.Imagery.Available().First(s => s.Name == "UI test imagery"));
+        foreach (var mode in new[] { FieldMap.Map.BaseMapMode.Imagery, FieldMap.Map.BaseMapMode.Hybrid })
+        {
+            AppServices.Imagery.SetMode(mode);
+            map.MapView.SetView(SampleRegion.At(0, 560), 14.5, 0);
+            map.MapView.Refresh();
+            Pump(200);
+            Assert.NotNull(AppServices.Imagery.Tiles);
+        }
+        map.ShowPanel(new LayersPanel(map));
+        Pump(100);
+        Assert.Contains("UI test imagery", PanelText(map));
+        AppServices.Windows.Open(DataWindow.ToolId);
+        Pump(200);
+        AppServices.Imagery.SetMode(FieldMap.Map.BaseMapMode.Map);
+        AppServices.Imagery.Delete(AppServices.Imagery.Packages().First(p => p.Name == "UI test imagery"));
+        Assert.DoesNotContain(AppServices.Imagery.Available(), s => s.Name == "UI test imagery");
+        map.ClosePanel();
+    }
 }
+

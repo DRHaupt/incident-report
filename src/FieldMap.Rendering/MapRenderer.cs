@@ -35,6 +35,10 @@ public sealed class MapScene
     /// <summary>APRS stations to draw (already filtered to those recently heard).</summary>
     public IReadOnlyList<AprsStation> Aprs { get; init; } = Array.Empty<AprsStation>();
     public string? SelectedAprs { get; init; }
+
+    /// <summary>Imagery tiles for the Imagery and Hybrid base maps (null: map only).</summary>
+    public RasterTileCache? Imagery { get; init; }
+    public BaseMapMode BaseMode { get; init; } = BaseMapMode.Map;
     public bool AprsTracks { get; init; } = true;
 
     /// <summary>Stations older than this are drawn faded.</summary>
@@ -106,13 +110,20 @@ public static class MapRenderer
             }
         }
 
+        var imagery = scene.Imagery != null && scene.BaseMode != BaseMapMode.Map;
+        if (imagery)
+        {
+            canvas.ResetMatrix();
+            DrawImagery(canvas, vp, scene, result);
+        }
+
         // Lines: waterways, boundaries, roads (casings then fills), rail
         foreach (var t in tiles)
         {
             canvas.SetMatrix(t.Matrix);
             foreach (var (key, path) in t.Tile.Lines)
             {
-                if (key.StartsWith("waterway:", StringComparison.Ordinal))
+                if (key.StartsWith("waterway:", StringComparison.Ordinal) && !imagery)
                 {
                     var kind = key[9..];
                     stroke.Color = st.WaterLine;
@@ -129,7 +140,20 @@ public static class MapRenderer
                 }
             }
         }
-        DrawRoads(canvas, vp, scene, tiles, stroke);
+        if (!imagery)
+        {
+            DrawRoads(canvas, vp, scene, tiles, stroke);
+        }
+        else if (scene.BaseMode == BaseMapMode.Hybrid)
+        {
+            // Roads see-through over the imagery.
+            canvas.ResetMatrix();
+            using var layer = new SKPaint { Color = SKColors.White.WithAlpha(165) };
+            canvas.SaveLayer(layer);
+            DrawRoads(canvas, vp, scene, tiles, stroke);
+            canvas.ResetMatrix();
+            canvas.Restore();
+        }
         foreach (var t in tiles)
         {
             canvas.SetMatrix(t.Matrix);
@@ -159,11 +183,16 @@ public static class MapRenderer
         DrawDrawings(canvas, vp, scene, scene.Drawings, false);
         if (scene.Draft != null)
             DrawDrawings(canvas, vp, scene, new[] { scene.Draft }, true);
-        DrawPlaceLabels(canvas, vp, scene, tiles, occupied, 1, 2); // cities and towns first
+        var labels = !imagery || scene.BaseMode == BaseMapMode.Hybrid;
+        if (labels)
+            DrawPlaceLabels(canvas, vp, scene, tiles, occupied, 1, 2); // cities and towns first
         DrawPois(canvas, vp, scene, occupied, result);
         DrawAprs(canvas, vp, scene, occupied, result);
-        DrawPlaceLabels(canvas, vp, scene, tiles, occupied, 3, 9);
-        DrawRoadLabels(canvas, vp, scene, tiles, occupied);
+        if (labels)
+        {
+            DrawPlaceLabels(canvas, vp, scene, tiles, occupied, 3, 9);
+            DrawRoadLabels(canvas, vp, scene, tiles, occupied);
+        }
         DrawMarkerAndGps(canvas, vp, scene);
         if (scene.ShowControls)
             DrawOverlays(canvas, vp, scene, result);
@@ -553,6 +582,72 @@ public static class MapRenderer
         _ => LayerCatalog.Find(layer)?.Glyph ?? "?"
     };
 
+
+    // ------------------------------------------------------------------ imagery
+
+    private static readonly SKSamplingOptions ImageSampling = new(SKFilterMode.Linear, SKMipmapMode.None);
+
+    private static void DrawImagery(SKCanvas canvas, Viewport vp, MapScene scene, RenderResult result)
+    {
+        var cache = scene.Imagery!;
+        var z = Math.Clamp((int)Math.Round(vp.Zoom), cache.MinZoom, cache.MaxZoom);
+        var n = 1 << z;
+        var (minX, minY, maxX, maxY) = vp.VisibleWorld();
+        var x0 = Math.Max(0, (int)Math.Floor(minX * n));
+        var x1 = Math.Min(n - 1, (int)Math.Floor(maxX * n));
+        var y0 = Math.Max(0, (int)Math.Floor(minY * n));
+        var y1 = Math.Min(n - 1, (int)Math.Floor(maxY * n));
+        if ((long)(x1 - x0 + 1) * (y1 - y0 + 1) > 400)
+            return;
+        using var paint = new SKPaint { IsAntialias = false };
+        var scale = (float)(vp.Scale / n / 256.0);
+        var bleed = 0.6f / scale;
+        for (var x = x0; x <= x1; x++)
+            for (var y = y0; y <= y1; y++)
+            {
+                SKImage? image = cache.Get(z, x, y, request: true);
+                SKRect src;
+                if (image != null)
+                {
+                    src = new SKRect(0, 0, image.Width, image.Height);
+                }
+                else
+                {
+                    // Not here (yet): stretch the nearest lower-zoom tile that is.
+                    src = SKRect.Empty;
+                    for (var pz = z - 1; pz >= Math.Max(cache.MinZoom, z - 6) && image == null; pz--)
+                    {
+                        var shift = z - pz;
+                        image = cache.Get(pz, x >> shift, y >> shift, request: false);
+                        if (image != null)
+                        {
+                            var part = (float)image.Width / (1 << shift);
+                            var ox = (x - ((x >> shift) << shift)) * part;
+                            var oy = (y - ((y >> shift) << shift)) * part;
+                            src = new SKRect(ox, oy, ox + part, oy + part);
+                        }
+                    }
+                    if (image == null)
+                    {
+                        result.TilesPending = true;
+                        continue;
+                    }
+                }
+                var (sx, sy) = vp.WorldToScreen((double)x / n, (double)y / n);
+                var m = SKMatrix.CreateTranslation((float)sx, (float)sy)
+                    .PreConcat(SKMatrix.CreateRotationDegrees((float)-vp.Bearing))
+                    .PreConcat(SKMatrix.CreateScale(scale, scale));
+                canvas.SetMatrix(m);
+                canvas.DrawImage(image, src, new SKRect(-bleed, -bleed, 256 + bleed, 256 + bleed), ImageSampling, paint);
+            }
+        canvas.ResetMatrix();
+        // Night: dim the photo so it doesn't ruin night vision; symbols drawn after stay readable.
+        if (scene.Style == MapStyle.Night)
+        {
+            using var dim = new SKPaint { Color = SKColors.Black.WithAlpha(150) };
+            canvas.DrawRect(new SKRect(0, 0, vp.Width, vp.Height), dim);
+        }
+    }
 
     // ------------------------------------------------------------------ APRS stations
 

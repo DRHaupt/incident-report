@@ -53,10 +53,13 @@ public static partial class AprsBeacon
         return (deg, min);
     }
 
-    /// <summary>Position report information field: "!DDMM.mmN/DDDMM.mmW>CSE/SPD/A=000000comment" (no messaging).</summary>
-    public static string Position(double lat, double lon, char table, char code, double? courseDegrees, double? speedKmh, double? altitudeMeters, string comment)
+    /// <summary>
+    /// Position report information field: "!DDMM.mmN/DDDMM.mmW>CSE/SPD/A=000000comment", starting with '=' instead of
+    /// '!' when the station can receive messages.
+    /// </summary>
+    public static string Position(double lat, double lon, char table, char code, double? courseDegrees, double? speedKmh, double? altitudeMeters, string comment, bool messaging = false)
     {
-        var s = "!" + Latitude(lat) + table + Longitude(lon) + code;
+        var s = (messaging ? "=" : "!") + Latitude(lat) + table + Longitude(lon) + code;
         if (courseDegrees is { } c && speedKmh is { } v && v >= 3)
         {
             var course = (int)Math.Round(c) % 360;

@@ -1,4 +1,5 @@
 using FieldMap.Core.Layers;
+using FieldMap.Map;
 using FieldMap.Services;
 using Shared;
 using Shared.UI;
@@ -16,6 +17,8 @@ public sealed class LayersPanel : SidePanel
             AddText("No map data is installed. Open Data & updates to install British Columbia and/or Alberta.", FontRole.Bold, Brand.Danger);
         else if (data.IsSample)
             AddText("SAMPLE DATA: fictitious places for trying the app.", FontRole.Bold, Brand.Danger);
+
+        BuildBaseMap();
 
         AddText("Facilities and features", FontRole.Heading);
         foreach (var layer in LayerCatalog.All)
@@ -77,4 +80,142 @@ public sealed class LayersPanel : SidePanel
         AppServices.Settings.Save();
         Map.MapView.Invalidate();
     }
+
+    // ------------------------------------------------------------------ base map and imagery
+
+    private CancellationTokenSource? _saving;
+
+    private void BuildBaseMap()
+    {
+        var imagery = AppServices.Imagery;
+        var s = AppServices.Settings;
+        AddText("Base map", FontRole.Heading);
+        var current = imagery.Current;
+        var modes = new[] { (BaseMapMode.Map, "Map"), (BaseMapMode.Imagery, "Imagery (satellite / aerial)"), (BaseMapMode.Hybrid, "Imagery with roads and labels") };
+        var boxes = new List<CheckBox>();
+        foreach (var (mode, title) in modes)
+        {
+            var m = mode;
+            var on = current != null ? s.BaseMode == m : m == BaseMapMode.Map;
+            CheckBox? box = null;
+            box = AddToggle(title, on, isOn =>
+            {
+                if (!isOn)
+                {
+                    // Radio behaviour: one is always selected.
+                    if (boxes.All(b => !b.Checked))
+                        box!.Checked = true;
+                    return;
+                }
+                if (m != BaseMapMode.Map && imagery.Current == null)
+                {
+                    // Select Map first so unticking this one doesn't re-tick it.
+                    boxes[0].Checked = true;
+                    box!.Checked = false;
+                    MessageBox.Show(FindForm(), imagery.Status + ".\n\nInstall an imagery package under Data & updates, or ask your administrator to enable an online imagery source.", "Imagery", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                foreach (var other in boxes.Where(b => b != box))
+                    other.Checked = false;
+                imagery.SetMode(m);
+                Map.MapView.Invalidate();
+            }, "");
+            boxes.Add(box);
+        }
+
+        var available = imagery.Available();
+        if (available.Count == 0)
+        {
+            AddText("No imagery is installed or set up. Field Map doesn't include imagery: free imagery that may be kept offline doesn't exist for all of BC and Alberta. " +
+                    "Install a package your organisation is licensed to use (Data & updates → Install imagery package), or ask your administrator to enable an online source.", FontRole.Normal, Brand.Muted);
+        }
+        else
+        {
+            AddText("Imagery source", FontRole.Bold);
+            foreach (var src in available)
+            {
+                var source = src;
+                var selected = current?.Id == source.Id;
+                var detail = $"{(source.IsOnline ? "Online" + (source.AllowOffline ? ", cached as viewed" : ", not kept offline") : "Installed, works offline")} · zoom {source.MinZoom}–{source.MaxZoom}" +
+                             (source.Attribution.Length > 0 ? $" · {source.Attribution}" : "") + (source.Licence.Length > 0 ? $" · {source.Licence}" : "");
+                AddRow((selected ? "● " : "○ ") + source.Name, detail, () => ChooseSource(source), selected ? Brand.Navy : Brand.Muted);
+            }
+            if (current != null)
+                AddText(imagery.Status, FontRole.Normal, imagery.Status.Contains("offline") ? Brand.Danger : Brand.Muted);
+            if (current is { IsOnline: true, AllowOffline: true })
+                AddButton("Save imagery of this area for offline use…", ButtonStyle.Secondary, SaveArea);
+        }
+        foreach (var missingKey in imagery.Catalog.Sources.Where(x => x.Enabled && x.NeedsKey && imagery.Key(x).Length == 0))
+        {
+            var source = missingKey;
+            AddButton($"Enter key for {source.Name}…", ButtonStyle.Secondary, () =>
+            {
+                var key = InputDialog.Ask(FindForm()!, source.Name, "Key or token for this imagery service:");
+                if (string.IsNullOrWhiteSpace(key))
+                    return;
+                AppServices.Settings.ImageryKeys[source.Id] = key.Trim();
+                AppServices.Settings.Save();
+                Map.ShowPanel(new LayersPanel(Map));
+            });
+        }
+    }
+
+    private void ChooseSource(Core.Imagery.ImagerySource source)
+    {
+        var imagery = AppServices.Imagery;
+        if (!imagery.TermsAccepted(source))
+        {
+            var answer = MessageBox.Show(FindForm(), $"{source.Name}\n\n{source.Terms}\n\nLicence: {source.Licence}\n\nUse this imagery under these terms?",
+                "Imagery terms", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (answer != DialogResult.Yes)
+                return;
+            imagery.AcceptTerms(source);
+        }
+        imagery.Select(source);
+        if (AppServices.Settings.BaseMode == BaseMapMode.Map)
+            imagery.SetMode(BaseMapMode.Hybrid);
+        Map.MapView.Invalidate();
+        Map.ShowPanel(new LayersPanel(Map));
+    }
+
+    private async void SaveArea()
+    {
+        var imagery = AppServices.Imagery;
+        if (imagery.Current is not { } source)
+            return;
+        var view = Map.MapView.Viewport.VisibleBounds();
+        var minZoom = Math.Max(source.MinZoom, (int)Math.Floor(Map.MapView.Zoom) - 2);
+        var maxZoom = Math.Min(source.MaxZoom, (int)Math.Floor(Map.MapView.Zoom) + 3);
+        var count = Core.Imagery.ImageryMath.CountTiles(view, minZoom, maxZoom);
+        if (MessageBox.Show(FindForm(), $"Save {count:N0} imagery tiles (zoom {minZoom}–{maxZoom}, about {count * 25 / 1024.0:0} MB) of the area on screen for offline use?\n\nZoom out first to save a larger area at less detail.",
+                "Save imagery", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
+            return;
+        _saving = new CancellationTokenSource();
+        var status = AddText("Saving imagery…", FontRole.Bold);
+        var cancel = AddButton("Stop saving", ButtonStyle.Danger, () => _saving?.Cancel());
+        Refit();
+        try
+        {
+            var r = await imagery.SaveAreaAsync(view, minZoom, maxZoom,
+                new Progress<Core.Imagery.SeedProgress>(p => { if (!status.IsDisposed) status.Text = $"Saving imagery: {p.Done:N0} of {p.Total:N0} tiles ({p.Failed:N0} not available)"; }), _saving.Token);
+            Map.Flash($"Saved {r.Fetched + r.Skipped:N0} imagery tiles for offline use");
+        }
+        catch (OperationCanceledException)
+        {
+            Map.Flash("Saving imagery stopped; what was saved is kept");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or HttpRequestException)
+        {
+            MessageBox.Show(FindForm(), ex.Message, "Save imagery", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+        finally
+        {
+            _saving = null;
+            if (!IsDisposed)
+                Map.ShowPanel(new LayersPanel(Map));
+        }
+    }
+
+    public override void OnClosing() => _saving?.Cancel();
 }
+
