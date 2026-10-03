@@ -203,6 +203,7 @@ public sealed class MainForm : Form
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(AppSettings.AppDataFolder) { UseShellExecute = true })));
 
         var help = new ToolStripMenuItem("&Help");
+        help.DropDownItems.Add(Item("Check for &updates...", Keys.None, () => Shared.Update.UpdateNotifier.ShowWindow(this)));
         help.DropDownItems.Add(Item("&About Incident Report Manager", Keys.None, () => { using var d = new AboutDialog(); d.ShowDialog(this); }));
 
         menu.Items.AddRange(new ToolStripItem[] { file, edit, view, reports, tools, help });

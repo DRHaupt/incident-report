@@ -52,6 +52,8 @@ public sealed class OptionsDialog : Form
         stack.Controls.Add(Ui.Text("In use: " + AppServices.ContentFolder, fore: Shared.Brand.Muted));
         stack.Controls.Add(Ui.Button("Open data folder (timers, settings, session)", ButtonStyle.Secondary, () =>
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ToolkitSettings.DataFolder) { UseShellExecute = true })));
+        stack.Controls.Add(Ui.Text("Updates", FontRole.Heading, padding: new Padding(0, 12, 0, 2)));
+        stack.Controls.Add(Ui.Button("Check for Field Suite updates…", ButtonStyle.Secondary, () => Shared.Update.UpdateNotifier.ShowWindow(this)));
         foreach (Control c in stack.Controls)
             c.Margin = new Padding(0, 2, 0, 4);
 

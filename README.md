@@ -40,6 +40,43 @@ The installer is made with the WiX Toolset v5 (see `docs/LEGAL-NOTES.md` on why 
 Windows SmartScreen warns on first run; sign the MSI and the three .exe files with your organisation's certificate
 before rolling out. Quick-reference cards for crews: [docs/quick-reference](docs/quick-reference/FieldSuite-Quick-Reference.pdf).
 
+### Updates (no reinstalling)
+
+Install the MSI once; after that the apps update themselves. Every green build of the main branch is published as
+a GitHub release (`v0.1.N`, the MSI plus `fieldsuite-update.json`). Shortly after an app starts (at most once a day) it
+checks quietly and shows an amber **"Field Suite 0.1.N is ready to install"** banner; tap it, or open *Settings →
+Check for Field Suite updates* (Incident Report Manager: *Help → Check for updates*). The app downloads the
+installer, checks its SHA-256 (and signature), asks the other Field Suite apps to close, then Windows asks for
+administrator permission, upgrades in place and reopens the app. Reports, maps, drawings and settings are kept.
+
+Where it looks (*Where to look* in the same window; shared by all three apps):
+
+* **USB stick / SD card** – a `FieldSuite-Updates` folder holding the two files from a release (or the
+  *FieldSuite-installer* CI artifact). No internet needed.
+* **Folder or network share** – same two files.
+* **Web address** – any `https://…/fieldsuite-update.json`, with the MSI next to it.
+* **GitHub** – the latest release of `DRHaupt/incident-report`. While the repository is **private**, each laptop
+  needs a GitHub *fine-grained access token* with read-only *Contents* access to this repository (*Access token…*;
+  stored encrypted for the Windows user). Without one, use a USB stick or share.
+
+IT can preset the sources for every user in `%ProgramData%\Field Suite\update-settings.json` (same format as the
+per-user `%LOCALAPPDATA%\FieldSuite\update-settings.json`) and update without anyone at the laptop:
+`FieldToolkit.exe --update-from "\\server\share\FieldSuite" --unattended` (any of the three programs; log in
+`%LOCALAPPDATA%\FieldSuite\updates`). Users who aren't local administrators can't approve the Windows prompt; push the
+MSI with Intune/Group Policy for them instead.
+
+**Signed updates.** Run `installer\new-update-key.ps1` once and save the key it copies as the repository's Actions
+secret `UPDATE_SIGNING_KEY`. From then on every release is signed and installed copies accept **only** updates signed
+with that key (a USB stick with a tampered installer is refused). Until the secret exists, releases are unsigned: the
+apps still verify the checksum but warn that the update isn't signed. CI tests every build by installing an older
+copy and updating it from inside the installed Field Toolkit.
+
+### Touch
+
+Drag any list or page with a finger (or pen) – also when the drag starts on a button; flick to glide; tap still
+presses, and press-and-hold hands the touch to the control (e.g. to select text). The map keeps its own pan, pinch and
+rotate gestures.
+
 ---
 
 # Field Toolkit

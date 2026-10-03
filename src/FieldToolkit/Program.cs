@@ -8,8 +8,15 @@ internal static class Program
     private const string ActivateEventName = @"Local\FieldToolkit.Activate";
 
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
+        // Unattended update for IT / scripted roll-outs: --update-from <folder or URL> --unattended
+        if (Shared.Update.UpdateCommandLine.TryRun(args) is { } exitCode)
+        {
+            Environment.ExitCode = exitCode;
+            return;
+        }
+
         // One toolkit process holds every window and the timers; a second launch just brings it forward.
         using var mutex = new Mutex(true, MutexName, out var first);
         if (!first)
@@ -39,6 +46,7 @@ internal static class Program
 
         AppServices.Initialize();
         var launcher = new LauncherForm();
+        Shared.Update.UpdateNotifier.Attach(launcher);
 
         using var activateEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ActivateEventName);
         var registration = ThreadPool.RegisterWaitForSingleObject(activateEvent, (_, _) =>

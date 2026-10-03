@@ -12,7 +12,7 @@ if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
 }
 $root = Split-Path -Parent $PSScriptRoot
 $publish = Join-Path $root "publish"
-$common = @("-c", "Release", "-r", "win-x64", "--self-contained", "true", "-p:PublishSingleFile=true", "-p:IncludeNativeLibrariesForSelfExtract=true")
+$common = @("-c", "Release", "-r", "win-x64", "--self-contained", "true", "-p:PublishSingleFile=true", "-p:IncludeNativeLibrariesForSelfExtract=true", "-p:Version=$Version")
 dotnet publish "$root\src\IncidentReporting\IncidentReporting.csproj" @common -o "$publish\IncidentReportManager"
 dotnet publish "$root\src\FieldToolkit\FieldToolkit.csproj" @common -o "$publish\FieldToolkit"
 dotnet publish "$root\src\FieldMap\FieldMap.csproj" @common -o "$publish\FieldMap"
@@ -20,4 +20,11 @@ dotnet publish "$root\tools\MapBuilder\MapBuilder.csproj" @common -o "$publish\M
 # Debug symbols aren't installed.
 Get-ChildItem $publish -Recurse -Filter *.pdb | Remove-Item
 dotnet build "$root\installer\FieldSuite.wixproj" -c Release "-p:SuiteVersion=$Version" "-p:PublishRoot=$publish\"
-Get-ChildItem "$root\installer\bin" -Recurse -Filter *.msi | Select-Object FullName, Length
+# The update manifest next to the MSI: copy both into a FieldSuite-Updates folder on a USB stick to update laptops
+# from the apps (signed only if UPDATE_SIGNING_KEY is set in this PowerShell session).
+$msi = Get-ChildItem "$root\installer\bin" -Recurse -Filter "FieldSuite-$Version-x64.msi" | Select-Object -First 1
+$release = Join-Path $root "release"
+New-Item -ItemType Directory -Force $release | Out-Null
+Copy-Item $msi.FullName $release -Force
+dotnet run --project "$root\tools\UpdateTool\UpdateTool.csproj" -c Release -- manifest (Join-Path $release $msi.Name) $Version $release
+Get-ChildItem $release | Select-Object FullName, Length

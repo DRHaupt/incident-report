@@ -7,8 +7,15 @@ namespace IncidentReporting;
 internal static class Program
 {
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
+        // Unattended update for IT / scripted roll-outs: --update-from <folder or URL> --unattended
+        if (Shared.Update.UpdateCommandLine.TryRun(args) is { } exitCode)
+        {
+            Environment.ExitCode = exitCode;
+            return;
+        }
+
         Application.SetHighDpiMode(HighDpiMode.SystemAware);
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
@@ -34,7 +41,9 @@ internal static class Program
             return;
         }
 
-        Application.Run(new MainForm());
+        var main = new MainForm();
+        Shared.Update.UpdateNotifier.Attach(main);
+        Application.Run(main);
     }
 
     private static void SaveUiPreferences()

@@ -45,6 +45,7 @@ public sealed class SettingsDialog : Form
         var aprs = Ui.Button("APRS (amateur radio positions)…", ButtonStyle.Secondary, () => { using var d = new AprsSettingsDialog(); d.ShowDialog(this); });
         aprs.Margin = new Padding(0, 6, 0, 0);
         stack.Controls.Add(aprs);
+        stack.Controls.Add(Ui.Button("Check for Field Suite updates…", ButtonStyle.Secondary, () => Shared.Update.UpdateNotifier.ShowWindow(this)));
         foreach (var c in new Control[] { _name, _key, _rings, _restore })
             c.Styled(FontRole.Large);
         var ok = Ui.Button("Save", ButtonStyle.Primary, Accept);

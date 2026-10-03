@@ -71,7 +71,17 @@ installer is built with the WiX Toolset **v5** (Microsoft Reciprocal Licence; th
 WiX itself, not the installers it builds). WiX v6 and later require an Open Source Maintenance Fee from
 organisations with more than US$10,000 revenue, so the build is pinned to v5; revisit before upgrading.
 
-## 8. Not yet decided
+## 8. Updates
+
+* The apps download updates only from the places configured under *Check for Field Suite updates* (by default the
+  repository's GitHub releases). Nothing installs without a person approving it (and Windows asking for an
+  administrator), except IT's `--unattended` command.
+* **Release signing key** (`UPDATE_SIGNING_KEY` secret): whoever holds it can produce updates every installed copy
+  accepts. Decide who may hold it, keep it only in the secret store, and replace it if it may have leaked.
+* **GitHub access tokens** on laptops (needed while the repository is private) are encrypted per Windows user. Use
+  fine-grained, read-only tokens limited to this repository with an expiry date; revoke a token if a laptop is lost.
+
+## 9. Not yet decided
 
 * Who owns the code and the built data; under what licence the apps are given to others (if at all).
 * Code-signing certificate holder (whose name appears in the Windows install prompt).

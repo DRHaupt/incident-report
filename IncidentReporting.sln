@@ -39,6 +39,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FieldMap", "src\FieldMap\Fi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FieldMap.UiTests", "tests\FieldMap.UiTests\FieldMap.UiTests.csproj", "{2179DF52-2EC7-4835-B751-78E855748785}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpdateTool", "tools\UpdateTool\UpdateTool.csproj", "{612002F5-2BAB-4D9E-96D6-871E726B5CB9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -105,6 +107,10 @@ Global
 		{2179DF52-2EC7-4835-B751-78E855748785}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2179DF52-2EC7-4835-B751-78E855748785}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2179DF52-2EC7-4835-B751-78E855748785}.Release|Any CPU.Build.0 = Release|Any CPU
+		{612002F5-2BAB-4D9E-96D6-871E726B5CB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{612002F5-2BAB-4D9E-96D6-871E726B5CB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{612002F5-2BAB-4D9E-96D6-871E726B5CB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{612002F5-2BAB-4D9E-96D6-871E726B5CB9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -124,5 +130,6 @@ Global
 		{D2FF6C3E-D706-4E14-8446-9CC419DABA81} = {95B48342-B1BD-43DA-AC68-361665B6CEC2}
 		{C68AD257-B838-48E3-9539-097948D9CDFE} = {95B48342-B1BD-43DA-AC68-361665B6CEC2}
 		{2179DF52-2EC7-4835-B751-78E855748785} = {D3BDF0BF-D19D-4799-ADD6-6A6BDBBD166B}
+		{612002F5-2BAB-4D9E-96D6-871E726B5CB9} = {5CE6140D-6914-475F-8F47-FC16066DBF44}
 	EndGlobalSection
 EndGlobal

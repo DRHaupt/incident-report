@@ -5,6 +5,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Publishing GitHub releases (which the apps' updater installs from) needs write access to the repository contents.
+permissions:
+  contents: write
+
+env:
+  SUITE_VERSION: 0.1.${{ github.run_number }}
+
 jobs:
   build:
     runs-on: windows-latest
@@ -35,40 +42,96 @@ jobs:
       - name: Publish Incident Report Manager (self-contained, single file)
         run: >
           dotnet publish src/IncidentReporting/IncidentReporting.csproj -c Release -r win-x64
-          --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:Version=${{ env.SUITE_VERSION }}
           -o publish/IncidentReportManager
 
       - name: Publish Field Toolkit (self-contained, single file + Content folder)
         run: >
           dotnet publish src/FieldToolkit/FieldToolkit.csproj -c Release -r win-x64
-          --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:Version=${{ env.SUITE_VERSION }}
           -o publish/FieldToolkit
 
       - name: Publish Field Map (self-contained, single file + Content folder)
         run: >
           dotnet publish src/FieldMap/FieldMap.csproj -c Release -r win-x64
-          --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:Version=${{ env.SUITE_VERSION }}
           -o publish/FieldMap
 
       - name: Publish MapBuilder (command line, for building/exporting data on a connected PC)
         run: >
           dotnet publish tools/MapBuilder/MapBuilder.csproj -c Release -r win-x64
-          --self-contained true -p:PublishSingleFile=true -o publish/MapBuilder
+          --self-contained true -p:PublishSingleFile=true -p:Version=${{ env.SUITE_VERSION }} -o publish/MapBuilder
+
+      - name: Write the release key into each program (update-keys.txt)
+        shell: pwsh
+        env:
+          UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+        run: |
+          $pub = dotnet tools/UpdateTool/bin/Release/net8.0/UpdateTool.dll public-key
+          if ($LASTEXITCODE -ne 0) { throw "The UPDATE_SIGNING_KEY secret is not a valid key (see installer/new-update-key.ps1)" }
+          if ($pub) {
+            foreach ($app in "IncidentReportManager", "FieldToolkit", "FieldMap") {
+              Set-Content "publish/$app/update-keys.txt" "# Field Suite release key: only updates signed with it are installed.`n$pub" }
+            Write-Host "Releases are signed; installed apps will only accept signed updates."
+          } else {
+            Write-Host "::warning::No UPDATE_SIGNING_KEY secret: this release is not signed. Run installer/new-update-key.ps1 and add the secret."
+          }
 
       - name: Build the Field Suite installer (MSI, WiX v5)
         shell: pwsh
         run: |
           Get-ChildItem publish -Recurse -Filter *.pdb | Remove-Item
-          dotnet build installer/FieldSuite.wixproj -c Release -p:SuiteVersion=0.1.${{ github.run_number }} "-p:PublishRoot=$PWD\publish\"
+          # The same build with a lower version number, installed first so the test below can upgrade it with the apps' own updater.
+          dotnet build installer/FieldSuite.wixproj -c Release -p:SuiteVersion=0.0.${{ github.run_number }} "-p:PublishRoot=$PWD\publish\"
+          New-Item -ItemType Directory upgrade-test | Out-Null
+          Move-Item installer/bin/x64/Release/*.msi upgrade-test/
+          dotnet build installer/FieldSuite.wixproj -c Release -p:SuiteVersion=$env:SUITE_VERSION "-p:PublishRoot=$PWD\publish\"
 
-      - name: Test the installer (silent install, start each app, uninstall)
+      - name: Write the update manifest (fieldsuite-update.json, signed when the key is set)
+        shell: pwsh
+        env:
+          UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+        run: |
+          $msi = Get-ChildItem installer/bin -Recurse -Filter "FieldSuite-$env:SUITE_VERSION-x64.msi" | Select-Object -First 1
+          New-Item -ItemType Directory release | Out-Null
+          Copy-Item $msi.FullName release/
+          $notes = git log -1 --pretty=%s
+          dotnet tools/UpdateTool/bin/Release/net8.0/UpdateTool.dll manifest "release/$($msi.Name)" $env:SUITE_VERSION release --notes "$notes"
+          if ($LASTEXITCODE -ne 0) { throw "manifest failed" }
+          $keys = "publish/FieldToolkit/update-keys.txt"
+          if (Test-Path $keys) { dotnet tools/UpdateTool/bin/Release/net8.0/UpdateTool.dll verify release $keys } else { dotnet tools/UpdateTool/bin/Release/net8.0/UpdateTool.dll verify release }
+          if ($LASTEXITCODE -ne 0) { throw "manifest verification failed" }
+
+      - name: Test the installer (install an older build, update it from inside an app, start each app, uninstall)
         shell: pwsh
         run: |
-          $msi = Get-ChildItem installer/bin -Recurse -Filter *.msi | Select-Object -First 1
-          Write-Host "Installing $($msi.Name) ($([math]::Round($msi.Length / 1MB)) MB)"
-          $p = Start-Process msiexec -ArgumentList "/i `"$($msi.FullName)`" /qn /l*v install.log" -Wait -PassThru
+          function Installed { (Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*, HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue | Where-Object DisplayName -eq "Field Suite").DisplayVersion }
+          $old = Get-ChildItem upgrade-test -Filter *.msi | Select-Object -First 1
+          $msi = Get-ChildItem release -Filter *.msi | Select-Object -First 1
+          Write-Host "Installing $($old.Name) ($([math]::Round($old.Length / 1MB)) MB)"
+          $p = Start-Process msiexec -ArgumentList "/i `"$($old.FullName)`" /qn /l*v install.log" -Wait -PassThru
           if ($p.ExitCode -ne 0) { Get-Content install.log -Tail 120; throw "msiexec /i failed: $($p.ExitCode)" }
+          if ((Installed) -ne "0.0.${{ github.run_number }}") { throw "Old build not registered: $(Installed)" }
           $base = Join-Path $env:ProgramFiles "Field Suite"
+
+          # Update exactly as from a USB stick: the installed Field Toolkit finds, verifies and installs the new release.
+          $updates = Join-Path $env:LOCALAPPDATA "FieldSuite\updates"
+          $p = Start-Process (Join-Path $base "FieldToolkit\FieldToolkit.exe") -ArgumentList "--update-from", "`"$PWD\release`"", "--unattended" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content (Join-Path $updates "update-cli.log") -ErrorAction SilentlyContinue; throw "Updater exit code $($p.ExitCode)" }
+          $result = Join-Path $updates "last-result.txt"
+          $deadline = (Get-Date).AddMinutes(8)
+          while (-not (Test-Path $result) -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 5 }
+          Get-Content (Join-Path $updates "update-cli.log")
+          if (-not (Test-Path $result)) { throw "The update did not finish within 8 minutes" }
+          $outcome = (Get-Content $result).Trim()
+          Write-Host "Update result: $outcome"
+          if ($outcome -ne "$env:SUITE_VERSION|0") {
+            Get-Content (Join-Path $updates "install-$env:SUITE_VERSION.log") -Tail 150 -ErrorAction SilentlyContinue
+            throw "Update failed: $outcome" }
+          if ((Installed) -ne $env:SUITE_VERSION) { throw "After the update Windows reports version $(Installed)" }
+          if (@(Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object DisplayName -eq "Field Suite").Count -ne 1) { throw "Old version still registered next to the new one" }
+          Write-Host "Updated 0.0.${{ github.run_number }} -> $env:SUITE_VERSION from inside the app"
+
           $expected = "IncidentReportManager\IncidentReporting.exe", "FieldToolkit\FieldToolkit.exe", "FieldToolkit\Content\erg\erg.json",
                       "FieldMap\FieldMap.exe", "FieldMap\Content\regions.json", "FieldMap\Content\imagery-sources.json",
                       "Documents\FieldSuite-Quick-Reference.pdf", "Licenses\THIRD-PARTY-NOTICES.txt"
@@ -92,12 +155,27 @@ jobs:
           if ($p.ExitCode -ne 0) { Get-Content uninstall.log -Tail 120; throw "msiexec /x failed: $($p.ExitCode)" }
           if (Test-Path (Join-Path $base "FieldMap\FieldMap.exe")) { throw "Uninstall left the programs behind" }
           if (Test-Path $menu) { throw "Uninstall left the Start menu folder" }
-          Write-Host "Install, start and uninstall OK"
+          Write-Host "Install, update, start and uninstall OK"
+
+      - name: Publish the release (installed apps update from it)
+        if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "v$env:SUITE_VERSION"
+          $subject = git log -1 --pretty=%s
+          $notes = "$subject`n`nInstall: download the .msi below, or let installed apps update themselves (Settings > Check for Field Suite updates).`nOffline: copy both files into a FieldSuite-Updates folder on a USB stick."
+          gh release create $tag (Get-ChildItem release/*).FullName --title "Field Suite $env:SUITE_VERSION" --notes $notes --target $env:GITHUB_SHA
+          if ($LASTEXITCODE -ne 0) { throw "gh release create failed" }
+          # Keep the ten newest releases; the updater only needs the latest.
+          $all = gh release list --limit 200 --json tagName,createdAt | ConvertFrom-Json
+          foreach ($r in ($all | Sort-Object createdAt -Descending | Select-Object -Skip 10)) { gh release delete $r.tagName --yes --cleanup-tag }
 
       - uses: actions/upload-artifact@v4
         with:
           name: FieldSuite-installer
-          path: installer/bin/**/*.msi
+          path: release/
 
       - uses: actions/upload-artifact@v4
         with:
