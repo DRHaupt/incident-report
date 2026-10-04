@@ -112,3 +112,44 @@ public sealed class TileScaleTests : IDisposable
         public void Report(double value) => _report(value);
     }
 }
+
+public class LocalityIndexTests
+{
+    [Fact]
+    public void Ring_search_matches_a_full_scan_and_respects_the_distance_limit()
+    {
+        var rnd = new Random(7);
+        var places = new List<FieldMap.Core.Build.Place>();
+        string[] kinds = { "city", "town", "village", "hamlet", "suburb" };
+        for (var i = 0; i < 2000; i++)
+            places.Add(new FieldMap.Core.Build.Place { Name = "P" + i, Kind = kinds[rnd.Next(kinds.Length)], Lat = 49 + rnd.NextDouble() * 3, Lon = -124 + rnd.NextDouble() * 4 });
+        var index = new FieldMap.Core.Search.LocalityIndex(places);
+
+        string? Brute(double lat, double lon, double maxKm)
+        {
+            FieldMap.Core.Build.Place? best = null;
+            var bestScore = double.MaxValue;
+            foreach (var p in places)
+            {
+                var d = Shared.Core.Geo.GeoMath.Distance(lat, lon, p.Lat, p.Lon) / 1000;
+                var score = d * p.Rank switch { 1 => 0.5, 2 => 0.7, 3 => 0.85, _ => 1 };
+                if (d <= maxKm && score < bestScore)
+                {
+                    best = p;
+                    bestScore = score;
+                }
+            }
+            return best?.Name;
+        }
+
+        for (var i = 0; i < 3000; i++)
+        {
+            var lat = 48.5 + rnd.NextDouble() * 4;
+            var lon = -124.5 + rnd.NextDouble() * 5;
+            var max = i % 3 == 0 ? 5 : 30;
+            Assert.Equal(Brute(lat, lon, max), index.Nearest(lat, lon, max));
+        }
+        Assert.Null(index.Nearest(10, 10));
+        Assert.Null(new FieldMap.Core.Search.LocalityIndex(Array.Empty<FieldMap.Core.Build.Place>()).Nearest(49, -123));
+    }
+}

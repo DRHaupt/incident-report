@@ -42,7 +42,7 @@ public static class RegionBuilder
         void Report(string stage, double f) => progress?.Report((stage, f));
 
         // 1. OpenStreetMap
-        var data = OsmExtractor.Extract(osmFiles.Select(f => f.Path).ToList(), new Progress<(string Stage, double Fraction)>(p => Report(p.Stage, p.Fraction)), cancel);
+        var data = OsmExtractor.Extract(osmFiles.Select(f => f.Path).ToList(), new Immediate<(string Stage, double Fraction)>(p => Report(p.Stage, p.Fraction)), cancel);
         var layerSources = new Dictionary<string, HashSet<string>>();
         foreach (var p in data.Pois)
             foreach (var f in osmFiles)
@@ -92,7 +92,8 @@ public static class RegionBuilder
 
         // 5. Search index
         Report("Building search index", 0);
-        SearchIndexBuilder.Build(data, graph, Path.Combine(req.OutputDir, SearchFile), meta, cancel);
+        SearchIndexBuilder.Build(data, graph, Path.Combine(req.OutputDir, SearchFile), meta, cancel,
+            new Immediate<double>(f => Report("Building search index", f)));
         Report("Building search index", 1);
 
         var stats = new Dictionary<string, long>
@@ -112,7 +113,7 @@ public static class RegionBuilder
 
         // 6. Vector tiles
         var tiles = TileBuilder.BuildMbTiles(data, Path.Combine(req.OutputDir, TilesFile), meta,
-            new Progress<double>(f => Report("Building map tiles", f)), cancel);
+            new Immediate<double>(f => Report("Building map tiles", f)), cancel);
         stats["tiles"] = tiles;
 
         // 7. Manifest
@@ -187,4 +188,15 @@ public static class RegionBuilder
             IsSample = true
         }, progress, cancel);
     }
+}
+
+/// <summary>
+/// Passes progress straight through on the reporting thread. (Progress&lt;T&gt; would queue each report to the thread
+/// pool, so a late "search index 70 %" could land after the tile stage had started.)
+/// </summary>
+internal sealed class Immediate<T> : IProgress<T>
+{
+    private readonly Action<T> _report;
+    public Immediate(Action<T> report) => _report = report;
+    public void Report(T value) => _report(value);
 }

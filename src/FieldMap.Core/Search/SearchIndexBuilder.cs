@@ -32,8 +32,25 @@ CREATE TABLE pois (id INTEGER PRIMARY KEY, layer TEXT, kind TEXT, name TEXT, lat
 CREATE INDEX pois_layer ON pois(layer);
 ";
 
-    public static void Build(MapData data, RoadGraph? graph, string path, IDictionary<string, string> meta, CancellationToken cancel = default)
+    /// <param name="progress">Fraction done (0–1), reported as each part is written.</param>
+    public static void Build(MapData data, RoadGraph? graph, string path, IDictionary<string, string> meta, CancellationToken cancel = default, IProgress<double>? progress = null)
     {
+        // Rough share of the work per part, so the bar moves evenly on a province.
+        var work = Math.Max(1.0, data.Places.Count + data.Pois.Count + data.Roads.Count * 0.2 + data.Addresses.Count + (graph?.NodeCount ?? 0) * 0.5);
+        var finalShare = 0.25; // building the full-text index at the end
+        double done = 0;
+        var lastReport = -1.0;
+        void Advance(double units)
+        {
+            done += units;
+            var f = Math.Min(1 - finalShare, done / work * (1 - finalShare));
+            if (f - lastReport >= 0.005)
+            {
+                lastReport = f;
+                progress?.Report(f);
+            }
+        }
+
         if (File.Exists(path))
             File.Delete(path);
         using var db = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Mode = SqliteOpenMode.ReadWriteCreate, Pooling = false }.ToString());
@@ -59,6 +76,7 @@ CREATE INDEX pois_layer ON pois(layer);
             cancel.ThrowIfCancellationRequested();
             Set(place, ("$n", p.Name), ("$k", p.Kind), ("$r", p.Rank), ("$p", p.Population), ("$lat", p.Lat), ("$lon", p.Lon));
             place.ExecuteNonQuery();
+            Advance(1);
             Entry("place", p.Name, PlaceLabel(p.Kind), p.Lat, p.Lon, null, 100 - p.Rank * 10, null);
         }
 
@@ -70,6 +88,7 @@ CREATE INDEX pois_layer ON pois(layer);
             Set(poi, ("$id", p.Id), ("$l", p.Layer), ("$k", p.Kind), ("$n", p.Name), ("$lat", p.Lat), ("$lon", p.Lon),
                 ("$p", JsonSerializer.Serialize(p.Props)), ("$s", p.Source), ("$v", p.LastVerified), ("$sid", p.SourceId));
             poi.ExecuteNonQuery();
+            Advance(1);
             if (p.Layer == LayerCatalog.Markers)
                 continue; // searched through km_markers / exits below
             if (p.Name.Length > 0 && p.Layer is not (LayerCatalog.Water or LayerCatalog.Crossings))
@@ -83,6 +102,7 @@ CREATE INDEX pois_layer ON pois(layer);
         var streets = new Dictionary<(string Norm, int Cx, int Cy), (string Name, double Lat, double Lon, double Len)>();
         foreach (var w in data.Roads)
         {
+            Advance(0.2);
             if (w.Tags["name"] is not { Length: > 0 } name || w.Points.Length < 2 || OsmExtractor.WalkHighways.Contains(w.Tags["highway"] ?? ""))
                 continue;
             var mid = w.Points[w.Points.Length / 2];
@@ -109,6 +129,7 @@ CREATE INDEX pois_layer ON pois(layer);
             Set(addrRtree, ("$id", addrId), ("$lat", a.Lat), ("$lon", a.Lon));
             addrRtree.ExecuteNonQuery();
             addrId++;
+            Advance(1);
             var k = (sn, city.ToLowerInvariant());
             addressStreets[k] = addressStreets.TryGetValue(k, out var s) ? (s.Name, s.Lat + a.Lat, s.Lon + a.Lon, s.N + 1) : (a.Street, a.Lat, a.Lon, 1);
         }
@@ -119,7 +140,7 @@ CREATE INDEX pois_layer ON pois(layer);
 
         // Intersections from the routing graph: junctions of two differently named roads.
         if (graph != null)
-            BuildIntersections(db, tx, graph, localities, cancel);
+            BuildIntersections(db, tx, graph, localities, cancel, n => Advance(n * 0.5));
 
         // Km markers (with the highway number from the tag or the nearest numbered road) and exits.
         var km = Prepare(db, tx, "INSERT INTO km_markers (ref,km,lat,lon,label) VALUES ($r,$k,$lat,$lon,$l)");
@@ -143,8 +164,11 @@ CREATE INDEX pois_layer ON pois(layer);
         }
 
         tx.Commit();
+        progress?.Report(1 - finalShare);
         Exec(db, "INSERT INTO entries_fts(entries_fts) VALUES('rebuild');");
+        progress?.Report(0.95);
         Exec(db, "ANALYZE;");
+        progress?.Report(1);
     }
 
     public static string NormalizeRef(string rf) => new string(rf.ToUpperInvariant().Where(char.IsLetterOrDigit).ToArray());
@@ -166,7 +190,7 @@ CREATE INDEX pois_layer ON pois(layer);
         return best.Ref;
     }
 
-    private static void BuildIntersections(SqliteConnection db, SqliteTransaction tx, RoadGraph g, LocalityIndex localities, CancellationToken cancel)
+    private static void BuildIntersections(SqliteConnection db, SqliteTransaction tx, RoadGraph g, LocalityIndex localities, CancellationToken cancel, Action<int> advance)
     {
         var ins = Prepare(db, tx, "INSERT INTO intersections (id,name1,name2,norm1,norm2,lat,lon,locality) VALUES ($id,$a,$b,$na,$nb,$lat,$lon,$loc)");
         var rtree = Prepare(db, tx, "INSERT INTO intersections_rtree VALUES ($id,$lat,$lat,$lon,$lon)");
@@ -175,7 +199,11 @@ CREATE INDEX pois_layer ON pois(layer);
         for (var n = 0; n < g.NodeCount; n++)
         {
             if (n % 10000 == 0)
+            {
                 cancel.ThrowIfCancellationRequested();
+                if (n > 0)
+                    advance(10000);
+            }
             var names = new HashSet<string>();
             for (var k = g.AdjStart[n]; k < g.AdjStart[n + 1]; k++)
             {
@@ -269,8 +297,10 @@ CREATE INDEX pois_layer ON pois(layer);
 /// <summary>Finds the nearest town or village name for labelling ("Main Street, Sampleton").</summary>
 internal sealed class LocalityIndex
 {
+    // Small cells searched outwards ring by ring: a city with hundreds of suburbs stays fast (it is asked once per
+    // address, street and facility – millions of times for a province).
+    private const double Cell = 0.05;
     private readonly Dictionary<(int, int), List<Place>> _grid = new();
-    private const double Cell = 0.25;
 
     public LocalityIndex(IEnumerable<Place> places)
     {
@@ -283,26 +313,45 @@ internal sealed class LocalityIndex
         }
     }
 
+    private static double Weight(Place p) => p.Rank switch { 1 => 0.5, 2 => 0.7, 3 => 0.85, _ => 1 };
+
     public string? Nearest(double lat, double lon, double maxKm = 30)
     {
+        if (_grid.Count == 0)
+            return null;
         var cy = (int)Math.Floor(lat / Cell);
         var cx = (int)Math.Floor(lon / Cell);
+        // Narrowest a cell gets (east-west, at the latitude here or 60°N, whichever is further north).
+        var cellKm = Cell * 111.32 * Math.Cos(Math.Min(Math.Abs(lat) + 1, 85) * Math.PI / 180);
+        var maxRing = (int)Math.Ceiling(maxKm / cellKm) + 1;
         Place? best = null;
         var bestScore = double.MaxValue;
-        for (var y = cy - 1; y <= cy + 1; y++)
-            for (var x = cx - 1; x <= cx + 1; x++)
-                if (_grid.TryGetValue((y, x), out var list))
+        for (var r = 0; r <= maxRing; r++)
+        {
+            // Anything in ring r is at least (r - 1) cells away; with the best weight (0.5) it can't beat bestScore.
+            var nearest = Math.Max(0, r - 1) * cellKm;
+            if (nearest > maxKm || nearest * 0.5 >= bestScore)
+                break;
+            for (var y = cy - r; y <= cy + r; y++)
+                for (var x = cx - r; x <= cx + r; x++)
+                {
+                    if (Math.Abs(y - cy) != r && Math.Abs(x - cx) != r)
+                        continue; // inside: done in an earlier ring
+                    if (!_grid.TryGetValue((y, x), out var list))
+                        continue;
                     foreach (var p in list)
                     {
                         var d = GeoMath.Distance(lat, lon, p.Lat, p.Lon) / 1000;
                         // Bigger places win over a slightly nearer hamlet.
-                        var score = d * p.Rank switch { 1 => 0.5, 2 => 0.7, 3 => 0.85, _ => 1 };
+                        var score = d * Weight(p);
                         if (d <= maxKm && score < bestScore)
                         {
                             best = p;
                             bestScore = score;
                         }
                     }
+                }
+        }
         return best?.Name;
     }
 }
