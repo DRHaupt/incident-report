@@ -3,10 +3,10 @@
 param([string]$Version = "0.1.0")
 $ErrorActionPreference = "Stop"
 # Building needs the .NET 8 SDK (and internet access for the first build). Installing the apps does not:
-# download the ready-made MSI from the CI run instead (Actions → latest run → Artifacts → FieldSuite-installer).
+# download the ready-made MSI from the repository's Releases page instead.
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
     Write-Host "The .NET 8 SDK isn't installed, so the installer can't be built on this PC." -ForegroundColor Yellow
-    Write-Host "To just install the apps, download FieldSuite-installer from the latest GitHub Actions run instead."
+    Write-Host "To just install the apps, download the latest FieldSuite-x.y.z-x64.msi from the repository's Releases page instead."
     Write-Host "To build here: winget install Microsoft.DotNet.SDK.8  (then open a new PowerShell window and run this again)."
     exit 1
 }
