@@ -174,24 +174,5 @@ jobs:
           $all = gh release list --limit 200 --json tagName,createdAt | ConvertFrom-Json
           foreach ($r in ($all | Sort-Object createdAt -Descending | Select-Object -Skip 10)) { gh release delete $r.tagName --yes --cleanup-tag }
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: FieldSuite-installer
-          path: release/
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: FieldMap-win-x64
-          path: |
-            publish/FieldMap/
-            publish/MapBuilder/
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: IncidentReportManager-win-x64
-          path: publish/IncidentReportManager/
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: FieldToolkit-win-x64
-          path: publish/FieldToolkit/
+      # No build artifacts: every green build is published as a GitHub release (MSI + update manifest), and
+      # per-run copies (~460 MB each) filled the private repository's artifact storage quota.

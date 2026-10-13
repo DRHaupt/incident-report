@@ -19,8 +19,8 @@ The apps share branding, the switchable **Touch Mode** (Ctrl+T), the high-contra
 
 ## Installing (all three apps)
 
-The **Field Suite installer** (`FieldSuite-x.y.z-x64.msi`, built by the CI workflow and attached to each run as the
-*FieldSuite-installer* artifact) installs Incident Report Manager, Field Toolkit and Field Map for all users of the
+The **Field Suite installer** (`FieldSuite-x.y.z-x64.msi`, built by the CI workflow and published on the repository's
+**Releases** page) installs Incident Report Manager, Field Toolkit and Field Map for all users of the
 PC, with Start menu and desktop shortcuts, the quick-reference cards and the licence notices. The programs are
 self-contained: no .NET or other download is needed, and they work offline. Pick the apps on the feature page;
 *MapBuilder* (for preparing map data on a connected PC) is optional and off by default. A newer MSI upgrades in place;
@@ -51,8 +51,7 @@ administrator permission, upgrades in place and reopens the app. Reports, maps, 
 
 Where it looks (*Where to look* in the same window; shared by all three apps):
 
-* **USB stick / SD card** – a `FieldSuite-Updates` folder holding the two files from a release (or the
-  *FieldSuite-installer* CI artifact). No internet needed.
+* **USB stick / SD card** – a `FieldSuite-Updates` folder holding the two files from a release. No internet needed.
 * **Folder or network share** – same two files.
 * **Web address** – any `https://…/fieldsuite-update.json`, with the MSI next to it.
 * **GitHub** – the latest release of `DRHaupt/incident-report`. While the repository is **private**, each laptop
@@ -570,7 +569,7 @@ dotnet publish src/IncidentReporting/IncidentReporting.csproj -c Release -r win-
   --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish
 ```
 
-This produces `publish\IncidentReporting.exe`, which runs without .NET installed. The same command with `src/FieldToolkit/FieldToolkit.csproj` produces `FieldToolkit.exe`, with its `Content` folder next to it. The GitHub Actions workflow in `.github/workflows/build.yml` builds both apps, runs both test projects on every push, and uploads both executables as build artifacts.
+This produces `publish\IncidentReporting.exe`, which runs without .NET installed. The same command with `src/FieldToolkit/FieldToolkit.csproj` produces `FieldToolkit.exe`, with its `Content` folder next to it. The GitHub Actions workflow in `.github/workflows/build.yml` builds the apps, runs the tests on every push, and publishes each green build as a release (installer + update manifest).
 
 ## Data location
 
