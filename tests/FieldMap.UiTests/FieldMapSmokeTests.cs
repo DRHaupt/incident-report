@@ -4,7 +4,9 @@ using FieldMap;
 using FieldMap.Core.Aprs;
 using FieldMap.Core.Drawings;
 using FieldMap.Core.Layers;
+using FieldMap.Core.Radio;
 using FieldMap.Core.Sample;
+using FieldMap.Core.Terrain;
 using FieldMap.Framework;
 using FieldMap.Launcher;
 using FieldMap.Panels;
@@ -159,6 +161,9 @@ public class FieldMapSmokeTests
 
         // Event layers: import a KMZ with a site plan, tap a post, convert it to a drawing, remove the layer.
         RunEventLayer(follow);
+
+        // Radio: elevation, an event repeater with predicted coverage, the repeater panels and a cell coverage layer.
+        RunRadio(follow);
 
         // Snapshot export.
         var dir = Path.Combine(Path.GetTempPath(), "fieldmap-ui-" + Guid.NewGuid().ToString("N")[..6]);
@@ -458,5 +463,88 @@ public class FieldMapSmokeTests
         map.ClosePanel();
         Directory.Delete(dir, true);
     }
-}
 
+    private static void RunRadio(MapWindow map)
+    {
+        // A synthetic 64 m elevation grid in the sample region's folder: a 400 m hill east of the repeater.
+        var region = AppServices.Data.Regions[0];
+        var terrainPath = Path.Combine(region.Dir, TerrainGrid.FileName);
+        var site = SampleRegion.At(0, 0);
+        var (sx, sy) = CanadaAtlasLambert.Forward(site.Lat, site.Lon);
+        TerrainGrid.Write(terrainPath, sx - 600 * 64, sy + 600 * 64, 64, 1200, 1200,
+            (c, r) => (short)(300 + 400 * Math.Exp(-(Math.Pow(c - 650, 2) + Math.Pow(r - 600, 2)) / 200.0)));
+        AppServices.ReloadData();
+        Pump(300);
+        Assert.True(AppServices.Data.HasTerrain);
+        Assert.NotNull(AppServices.Data.TerrainAt(site));
+
+        var repeater = new Repeater { Source = RepeaterSource.Event, CallSign = "EVT1", Name = "UI test portable", Lat = site.Lat, Lon = site.Lon,
+            OutputMHz = 155.5, InputMHz = 160.0, Tone = "CTCSS 100.0", AntennaHeightM = 20, ErpWatts = 40 };
+        AppServices.Repeaters.Save(repeater);
+        map.MapView.SetView(site, 12, 0);
+        map.MapView.Refresh();
+        Pump(300);
+        Assert.Equal(repeater.Id, map.MapView.HitRepeater(Point.Round(map.MapView.GeoToScreen(site))));
+        map.SelectRepeater(repeater.Id, center: false);
+        Pump(100);
+        Assert.Contains("EVT1", PanelText(map));
+        All(map.CurrentPanel!).OfType<Button>().First(b => b.Text == "Handheld").PerformClick();
+        PumpUntil(() => AppServices.Coverage.For(repeater.Id) != null && !AppServices.Coverage.Busy, 60_000, "repeater coverage");
+        Pump(200);
+        Assert.Contains("likely", PanelText(map));
+        foreach (var theme in new[] { UiTheme.Night, UiTheme.Daylight, UiTheme.Standard })
+        {
+            UiMode.SetTheme(theme);
+            map.MapView.Refresh();
+            Pump(100);
+        }
+        using (var edit = new RepeaterEditDialog(repeater, isNew: false))
+        {
+            edit.Show(map);
+            Pump(100);
+            edit.Close();
+        }
+        map.ShowPanel(new RepeatersPanel(map));
+        Pump(100);
+        Assert.Contains("Event repeater: 1", PanelText(map));
+        map.ShowWhatsHere(SampleRegion.At(200, 100), null);
+        Pump(200);
+        Assert.Contains("Ground elevation", PanelText(map));
+
+        // Cell coverage from a small KML, shown under Layers.
+        var dir = Path.Combine(Path.GetTempPath(), "fieldmap-ui-cell-" + Guid.NewGuid().ToString("N")[..6]);
+        Directory.CreateDirectory(dir);
+        var a = SampleRegion.At(-800, -800);
+        var b = SampleRegion.At(800, 800);
+        string F(double v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var kml = Path.Combine(dir, "lte.kml");
+        File.WriteAllText(kml, $"""
+            <kml xmlns="http://www.opengis.net/kml/2.2"><Document><Folder><name>LTE</name>
+              <Placemark><Polygon><outerBoundaryIs><LinearRing><coordinates>{F(a.Lon)},{F(a.Lat)} {F(b.Lon)},{F(a.Lat)} {F(b.Lon)},{F(b.Lat)} {F(a.Lon)},{F(b.Lat)} {F(a.Lon)},{F(a.Lat)}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>
+            </Folder></Document></kml>
+            """);
+        CellCoverage.Build(new[] { kml }, AppServices.Data.CellCoveragePath, null);
+        AppServices.ReloadData();
+        AppServices.Settings.ShowCellCoverage = true;
+        Assert.NotNull(AppServices.Data.CellCoverage);
+        map.MapView.Refresh();
+        Pump(300);
+        map.ShowPanel(new LayersPanel(map));
+        Pump(100);
+        Assert.Contains("Cell coverage (LTE / 5G)", PanelText(map));
+
+        // Tidy up.
+        AppServices.Coverage.Clear();
+        AppServices.Repeaters.Remove(repeater.Id);
+        AppServices.Settings.ShowCellCoverage = false;
+        AppServices.Data.CloseCellCoverage();
+        File.Delete(AppServices.Data.CellCoveragePath);
+        map.ClosePanel();
+        AppServices.ReloadData();
+        Pump(100);
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        File.Delete(terrainPath);
+        AppServices.ReloadData();
+        Directory.Delete(dir, true);
+    }
+}

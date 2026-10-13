@@ -30,6 +30,12 @@ public sealed class UpdateService
         var list = new List<SourceStatus>();
         foreach (var s in region.Sources.Where(s => s.Enabled))
         {
+            if (s.Kind == SourceKinds.Elevation)
+            {
+                // Only the region's part of the national file is fetched; its size is in the catalogue.
+                list.Add(new SourceStatus(s, s.ApproxBytes, null, null));
+                continue;
+            }
             try
             {
                 var info = await _downloader.HeadAsync(s.Url, cancel).ConfigureAwait(false);
@@ -71,6 +77,8 @@ public sealed class UpdateService
 
     private async Task<SourceFile> DownloadSourceAsync(string regionId, SourceDefinition source, IProgress<(string Stage, double Fraction)>? progress, CancellationToken cancel)
     {
+        if (source.Kind == SourceKinds.Elevation)
+            return await DownloadElevationAsync(regionId, source, progress, cancel).ConfigureAwait(false);
         string? hash = null;
         if (source.ChecksumUrl != null)
             hash = Downloader.ParseChecksumFile(await _downloader.GetStringAsync(source.ChecksumUrl, cancel).ConfigureAwait(false));
@@ -79,6 +87,34 @@ public sealed class UpdateService
         var info = await _downloader.DownloadAsync(source.Url, dest, hash, source.ChecksumType ?? "sha256",
             new Progress<(long Done, long? Total)>(p => progress?.Report((stage, p.Total is > 0 ? (double)p.Done / p.Total.Value : 0))), cancel).ConfigureAwait(false);
         return new SourceFile(source, dest, Describe(source, dest, DateTime.UtcNow, info.LastModifiedUtc));
+    }
+
+    /// <summary>
+    /// Fetches the region's part of the national elevation model once (it is static; delete the file in the downloads
+    /// folder to fetch it again).
+    /// </summary>
+    internal async Task<SourceFile> DownloadElevationAsync(string regionId, SourceDefinition source, IProgress<(string Stage, double Fraction)>? progress, CancellationToken cancel)
+    {
+        var dest = Path.Combine(DownloadDir(regionId), source.LocalFileName(regionId));
+        if (!File.Exists(dest))
+        {
+            if (source.Bounds is not { Length: 4 } b)
+                throw new InvalidDataException("The elevation source has no area (bounds) in the region catalogue.");
+            var stage = $"Downloading {source.Name}";
+            progress?.Report((stage, 0));
+            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+            try
+            {
+                await Terrain.TerrainExtractor.ExtractAsync(new Terrain.HttpRangeSource(_downloader.Http, new Uri(source.Url)),
+                    new Geo.GeoBounds(b[0], b[1], b[2], b[3]), source.PixelMetres, dest,
+                    new Progress<double>(f => progress?.Report((stage, f))), cancel).ConfigureAwait(false);
+            }
+            catch (Microsoft.Data.Sqlite.SqliteException ex)
+            {
+                throw new IOException("The elevation file could not be written: " + ex.Message, ex);
+            }
+        }
+        return new SourceFile(source, dest, Describe(source, dest, File.GetLastWriteTimeUtc(dest), null));
     }
 
     public static DataSourceInfo Describe(SourceDefinition s, string path, DateTime downloadedUtc, DateTime? dataDateUtc) => new()
@@ -101,7 +137,7 @@ public sealed class UpdateService
         var files = new List<SourceFile>();
         foreach (var s in region.Sources.Where(s => s.Enabled))
         {
-            var path = Path.Combine(DownloadDir(region.Id), s.FileName);
+            var path = Path.Combine(DownloadDir(region.Id), s.LocalFileName(region.Id));
             if (File.Exists(path))
                 files.Add(new SourceFile(s, path, Describe(s, path, File.GetLastWriteTimeUtc(path), File.GetLastWriteTimeUtc(path))));
             else if (s.Required)

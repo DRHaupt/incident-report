@@ -5,6 +5,8 @@ using FieldMap.Core.Aprs;
 using FieldMap.Core.Live;
 using FieldMap.Core.Overlays;
 using FieldMap.Core.Routing;
+using FieldMap.Core.Radio;
+using FieldMap.Core.Terrain;
 using SkiaSharp;
 
 namespace FieldMap.Map;
@@ -45,6 +47,16 @@ public sealed class MapScene
     public BaseMapMode BaseMode { get; init; } = BaseMapMode.Map;
     public bool AprsTracks { get; init; } = true;
 
+    /// <summary>Repeaters to draw, and the selected one.</summary>
+    public IReadOnlyList<Repeater> Repeaters { get; init; } = Array.Empty<Repeater>();
+    public string? SelectedRepeater { get; init; }
+
+    /// <summary>Predicted repeater coverage rasters to shade.</summary>
+    public IReadOnlyList<CoverageResult> Coverage { get; init; } = Array.Empty<CoverageResult>();
+
+    /// <summary>The imported cell-coverage tileset, when shown.</summary>
+    public TileSource? CellCoverage { get; init; }
+
     /// <summary>Stations older than this are drawn faded.</summary>
     public TimeSpan AprsFadeAfter { get; init; } = TimeSpan.FromMinutes(30);
     public DateTime NowUtc { get; init; } = DateTime.UtcNow;
@@ -60,6 +72,7 @@ public sealed class RenderResult
     public List<(SKRect Rect, Poi Poi)> Pois { get; } = new();
     public List<(SKRect Rect, string Key)> Aprs { get; } = new();
     public List<(SKRect Rect, OverlayLayer Layer, OverlayFeature Feature)> OverlayPoints { get; } = new();
+    public List<(SKRect Rect, string Id)> Repeaters { get; } = new();
     public SKRect NorthArrow { get; set; }
     public bool TilesPending { get; set; }
 }
@@ -79,7 +92,7 @@ public static class MapRenderer
         var result = new RenderResult();
         var st = scene.Style;
         canvas.Clear(st.Background);
-        var tiles = CollectTiles(vp, scene, result);
+        var tiles = CollectTiles(vp, scene, scene.Regions, 0, result);
 
         using var fill = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
         using var stroke = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round, StrokeJoin = SKStrokeJoin.Round };
@@ -121,6 +134,10 @@ public static class MapRenderer
             canvas.ResetMatrix();
             DrawImagery(canvas, vp, scene, result);
         }
+
+        canvas.ResetMatrix();
+        DrawCellCoverage(canvas, vp, scene, result);
+        DrawCoverage(canvas, vp, scene);
 
         // Lines: waterways, boundaries, roads (casings then fills), rail
         foreach (var t in tiles)
@@ -193,6 +210,7 @@ public static class MapRenderer
         if (labels)
             DrawPlaceLabels(canvas, vp, scene, tiles, occupied, 1, 2); // cities and towns first
         DrawPois(canvas, vp, scene, occupied, result);
+        DrawRepeaters(canvas, vp, scene, occupied, result);
         DrawAprs(canvas, vp, scene, occupied, result);
         if (labels)
         {
@@ -207,13 +225,17 @@ public static class MapRenderer
 
     // ------------------------------------------------------------------ tiles
 
-    private static List<VisibleTile> CollectTiles(Viewport vp, MapScene scene, RenderResult result)
+    /// <summary>Region index base for the cell-coverage tileset in the shared tile cache.</summary>
+    private const int CellCoverageIndex = 10_000;
+
+    private static List<VisibleTile> CollectTiles(Viewport vp, MapScene scene, IReadOnlyList<TileSource> regions, int indexBase, RenderResult result)
     {
         var list = new List<VisibleTile>();
         var (minX, minY, maxX, maxY) = vp.VisibleWorld();
-        for (var r = 0; r < scene.Regions.Count; r++)
+        for (var ri = 0; ri < regions.Count; ri++)
         {
-            var region = scene.Regions[r];
+            var r = indexBase + ri;
+            var region = regions[ri];
             var reader = region.Tiles;
             var z = (int)Math.Clamp(Math.Floor(vp.Zoom + 0.25), reader.MinZoom, reader.MaxZoom);
             var n = 1 << z;
@@ -799,6 +821,176 @@ public static class MapRenderer
         {
             using var dim = new SKPaint { Color = SKColors.Black.WithAlpha(150) };
             canvas.DrawRect(new SKRect(0, 0, vp.Width, vp.Height), dim);
+        }
+    }
+
+    // ------------------------------------------------------------------ radio: cell coverage, predicted coverage, repeaters
+
+    public static SKColor CellCoverageColor(string kind) => kind switch
+    {
+        "5g" => new SKColor(0x6A, 0x1B, 0x9A),
+        "lte" => new SKColor(0x15, 0x65, 0xC0),
+        "3g" => new SKColor(0x00, 0x83, 0x8F),
+        _ => new SKColor(0x75, 0x75, 0x75)
+    };
+
+    private static void DrawCellCoverage(SKCanvas canvas, Viewport vp, MapScene scene, RenderResult result)
+    {
+        if (scene.CellCoverage is not { } source)
+            return;
+        var tiles = CollectTiles(vp, scene, new[] { source }, CellCoverageIndex, result);
+        using var fill = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+        // Older technologies underneath, 5G on top.
+        foreach (var kind in new[] { "other", "3g", "lte", "5g" })
+            foreach (var t in tiles)
+                if (t.Tile.Fills.TryGetValue("coverage:" + kind, out var path))
+                {
+                    canvas.SetMatrix(t.Matrix);
+                    fill.Color = scene.Style.Symbol(CellCoverageColor(kind)).WithAlpha(kind == "5g" ? (byte)70 : (byte)55);
+                    canvas.DrawPath(path, fill);
+                }
+        canvas.ResetMatrix();
+    }
+
+    public static SKColor CoverageColor(CoverageClass c) => c switch
+    {
+        CoverageClass.Likely => new SKColor(0x2E, 0x7D, 0x32, 120),
+        CoverageClass.Marginal => new SKColor(0xF9, 0xA8, 0x25, 120),
+        CoverageClass.None => new SKColor(0xC6, 0x28, 0x28, 50),
+        _ => SKColors.Transparent
+    };
+
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<CoverageResult, Dictionary<MapStyle, SKImage>> CoverageImages = new();
+
+    private static SKImage CoverageImage(CoverageResult c, MapStyle style)
+    {
+        var byStyle = CoverageImages.GetOrCreateValue(c);
+        lock (byStyle)
+        {
+            if (byStyle.TryGetValue(style, out var img))
+                return img;
+            var colors = new uint[256];
+            foreach (var cls in new[] { CoverageClass.None, CoverageClass.Marginal, CoverageClass.Likely })
+            {
+                var col = CoverageColor(cls);
+                var s = style.Symbol(col).WithAlpha(col.Alpha);
+                // Premultiplied BGRA for the raster.
+                var a = s.Alpha / 255f;
+                colors[(int)cls] = ((uint)s.Alpha << 24) | ((uint)(s.Red * a) << 16) | ((uint)(s.Green * a) << 8) | (uint)(s.Blue * a);
+            }
+            var pixels = new uint[c.Width * c.Height];
+            for (var i = 0; i < pixels.Length; i++)
+                pixels[i] = colors[c.Classes[i]];
+            var info = new SKImageInfo(c.Width, c.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
+            var handle = System.Runtime.InteropServices.GCHandle.Alloc(pixels, System.Runtime.InteropServices.GCHandleType.Pinned);
+            try
+            {
+                using var pm = new SKPixmap(info, handle.AddrOfPinnedObject(), c.Width * 4);
+                img = SKImage.FromPixelCopy(pm);
+            }
+            finally
+            {
+                handle.Free();
+            }
+            byStyle[style] = img;
+            return img;
+        }
+    }
+
+    private static void DrawCoverage(SKCanvas canvas, Viewport vp, MapScene scene)
+    {
+        if (scene.Coverage.Count == 0)
+            return;
+        var view = vp.VisibleBounds();
+        using var paint = new SKPaint();
+        foreach (var c in scene.Coverage)
+        {
+            if (!c.Bounds.Intersects(view))
+                continue;
+            var img = CoverageImage(c, scene.Style);
+            var (sx, sy) = vp.WorldToScreen(c.MinX, c.MinY);
+            var m = SKMatrix.CreateTranslation((float)sx, (float)sy)
+                .PreConcat(SKMatrix.CreateRotationDegrees((float)-vp.Bearing))
+                .PreConcat(SKMatrix.CreateScale((float)(vp.Scale * (c.MaxX - c.MinX) / c.Width), (float)(vp.Scale * (c.MaxY - c.MinY) / c.Height)));
+            canvas.SetMatrix(m);
+            canvas.DrawImage(img, 0, 0, new SKSamplingOptions(SKFilterMode.Nearest, SKMipmapMode.None), paint);
+        }
+        canvas.ResetMatrix();
+    }
+
+    public static SKColor RepeaterColor(RepeaterSource s) => s switch
+    {
+        RepeaterSource.Own => new SKColor(0x28, 0x35, 0x93),
+        RepeaterSource.Event => new SKColor(0xE6, 0x51, 0x00),
+        RepeaterSource.Amateur => new SKColor(0x2E, 0x7D, 0x32),
+        RepeaterSource.RepeaterBook => new SKColor(0x00, 0x79, 0x6B),
+        _ => new SKColor(0x54, 0x6E, 0x7A)
+    };
+
+    private static void DrawRepeaters(SKCanvas canvas, Viewport vp, MapScene scene, List<SKRect> occupied, RenderResult result)
+    {
+        if (scene.Repeaters.Count == 0 || vp.Zoom < 6)
+            return;
+        var st = scene.Style;
+        var u = scene.UiScale;
+        var view = vp.VisibleBounds().Expand(500);
+        var r = 11f * u;
+        using var fill = new SKPaint { IsAntialias = true };
+        using var ring = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 2f };
+        using var glyph = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1.8f * u, StrokeCap = SKStrokeCap.Round };
+        using var labelFont = Font(11f * u, true);
+        using var text = new SKPaint { IsAntialias = true };
+        // Licensed stations can number thousands: only when zoomed in. Own and event repeaters always.
+        var visible = scene.Repeaters.Where(x => view.Contains(x.Lat, x.Lon) &&
+                                                 (x.Source is RepeaterSource.Own or RepeaterSource.Event || x.Id == scene.SelectedRepeater ||
+                                                  vp.Zoom >= (x.Source == RepeaterSource.Licensed ? 11 : 8)))
+            .OrderBy(x => x.Source is RepeaterSource.Own or RepeaterSource.Event).ThenBy(x => x.Id == scene.SelectedRepeater).ToList();
+        if (visible.Count > 1500)
+            visible = visible.Skip(visible.Count - 1500).ToList();
+        var edge = st == MapStyle.Night ? new SKColor(0x30, 0x30, 0x30) : st == MapStyle.Daylight ? SKColors.Black : SKColors.White;
+        foreach (var x in visible)
+        {
+            var p = S(vp, x.Point);
+            var color = st.Symbol(RepeaterColor(x.Source));
+            fill.Color = color;
+            canvas.DrawCircle(p, r, fill);
+            ring.Color = edge;
+            canvas.DrawCircle(p, r, ring);
+            // Mast with radio waves.
+            glyph.Color = st == MapStyle.Night ? new SKColor(0xC4, 0xB4, 0x96) : SKColors.White;
+            canvas.DrawLine(p.X, p.Y - r * 0.35f, p.X, p.Y + r * 0.6f, glyph);
+            canvas.DrawLine(p.X - r * 0.3f, p.Y + r * 0.6f, p.X, p.Y - r * 0.05f, glyph);
+            canvas.DrawLine(p.X + r * 0.3f, p.Y + r * 0.6f, p.X, p.Y - r * 0.05f, glyph);
+            using (var waves = new SKPath())
+            {
+                waves.AddArc(new SKRect(p.X - r * 0.45f, p.Y - r * 0.8f, p.X + r * 0.45f, p.Y + r * 0.1f), 200, 140);
+                waves.AddArc(new SKRect(p.X - r * 0.75f, p.Y - r * 1.05f, p.X + r * 0.75f, p.Y + r * 0.35f), 205, 130);
+                canvas.DrawPath(waves, glyph);
+            }
+            var hit = new SKRect(p.X - r - 6, p.Y - r - 6, p.X + r + 6, p.Y + r + 6);
+            if (x.Id == scene.SelectedRepeater)
+            {
+                ring.Color = st.Selection;
+                ring.StrokeWidth = 4;
+                canvas.DrawCircle(p, r + 5, ring);
+                ring.StrokeWidth = 2;
+            }
+            result.Repeaters.Add((hit, x.Id));
+            occupied.Add(new SKRect(p.X - r, p.Y - r, p.X + r, p.Y + r));
+            if (vp.Zoom >= 10 || x.Id == scene.SelectedRepeater)
+            {
+                var label = x.Label;
+                var tw = labelFont.MeasureText(label);
+                var lr = new SKRect(p.X - tw / 2 - 4, p.Y + r + 3, p.X + tw / 2 + 4, p.Y + r + 7 + labelFont.Size);
+                if (Free(occupied, lr) || x.Id == scene.SelectedRepeater)
+                {
+                    occupied.Add(lr);
+                    fill.Color = st.Overlay.WithAlpha(230);
+                    canvas.DrawRoundRect(lr, 4, 4, fill);
+                    text.Color = st.OverlayText;
+                    canvas.DrawText(label, p.X, lr.Bottom - 4 - labelFont.Size * 0.12f, SKTextAlign.Center, labelFont, text);
+                }
+            }
         }
     }
 

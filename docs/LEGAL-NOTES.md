@@ -51,6 +51,20 @@ suggest endorsement by the government; check that nothing (logos, wording) does.
 * Software identifier (tocall): `APZFMP` (experimental) until a permanent one is allocated – see
   `docs/APRS-TOCALL-REQUEST.md`.
 
+## 5a. Radio coverage and repeater data
+
+* **Predicted coverage is an estimate** (terrain only, 64 m, one main obstacle per path). The app says so next to
+  every prediction. Decide whether crews may plan with it and how it is checked on the ground.
+* **Cell coverage maps** are carrier-reported and unverified; shown with that warning. Confirm the licence shown
+  with the CRTC / Atlas of Canada download before sharing the imported layer outside the organisation.
+* **RepeaterBook** data: their terms allow personal, non-commercial use by registered users and forbid
+  redistribution; API access requires an approved token. The app only imports a file a user downloaded with their
+  own account and does not share it. Using it for an organisation's operations may count as commercial use –
+  ask RepeaterBook, or use your own repeater list. Don't put RepeaterBook files in USB packages or shared folders.
+* **ISED spectrum data**: check the terms on ISED's download page. Some public-safety stations may be left out of
+  the public data on purpose; an absent repeater doesn't mean there is none.
+* **Elevation** (NRCan CDEM): Open Government Licence – Canada; attribution shown in Layers.
+
 ## 6. Privacy and records (incident reports, drawings, messages)
 
 * Incident reports can hold personal and health information. Depending on the organisation, **BC FIPPA / PIPA** or

@@ -314,3 +314,21 @@ online source (xyz / WMS 1.1.1 EPSG:3857) ─┴─► cache (imagery\cache) ┘
   details with directions / dispatch copy / Field Toolkit / convert to an incident drawing. The AED import and the
   Drawings import also read these formats.
 
+## 9. Terrain and radio
+
+* **Elevation** – `FieldMap.Core.Terrain`: a minimal cloud-optimised GeoTIFF reader (classic/BigTIFF, LZW, 16-bit,
+  overviews) reads NRCan's national CDEM over HTTP range requests; `TerrainExtractor` copies the 64 m tiles covering a
+  region's bounds into `terrain.sqlite` unchanged (LZW blobs + grid origin), `TerrainGrid` decodes tiles on demand
+  (48-tile cache) and answers bilinear elevations. EPSG:3979 Lambert conformal conic is implemented directly
+  (`CanadaAtlasLambert`). The file sits in the region version folder, so it is hashed, validated, rolled back and
+  packaged like the rest.
+* **Coverage** – `RadioCoverage.Compute` loads the elevation window around a site, casts a ray to every edge cell
+  (64 m steps), and per cell takes max(free-space, plane-earth) loss with the transmitter height measured above the
+  receiver's ground, plus single knife-edge diffraction (ITU-R P.526) over the highest-angle obstacle seen from the
+  antenna (4/3-earth), against sensitivity and a fade margin → likely / marginal / none; resampled to Web Mercator.
+  50 km takes ~2 s.
+* **Repeaters** – `RepeaterStore` (repeaters.json) with CSV / RepeaterBook JSON / ISED importers; drawn as mast
+  symbols (licensed ones only from zoom 11).
+* **Cell coverage** – imported polygons go through the tile builder into a separate `cell-coverage.mbtiles`
+  (zoom 0–11, stretched beyond) drawn as translucent fills under the roads.
+

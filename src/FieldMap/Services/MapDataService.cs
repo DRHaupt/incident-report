@@ -2,6 +2,7 @@ using FieldMap.Core.Build;
 using FieldMap.Core.Data;
 using FieldMap.Core.Routing;
 using FieldMap.Core.Search;
+using FieldMap.Core.Terrain;
 using FieldMap.Core.Tiles;
 using FieldMap.Map;
 
@@ -22,7 +23,28 @@ public sealed class LoadedRegion : IDisposable
 
     public TileSource Source => new(Tiles, Bounds);
 
-    public void Dispose() => Tiles.Dispose();
+    private Lazy<TerrainGrid?>? _terrain;
+
+    /// <summary>The region's elevation grid, if its map data includes one (opened on first use).</summary>
+    public TerrainGrid? Terrain => (_terrain ??= new Lazy<TerrainGrid?>(() =>
+    {
+        var path = Path.Combine(Dir, TerrainGrid.FileName);
+        try
+        {
+            return File.Exists(path) ? TerrainGrid.Open(path) : null;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    })).Value;
+
+    public void Dispose()
+    {
+        Tiles.Dispose();
+        if (_terrain is { IsValueCreated: true, Value: { } t })
+            t.Dispose();
+    }
 }
 
 /// <summary>
@@ -107,6 +129,15 @@ public sealed class MapDataService : IDisposable
             }
         }
         _search = search;
+        try
+        {
+            CellCoverage = File.Exists(CellCoveragePath) ? new MbTilesReader(CellCoveragePath) : null;
+        }
+        catch (Exception ex)
+        {
+            CellCoverage = null;
+            Messages.Add("The cell coverage layer could not be opened: " + ex.Message);
+        }
         Pois = search.LoadPois();
         PoiIndex = new PoiIndex(Pois);
         // Give the search engine the graphs once they are loaded (for "What's here?" road names).
@@ -121,6 +152,26 @@ public sealed class MapDataService : IDisposable
         }
         Changed?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>The imported cell-coverage tileset (Data &amp; updates → Cell coverage), if any.</summary>
+    public MbTilesReader? CellCoverage { get; private set; }
+
+    /// <summary>Releases the cell-coverage file (before replacing or deleting it).</summary>
+    public void CloseCellCoverage()
+    {
+        CellCoverage?.Dispose();
+        CellCoverage = null;
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    public string CellCoveragePath => Path.Combine(Store.ImportsDir, Core.Radio.CellCoverage.Folder, Core.Radio.CellCoverage.FileName);
+
+    /// <summary>Elevation grid covering a point, from whichever installed region has one.</summary>
+    public TerrainGrid? TerrainAt(GeoPoint p) =>
+        _regions.Where(r => r.Bounds.Expand(2000).Contains(p.Lat, p.Lon)).Select(r => r.Terrain).FirstOrDefault(t => t != null);
+
+    public bool HasTerrain => _regions.Any(r => File.Exists(Path.Combine(r.Dir, TerrainGrid.FileName)));
 
     public LoadedRegion? RegionAt(GeoPoint p) =>
         _regions.FirstOrDefault(r => r.Bounds.Expand(2000).Contains(p.Lat, p.Lon));
@@ -138,6 +189,8 @@ public sealed class MapDataService : IDisposable
         foreach (var r in _regions)
             r.Dispose();
         _regions.Clear();
+        CellCoverage?.Dispose();
+        CellCoverage = null;
         _search?.Dispose();
         _search = null;
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();

@@ -58,6 +58,7 @@ public sealed class PreparedTile : IDisposable
                     case TileSchema.Water: fillKey = "water"; break;
                     case TileSchema.Landuse: fillKey = "landuse:" + (f.Str("kind") ?? ""); break;
                     case TileSchema.Hazards: fillKey = "hazard"; lineKey = "hazard"; break;
+                    case TileSchema.Coverage: fillKey = "coverage:" + (f.Str("kind") ?? "other"); break;
                     case TileSchema.Waterways: lineKey = "waterway:" + (f.Str("kind") ?? "stream"); break;
                     case TileSchema.Boundaries: lineKey = "boundary"; break;
                     case TileSchema.Rail: lineKey = "rail:" + (f.Str("class") ?? "rail"); break;

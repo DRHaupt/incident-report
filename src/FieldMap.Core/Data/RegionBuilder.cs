@@ -111,12 +111,21 @@ public static class RegionBuilder
         var bounds = data.Bounds;
         var layerCounts = data.Pois.GroupBy(p => p.Layer).ToDictionary(g => g.Key, g => g.Count());
 
-        // 6. Vector tiles
+        // 6. Elevation (fetched during the download step; copied as is)
+        if (req.Sources.FirstOrDefault(s => s.Definition.Kind == SourceKinds.Elevation) is { } elevation)
+        {
+            Report("Adding elevation", 0);
+            File.Copy(elevation.Path, Path.Combine(req.OutputDir, Terrain.TerrainGrid.FileName), overwrite: true);
+            stats["terrain"] = 1;
+            Report("Adding elevation", 1);
+        }
+
+        // 7. Vector tiles
         var tiles = TileBuilder.BuildMbTiles(data, Path.Combine(req.OutputDir, TilesFile), meta,
             new Immediate<double>(f => Report("Building map tiles", f)), cancel);
         stats["tiles"] = tiles;
 
-        // 7. Manifest
+        // 8. Manifest
         var manifest = new RegionManifest
         {
             RegionId = req.RegionId,

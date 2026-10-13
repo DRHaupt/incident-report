@@ -471,6 +471,11 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
             SelectAprs(aprs, center: false);
             return;
         }
+        if (_map.HitRepeater(e.Screen) is { } repeater)
+        {
+            SelectRepeater(repeater, center: false);
+            return;
+        }
         if (_map.HitOverlayPoint(e.Screen) is { } overlayPoint)
         {
             ShowPanel(new OverlayFeaturePanel(this, overlayPoint.Layer, overlayPoint.Feature));
@@ -491,11 +496,12 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
             ShowPanel(new OverlayFeaturePanel(this, overlayShape.Layer, overlayShape.Feature));
             return;
         }
-        if (_map.SelectedPoi != null || _map.SelectedDrawing != null || _map.SelectedAprs != null)
+        if (_map.SelectedPoi != null || _map.SelectedDrawing != null || _map.SelectedAprs != null || _map.SelectedRepeater != null)
         {
             _map.SelectedPoi = null;
             _map.SelectedDrawing = null;
             _map.SelectedAprs = null;
+            _map.SelectedRepeater = null;
             _map.Invalidate();
         }
     }
@@ -510,6 +516,21 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
             CenterOn(p);
         _map.Invalidate();
         ShowPanel(new AprsStationPanel(this, key));
+    }
+
+    /// <summary>Selects a repeater and shows its details and coverage buttons.</summary>
+    public void SelectRepeater(string id, bool center)
+    {
+        if (AppServices.Repeaters.Find(id) is not { } r)
+            return;
+        _map.SelectedRepeater = id;
+        _map.SelectedPoi = null;
+        _map.SelectedDrawing = null;
+        _map.SelectedAprs = null;
+        if (center)
+            CenterOn(r.Point);
+        _map.Invalidate();
+        ShowPanel(new RepeaterPanel(this, id));
     }
 
     public void CenterOn(GeoPoint p)

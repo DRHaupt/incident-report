@@ -165,6 +165,34 @@ public sealed class DataWindow : ToolWindow
         }
         Row(Button("Install imagery package…", ButtonStyle.Secondary, InstallImagery));
 
+        Line("Cell coverage (LTE / 5G)", FontRole.Heading);
+        var cell = AppServices.Data.CellCoverage;
+        Line(cell != null
+                ? $"Installed: {cell.Metadata.GetValueOrDefault("description", "coverage file")} (imported {(DateTime.TryParse(cell.Metadata.GetValueOrDefault("built"), out var built) ? built.ToLocalTime().ToString("yyyy-MM-dd") : "–")}). Show it under Layers → Radio and cell coverage."
+                : "Not installed.", FontRole.Normal, cell != null ? Brand.Navy : Brand.Muted);
+        Line("Download the national mobile coverage map (LTE and 5G, all carriers combined) as KML/KMZ from the CRTC's mobile coverage page or the Atlas of Canada " +
+             "Wireless Data Network map, on a connected PC, then import it here. Only the part over the installed map is kept. The maps show what carriers report, " +
+             "not measured service – check the licence shown with the download.", FontRole.Normal, Brand.Muted);
+        Row(Button("Import coverage file(s)…", ButtonStyle.Secondary, () => _ = ImportCellCoverageAsync()),
+            Button("Remove", ButtonStyle.Danger, () =>
+            {
+                if (cell == null || MessageBox.Show(this, "Remove the cell coverage layer?", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                    return;
+                var path = AppServices.Data.CellCoveragePath;
+                AppServices.Settings.ShowCellCoverage = false;
+                AppServices.Data.CloseCellCoverage();
+                try
+                {
+                    File.Delete(path);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    MessageBox.Show(this, ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                AppServices.Data.Load();
+                Build();
+            }));
+
         Line("AEDs", FontRole.Heading);
         var aeds = UpdateService.AedImports(store);
         Line(aeds.Count == 0 ? "No AED registry imported. OpenStreetMap AEDs are always included." :
@@ -390,6 +418,41 @@ public sealed class DataWindow : ToolWindow
         {
             Finish(ex.Message, reload: false);
         }
+    }
+
+    private async Task ImportCellCoverageAsync()
+    {
+        using var d = new OpenFileDialog { Filter = "Coverage maps (*.kml;*.kmz;*.geojson;*.json)|*.kml;*.kmz;*.geojson;*.json|All files (*.*)|*.*", Multiselect = true, Title = "Cell coverage files" };
+        if (d.ShowDialog(this) != DialogResult.OK)
+            return;
+        var files = d.FileNames.ToList();
+        var path = AppServices.Data.CellCoveragePath;
+        var temp = path + ".new";
+        var clip = AppServices.Data.HasData ? AppServices.Data.Bounds.Expand(20000) : (GeoBounds?)null;
+        SetBusy(true, "Building the cell coverage layer…");
+        var progress = Progress();
+        try
+        {
+            var summary = await Task.Run(() => Core.Radio.CellCoverage.Build(files, temp, clip, new Progress<double>(f => progress.Report(("Building the cell coverage layer", f)))));
+            AppServices.Data.CloseCellCoverage();
+            File.Move(temp, path, overwrite: true);
+            AppServices.Settings.ShowCellCoverage = true;
+            AppServices.Settings.Save();
+            AppServices.Data.Load();
+            _log = $"Cell coverage imported from {string.Join(", ", files.Select(Path.GetFileName))}: {summary.Areas:N0} areas (" +
+                   string.Join(", ", summary.ByKind.Select(k => $"{Core.Radio.CellCoverage.KindLabel(k.Key)} {k.Value:N0}")) + ")." +
+                   (summary.Warnings.Count > 0 ? "\n" + string.Join("\n", summary.Warnings.Take(10)) : "") +
+                   (summary.ByKind.ContainsKey("other") ? "\nSome areas didn't say which technology they are for and are shown as 'other' (grey)." : "");
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or System.Xml.XmlException or System.Text.Json.JsonException)
+        {
+            _log = "The coverage file could not be imported: " + ex.Message;
+        }
+        finally
+        {
+            try { File.Delete(temp); } catch (IOException) { }
+        }
+        Finish(_log, reload: false);
     }
 
     private async Task ImportAedAsync()

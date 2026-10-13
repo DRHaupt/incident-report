@@ -55,6 +55,8 @@ public sealed class MapView : SKControl
         AppServices.Breadcrumbs.Changed += OnRedraw;
         AppServices.Live.Changed += OnRedraw;
         AppServices.Aprs.Changed += OnRedraw;
+        AppServices.Repeaters.Changed += OnRedraw;
+        AppServices.Coverage.Changed += OnRedraw;
         AppServices.Imagery.Changed += OnRedraw;
         AppServices.Overlays.Changed += OnRedraw;
         UiMode.Changed += OnRedraw;
@@ -66,6 +68,8 @@ public sealed class MapView : SKControl
             AppServices.Breadcrumbs.Changed -= OnRedraw;
             AppServices.Live.Changed -= OnRedraw;
             AppServices.Aprs.Changed -= OnRedraw;
+            AppServices.Repeaters.Changed -= OnRedraw;
+            AppServices.Coverage.Changed -= OnRedraw;
             AppServices.Imagery.Changed -= OnRedraw;
             AppServices.Overlays.Changed -= OnRedraw;
             UiMode.Changed -= OnRedraw;
@@ -162,6 +166,7 @@ public sealed class MapView : SKControl
     public Guid? SelectedDrawing { get; set; }
     public Poi? SelectedPoi { get; set; }
     public string? SelectedAprs { get; set; }
+    public string? SelectedRepeater { get; set; }
     public GeoPoint? Marker { get; set; }
     public GeoFix? Fix { get; set; }
     public bool FixStale { get; set; }
@@ -189,6 +194,10 @@ public sealed class MapView : SKControl
         AprsTracks = AppServices.Settings.Aprs.ShowTracks,
         AprsFadeAfter = TimeSpan.FromMinutes(Math.Max(1, AppServices.Settings.Aprs.ShowMinutes) / 2.0),
         SelectedAprs = SelectedAprs,
+        Repeaters = AppServices.Settings.ShowRepeaters ? AppServices.Repeaters.All : Array.Empty<Core.Radio.Repeater>(),
+        SelectedRepeater = SelectedRepeater,
+        Coverage = AppServices.Settings.ShowCoverage ? AppServices.Coverage.Results : Array.Empty<Core.Terrain.CoverageResult>(),
+        CellCoverage = AppServices.Settings.ShowCellCoverage && AppServices.Data.CellCoverage is { } cell ? new TileSource(cell, new GeoBounds(-85, -180, 85, 180)) : null,
         NowUtc = DateTime.UtcNow,
         Overlays = AppServices.Overlays.VisibleLayers,
         Imagery = AppServices.Imagery.Tiles,
@@ -234,6 +243,7 @@ public sealed class MapView : SKControl
             Breadcrumbs = scene.Breadcrumbs, Live = scene.Live, Marker = scene.Marker, Attribution = scene.Attribution, Synchronous = true,
             Aprs = scene.Aprs, AprsTracks = scene.AprsTracks, AprsFadeAfter = scene.AprsFadeAfter, NowUtc = scene.NowUtc,
             Imagery = scene.Imagery, BaseMode = scene.BaseMode, Overlays = scene.Overlays,
+            Repeaters = scene.Repeaters, Coverage = scene.Coverage, CellCoverage = scene.CellCoverage,
             ShowControls = true, UiScale = UiScale * factor
         });
         return bmp;
@@ -256,6 +266,17 @@ public sealed class MapView : SKControl
         foreach (var (rect, poi) in Enumerable.Reverse(_last.Pois))
             if (rect.Contains(p.X, p.Y))
                 return poi;
+        return null;
+    }
+
+    /// <summary>The repeater (id) drawn under a screen point, if any.</summary>
+    public string? HitRepeater(Point p)
+    {
+        if (_last == null)
+            return null;
+        foreach (var (rect, id) in Enumerable.Reverse(_last.Repeaters))
+            if (rect.Contains(p.X, p.Y))
+                return id;
         return null;
     }
 

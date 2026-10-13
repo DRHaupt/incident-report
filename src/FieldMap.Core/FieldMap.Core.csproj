@@ -21,6 +21,7 @@
     <Using Include="Shared.Core" />
     <Using Include="Shared.Core.Geo" />
     <InternalsVisibleTo Include="FieldMap.Tests" />
+    <InternalsVisibleTo Include="FieldMap.UiTests" />
   </ItemGroup>
 
 </Project>

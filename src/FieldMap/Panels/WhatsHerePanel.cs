@@ -48,6 +48,8 @@ public sealed class WhatsHerePanel : SidePanel
             AddText($"Nearest intersection: {_here.Intersection} ({GeoMath.FormatDistance(_here.IntersectionDistance ?? 0)})");
         if (_here?.Address != null && !_here.Summary.Contains(_here.Address))
             AddText($"Nearest address: {_here.Address} ({GeoMath.FormatDistance(_here.AddressDistance ?? 0)})");
+        if (AppServices.Data.TerrainAt(p)?.Elevation(p) is { } ground)
+            AddText($"Ground elevation about {ground:0} m ({ground * 3.28084:0} ft) – NRCan elevation model, 64 m cells");
         if (Map.MyPosition is { } me && Map.FixUsable)
             AddText($"From my position: {GeoMath.FormatDistance(me.DistanceTo(p))}, bearing {GeoMath.FormatBearing(me.BearingTo(p))} true", FontRole.Bold);
 
@@ -82,6 +84,7 @@ public sealed class WhatsHerePanel : SidePanel
                    Btn("Save as note", ButtonStyle.Secondary, () => DrawPanel.QuickAdd(Map, DrawingKind.Note, p, _label ?? _here?.Summary)));
         AddButtons(Btn("Send to Field Toolkit", ButtonStyle.Secondary, () => Map.SendToToolkit(p, _label ?? _here?.Summary ?? "Map point")),
                    Btn("Directions from here", ButtonStyle.Secondary, () => Map.ShowPanel(new DirectionsPanel(Map, p, null))));
+        AddButton("Add a repeater here…", ButtonStyle.Secondary, () => RepeatersPanel.AddAt(Map, p));
         Refit();
     }
 

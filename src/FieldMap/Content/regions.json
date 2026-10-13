@@ -123,6 +123,26 @@
             "lonColumn": "longitude",
             "mergeRadiusMeters": 150
           }
+        },
+        {
+          "id": "cdem",
+          "name": "Elevation – Canadian Digital Elevation Model (NRCan)",
+          "kind": "elevation-cog",
+          "url": "https://datacube-prod-data-public.s3.ca-central-1.amazonaws.com/store/elevation/cdem-cdsm/cdem/cdem-canada-dem.tif",
+          "licence": "Open Government Licence – Canada",
+          "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada",
+          "attribution": "Elevation: Natural Resources Canada (CDEM)",
+          "required": false,
+          "enabled": true,
+          "approxBytes": 622000000,
+          "bounds": [
+            48.2,
+            -139.1,
+            60.0,
+            -114.0
+          ],
+          "pixelMetres": 64,
+          "verified": "2026-10 (file layout read; size summed from its 64 m tile index)"
         }
       ]
     },
@@ -199,6 +219,26 @@
             "lonColumn": "longitude",
             "mergeRadiusMeters": 250
           }
+        },
+        {
+          "id": "cdem",
+          "name": "Elevation – Canadian Digital Elevation Model (NRCan)",
+          "kind": "elevation-cog",
+          "url": "https://datacube-prod-data-public.s3.ca-central-1.amazonaws.com/store/elevation/cdem-cdsm/cdem/cdem-canada-dem.tif",
+          "licence": "Open Government Licence – Canada",
+          "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada",
+          "attribution": "Elevation: Natural Resources Canada (CDEM)",
+          "required": false,
+          "enabled": true,
+          "approxBytes": 311000000,
+          "bounds": [
+            48.95,
+            -120.1,
+            60.0,
+            -109.95
+          ],
+          "pixelMetres": 64,
+          "verified": "2026-10 (file layout read; size summed from its 64 m tile index)"
         }
       ]
     },
@@ -264,6 +304,26 @@
           "enabled": true,
           "approxBytes": 80000000,
           "verified": "unverified – dataset and licence confirmed, exact file URL to confirm"
+        },
+        {
+          "id": "cdem",
+          "name": "Elevation – Canadian Digital Elevation Model (NRCan)",
+          "kind": "elevation-cog",
+          "url": "https://datacube-prod-data-public.s3.ca-central-1.amazonaws.com/store/elevation/cdem-cdsm/cdem/cdem-canada-dem.tif",
+          "licence": "Open Government Licence – Canada",
+          "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada",
+          "attribution": "Elevation: Natural Resources Canada (CDEM)",
+          "required": false,
+          "enabled": true,
+          "approxBytes": 681000000,
+          "bounds": [
+            48.2,
+            -139.1,
+            60.0,
+            -109.95
+          ],
+          "pixelMetres": 64,
+          "verified": "2026-10 (file layout read; size summed from its 64 m tile index)"
         }
       ]
     }

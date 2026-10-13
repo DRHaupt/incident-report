@@ -25,6 +25,8 @@ public sealed class Downloader
 
     public Downloader(HttpClient http) => _http = http;
 
+    public HttpClient Http => _http;
+
     public static HttpClient CreateClient()
     {
         var http = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.None }) { Timeout = Timeout.InfiniteTimeSpan };

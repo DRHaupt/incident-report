@@ -76,12 +76,16 @@ public sealed class TestHttpServer : IDisposable
         res.Headers["Last-Modified"] = new DateTime(2026, 9, 30, 12, 0, 0, DateTimeKind.Utc).ToString("R");
         res.Headers["Accept-Ranges"] = "bytes";
         long start = 0;
+        long end = data.Length - 1;
         var range = ctx.Request.Headers["Range"];
         var ifRange = ctx.Request.Headers["If-Range"];
         if (range != null && range.StartsWith("bytes=") && (ifRange == null || ifRange == ETag))
         {
             RangeRequests++;
-            start = long.Parse(range[6..].TrimEnd('-'));
+            var parts = range[6..].Split('-');
+            start = long.Parse(parts[0]);
+            if (parts.Length > 1 && parts[1].Length > 0)
+                end = Math.Min(data.Length - 1, long.Parse(parts[1]));
             if (start >= data.Length)
             {
                 res.StatusCode = 416;
@@ -89,15 +93,15 @@ public sealed class TestHttpServer : IDisposable
                 return;
             }
             res.StatusCode = 206;
-            res.Headers["Content-Range"] = $"bytes {start}-{data.Length - 1}/{data.Length}";
+            res.Headers["Content-Range"] = $"bytes {start}-{end}/{data.Length}";
         }
-        res.ContentLength64 = data.Length - start;
+        res.ContentLength64 = end - start + 1;
         if (ctx.Request.HttpMethod == "HEAD")
         {
             res.Close();
             return;
         }
-        var count = data.Length - start;
+        var count = end - start + 1;
         if (CutAfter is { } cut && cut < count)
         {
             CutAfter = null;

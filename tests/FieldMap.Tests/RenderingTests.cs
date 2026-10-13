@@ -103,6 +103,93 @@ public class RenderingTests
         Assert.True(hiker.Contains((float)hx, (float)hy));
     }
 
+    [Theory]
+    [InlineData("standard")]
+    [InlineData("night")]
+    [InlineData("daylight")]
+    public void Draws_repeaters_predicted_coverage_and_cell_coverage(string theme)
+    {
+        var style = theme switch { "night" => MapStyle.Night, "daylight" => MapStyle.Daylight, _ => MapStyle.Standard };
+        using var tiles = new MbTilesReader(Path.Combine(_f.Dir, RegionBuilder.TilesFile));
+        var centre = SampleRegion.At(0, 560);
+        var repeater = new FieldMap.Core.Radio.Repeater { Source = FieldMap.Core.Radio.RepeaterSource.Own, CallSign = "VE7TST", Lat = centre.Lat, Lon = centre.Lon, OutputMHz = 155.5 };
+        // A 100×100 coverage raster 3 km across: west half likely, east half none.
+        var nw = Geometry.Destination(Geometry.Destination(centre, 0, 1500), 270, 1500);
+        var se = Geometry.Destination(Geometry.Destination(centre, 180, 1500), 90, 1500);
+        var (minX, minY) = WebMercator.ToWorld(nw);
+        var (maxX, maxY) = WebMercator.ToWorld(se);
+        var classes = new byte[100 * 100];
+        for (var y = 0; y < 100; y++)
+            for (var x = 0; x < 100; x++)
+                classes[y * 100 + x] = (byte)(x < 50 ? FieldMap.Core.Terrain.CoverageClass.Likely : FieldMap.Core.Terrain.CoverageClass.None);
+        var coverage = new FieldMap.Core.Terrain.CoverageResult
+        {
+            Request = FieldMap.Core.Terrain.CoverageRequest.Handheld(centre.Lat, centre.Lon), Width = 100, Height = 100, Classes = classes,
+            MinX = minX, MinY = minY, MaxX = maxX, MaxY = maxY, Bounds = new GeoBounds(se.Lat, nw.Lon, nw.Lat, se.Lon)
+        };
+        // Cell coverage: LTE over the whole sample area.
+        var kml = Path.Combine(Path.GetTempPath(), $"cell-{Guid.NewGuid():N}.kml");
+        var a = SampleRegion.At(-3000, -3000);
+        var b = SampleRegion.At(3000, 3000);
+        string F(double v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        File.WriteAllText(kml, $"<kml xmlns=\"http://www.opengis.net/kml/2.2\"><Document><Placemark><name>LTE</name><Polygon><outerBoundaryIs><LinearRing><coordinates>" +
+                               $"{F(a.Lon)},{F(a.Lat)} {F(b.Lon)},{F(a.Lat)} {F(b.Lon)},{F(b.Lat)} {F(a.Lon)},{F(b.Lat)} {F(a.Lon)},{F(a.Lat)}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark></Document></kml>");
+        var cellPath = Path.Combine(Path.GetTempPath(), $"cell-{Guid.NewGuid():N}.mbtiles");
+        FieldMap.Core.Radio.CellCoverage.Build(new[] { kml }, cellPath, null);
+        try
+        {
+            using var cell = new MbTilesReader(cellPath);
+            SKBitmap Draw(bool extras)
+            {
+                var scene = new MapScene
+                {
+                    Regions = new[] { new TileSource(tiles, new GeoBounds(_f.Manifest.MinLat, _f.Manifest.MinLon, _f.Manifest.MaxLat, _f.Manifest.MaxLon)) },
+                    Tiles = new TileCache(), Style = style, Synchronous = true, LayerOn = _ => true,
+                    Repeaters = extras ? new[] { repeater } : Array.Empty<FieldMap.Core.Radio.Repeater>(),
+                    SelectedRepeater = extras ? repeater.Id : null,
+                    Coverage = extras ? new[] { coverage } : Array.Empty<FieldMap.Core.Terrain.CoverageResult>(),
+                    CellCoverage = extras ? new TileSource(cell, new GeoBounds(-85, -180, 85, 180)) : null
+                };
+                var vp = Viewport.At(centre, 14, 0, 800, 600);
+                var bmp = new SKBitmap(vp.Width, vp.Height);
+                using var canvas = new SKCanvas(bmp);
+                var result = MapRenderer.Render(canvas, vp, scene);
+                if (extras)
+                {
+                    Assert.Contains(result.Repeaters, r => r.Id == repeater.Id);
+                    var (rx, ry) = vp.GeoToScreen(centre);
+                    Assert.True(result.Repeaters.First().Rect.Contains((float)rx, (float)ry));
+                }
+                return bmp;
+            }
+            using var plain = Draw(false);
+            using var with = Draw(true);
+            Directory.CreateDirectory(OutputDir);
+            using (var img = SKImage.FromBitmap(with))
+            using (var data = img.Encode(SKEncodedImageFormat.Png, 90))
+            using (var fs = File.Create(Path.Combine(OutputDir, $"radio-{theme}.png")))
+                data.SaveTo(fs);
+            // West of the site (likely) gets greener; east (unlikely) gets redder.
+            var west = Geometry.Destination(centre, 270, 900);
+            var east = Geometry.Destination(centre, 90, 900);
+            var vp2 = Viewport.At(centre, 14, 0, 800, 600);
+            var (wx, wy) = vp2.GeoToScreen(west);
+            var (ex, ey) = vp2.GeoToScreen(east);
+            SKColor P(SKBitmap bmp, double x, double y) => bmp.GetPixel((int)x, (int)y);
+            var w0 = P(plain, wx, wy); var w1 = P(with, wx, wy);
+            var e0 = P(plain, ex, ey); var e1 = P(with, ex, ey);
+            Assert.True(w1.Green - w1.Red > w0.Green - w0.Red, $"west {w0} -> {w1}");
+            Assert.True(e1.Red - e1.Green > e0.Red - e0.Green - 1, $"east {e0} -> {e1}");
+            Assert.NotEqual(w0, w1);
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            File.Delete(cellPath);
+            File.Delete(kml);
+        }
+    }
+
     /// <summary>A synthetic "imagery" package for the sample area: textured fields with the tile number on each tile.</summary>
     private string SyntheticImagery()
     {

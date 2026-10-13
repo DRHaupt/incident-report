@@ -35,6 +35,12 @@ public sealed class MapSettings : ILocationSettings
     public bool ShowBreadcrumbs { get; set; } = true;
     public bool ShowDrawings { get; set; } = true;
     public bool ShowLiveData { get; set; } = true;
+
+    // Radio
+    public bool ShowRepeaters { get; set; } = true;
+    public bool ShowCellCoverage { get; set; }
+    public bool ShowCoverage { get; set; } = true;
+    public double CoverageRadiusKm { get; set; } = 50;
     public Dictionary<string, bool> LiveFeeds { get; set; } = new();
     public string Ab511Key { get; set; } = "";
 

@@ -8,6 +8,11 @@ public static class SourceKinds
     public const string AddressCsv = "address-csv";
     /// <summary>Facility list CSV/GeoJSON merged into a POI layer using a column mapping.</summary>
     public const string PoiTable = "poi-table";
+    /// <summary>
+    /// Elevation model: a cloud-optimised GeoTIFF (NRCan CDEM) of which only the tiles covering
+    /// <see cref="SourceDefinition.Bounds"/> are fetched, into terrain.sqlite.
+    /// </summary>
+    public const string Elevation = "elevation-cog";
 }
 
 /// <summary>How columns of an official facility table map onto a POI layer.</summary>
@@ -59,6 +64,15 @@ public sealed class SourceDefinition
     public PoiMapping? Mapping { get; set; }
 
     public string FileName => Path.GetFileName(new Uri(Url).AbsolutePath) is { Length: > 0 } f ? f : Id;
+
+    /// <summary>Elevation sources: area to fetch, [minLat, minLon, maxLat, maxLon].</summary>
+    public double[]? Bounds { get; set; }
+
+    /// <summary>Elevation sources: cell size to fetch in metres (the nearest coarser level of the file is used).</summary>
+    public double PixelMetres { get; set; } = 64;
+
+    /// <summary>Name of the downloaded copy. Elevation extracts are per region (the source file itself is national).</summary>
+    public string LocalFileName(string regionId) => Kind == SourceKinds.Elevation ? $"terrain-{regionId}-{PixelMetres:0}m.sqlite" : FileName;
 }
 
 public sealed class RegionDefinition

@@ -110,6 +110,16 @@ detailed, covers all of BC and Alberta, and may be stored offline for operationa
 | Google, Bing, Mapbox satellite | Worldwide | Terms forbid bulk or offline caching outside their own SDKs | Not used |
 | "OpenStreetMap satellite" | – | ✓ OSM has no imagery of its own; the imagery offered in OSM editors (Esri, Bing…) is licensed only for tracing into OSM | Not usable |
 
+## Elevation and radio
+
+| Data | Source | Licence | How it gets in |
+|---|---|---|---|
+| Elevation (64 m) | Natural Resources Canada – Canadian Digital Elevation Model, national cloud-optimised GeoTIFF on the NRCan datacube (`…/elevation/cdem-cdsm/cdem/cdem-canada-dem.tif`, EPSG:3979, 16 m with overviews) | Open Government Licence – Canada | *Update map data* fetches only the 64 m tiles over the region by HTTP range requests (BC ≈ 622 MB, AB ≈ 311 MB, BC+AB ≈ 681 MB, summed from the file's tile index, Oct 2026). Checked against known heights (Calgary 1048 m, Nose Hill 1217 m, English Bay 0 m). |
+| Cell coverage | CRTC mobile coverage maps / Atlas of Canada "Wireless Data Network" (LTE, 5G; carriers combined) | Check the licence shown with the download (not reachable from the build environment to confirm) | The user downloads KML/KMZ on a connected PC and imports it; areas are classified 5G / LTE / 3G / other from their names or folders. Carrier-reported, not verified (Auditor General). |
+| Licensed repeaters | ISED Spectrum Management System data extracts (land mobile) | ISED terms on the download page (to confirm) | The user imports the CSV; columns are matched by name (TX/RX frequency, latitude/longitude, licensee, location, antenna height, ERP). Not yet tried against a real extract – send a sample if it isn't recognised. |
+| Amateur repeaters | The club's or coordinator's list | Theirs | CSV import. |
+| RepeaterBook | RepeaterBook.com export from the user's own account | Personal, non-commercial; no redistribution; API access by approved token only (2026) | JSON import by the user. Not bundled or downloaded by the app. |
+
 ## How to install real data
 
 On a PC with internet (or on the vehicle when connected):

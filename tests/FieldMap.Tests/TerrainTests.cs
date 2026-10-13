@@ -86,6 +86,42 @@ public sealed class TerrainTests : IDisposable
         Assert.Null(grid.Elevation(55, -120));
     }
 
+    [Fact]
+    public async Task Region_update_fetches_only_its_elevation_tiles_over_http_and_builds_them_in()
+    {
+        var (cx, cy) = CanadaAtlasLambert.Forward(51.0447, -114.0719);
+        double ox = Math.Floor(cx / 64) * 64 - 128 * 64, oy = Math.Floor(cy / 64) * 64 + 128 * 64;
+        var tif = Path.Combine(_dir, "national.tif");
+        WriteGeoTiff(tif, ox, oy, 64, 256, 256, (c, r) => (short)(1000 + c));
+        using var server = new TestHttpServer();
+        server.Serve("cdem.tif", File.ReadAllBytes(tif));
+
+        var store = new FieldMap.Core.Data.RegionStore(Path.Combine(_dir, "store"));
+        var service = new FieldMap.Core.Data.UpdateService(store);
+        var source = new FieldMap.Core.Data.SourceDefinition
+        {
+            Id = "cdem", Name = "Elevation", Kind = FieldMap.Core.Data.SourceKinds.Elevation, Url = server.BaseUrl + "cdem.tif",
+            Bounds = new[] { 51.02, -114.10, 51.06, -114.04 }, PixelMetres = 64
+        };
+        var region = new FieldMap.Core.Data.RegionDefinition { Id = "test", Name = "Test", Sources = { source } };
+        var stages = new List<string>();
+        var file = await service.DownloadElevationAsync("test", source, new Sync2(s => stages.Add(s.Stage)), CancellationToken.None);
+        Assert.EndsWith("terrain-test-64m.sqlite", file.Path);
+        Assert.Contains("Downloading Elevation", stages);
+        Assert.True(server.RangeRequests >= 3); // header, tile index arrays, tiles – never the whole file
+        using (var grid = TerrainGrid.Open(file.Path))
+            Assert.Equal(1000 + 128, grid.Elevation(51.0447, -114.0719)!.Value, 0);
+        // Cached: a rebuild offline finds it.
+        Assert.Contains(service.CachedSources(region)!, s => s.Path == file.Path);
+    }
+
+    private sealed class Sync2 : IProgress<(string Stage, double Fraction)>
+    {
+        private readonly Action<(string Stage, double Fraction)> _a;
+        public Sync2(Action<(string Stage, double Fraction)> a) => _a = a;
+        public void Report((string Stage, double Fraction) v) => _a(v);
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private sealed class Sync : IProgress<double>
@@ -154,7 +190,7 @@ public sealed class TerrainTests : IDisposable
     /// Writes a little-endian classic TIFF: a full-resolution image (pixel/4 size) and one overview at
     /// <paramref name="pixel"/>, 64×64 tiles, LZW, 16-bit signed, EPSG:3979, nodata −32767 in the top-left 4×4 cells.
     /// </summary>
-    private static void WriteGeoTiff(string path, double originX, double originY, double pixel, int width, int height, Func<int, int, short> value)
+    internal static void WriteGeoTiff(string path, double originX, double originY, double pixel, int width, int height, Func<int, int, short> value)
     {
         const int tile = 64;
         var images = new[] { (W: width * 4, H: height * 4, Scale: 4), (W: width, H: height, Scale: 1) };

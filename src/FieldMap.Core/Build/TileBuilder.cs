@@ -22,6 +22,8 @@ public static class TileSchema
     public const string Landuse = "landuse";
     /// <summary>Polygons: kind=avalanche|rockfall|hazard, name.</summary>
     public const string Hazards = "hazards";
+    /// <summary>Polygons in the separate cell-coverage tileset: kind=5g|lte|3g|other.</summary>
+    public const string Coverage = "coverage";
     /// <summary>Lines: class=motorway|trunk|primary|secondary|tertiary|minor|service|track|path, name, ref, bridge, tunnel, oneway, seasonal, unpaved, link.</summary>
     public const string Roads = "roads";
     /// <summary>Lines: class=rail|service, name.</summary>
@@ -87,10 +89,11 @@ public sealed class TileBuilder
     }
 
     private readonly List<Feature> _features = new();
+    private int _maxZoom = TileSchema.MaxZoom;
 
     /// <summary>Layer draw order inside each tile (bottom first).</summary>
     private static readonly string[] LayerOrder =
-        { TileSchema.Landuse, TileSchema.Water, TileSchema.Hazards, TileSchema.Waterways, TileSchema.Boundaries, TileSchema.Rail, TileSchema.Roads, TileSchema.Places };
+        { TileSchema.Coverage, TileSchema.Landuse, TileSchema.Water, TileSchema.Hazards, TileSchema.Waterways, TileSchema.Boundaries, TileSchema.Rail, TileSchema.Roads, TileSchema.Places };
 
     public int TileCount { get; private set; }
 
@@ -114,7 +117,31 @@ public sealed class TileBuilder
             meta["bounds"] = string.Create(CultureInfo.InvariantCulture, $"{bb.MinLon:0.######},{bb.MinLat:0.######},{bb.MaxLon:0.######},{bb.MaxLat:0.######}");
             meta["center"] = string.Create(CultureInfo.InvariantCulture, $"{bb.Center.Lon:0.######},{bb.Center.Lat:0.######},10");
         }
-        meta["json"] = "{\"vector_layers\":[" + string.Join(",", LayerOrder.Select(l => $"{{\"id\":\"{l}\",\"fields\":{{}}}}")) + "]}";
+        meta["json"] = "{\"vector_layers\":[" + string.Join(",", LayerOrder.Where(l => l != TileSchema.Coverage).Select(l => $"{{\"id\":\"{l}\",\"fields\":{{}}}}")) + "]}";
+        writer.SetMetadata(meta);
+        b.Generate(writer, progress, cancel);
+        return writer.TileCount;
+    }
+
+    /// <summary>
+    /// Builds a small extra tileset of coverage polygons (zoom 0 to <paramref name="maxZoom"/>; the map stretches the
+    /// last level when zoomed in further). Kind goes into the "kind" property.
+    /// </summary>
+    public static int BuildCoverageMbTiles(IEnumerable<MapArea> areas, string path, IDictionary<string, string> metadata, int maxZoom = 11,
+        IProgress<double>? progress = null, CancellationToken cancel = default)
+    {
+        var b = new TileBuilder { _maxZoom = maxZoom };
+        foreach (var a in areas)
+            b.AddArea(TileSchema.Coverage, a, 0);
+        using var writer = new MbTilesWriter(path);
+        var meta = new Dictionary<string, string>(metadata)
+        {
+            ["format"] = "pbf",
+            ["minzoom"] = "0",
+            ["maxzoom"] = maxZoom.ToString(CultureInfo.InvariantCulture),
+            ["type"] = "overlay",
+            ["json"] = "{\"vector_layers\":[{\"id\":\"coverage\",\"fields\":{}}]}"
+        };
         writer.SetMetadata(meta);
         b.Generate(writer, progress, cancel);
         return writer.TileCount;
@@ -294,7 +321,7 @@ public sealed class TileBuilder
                 return;
             }
             Write(z, x, y, inTile);
-            if (z < TileSchema.MaxZoom)
+            if (z < _maxZoom)
                 for (var dy = 0; dy < 2; dy++)
                     for (var dx = 0; dx < 2; dx++)
                         Tile(z + 1, x * 2 + dx, y * 2 + dy, inTile, defer);

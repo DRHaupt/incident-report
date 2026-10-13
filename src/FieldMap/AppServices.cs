@@ -31,6 +31,8 @@ public static class AppServices
 
     /// <summary>Imported event layers (KML, KMZ, GPX, GeoJSON, CSV).</summary>
     public static Core.Overlays.OverlayLibrary Overlays { get; private set; } = null!;
+    public static Core.Radio.RepeaterStore Repeaters { get; private set; } = null!;
+    public static CoverageService Coverage { get; } = new();
     public static RegionCatalog Catalog { get; private set; } = new();
 
     /// <summary>Problems found at start-up (data folder unavailable, damaged data) to show once.</summary>
@@ -140,6 +142,10 @@ public static class AppServices
             Overlays = new Core.Overlays.OverlayLibrary(Path.Combine(Path.GetTempPath(), "FieldMap-overlays"));
             StartupMessages.Add("Event layers folder unavailable: " + ex.Message);
         }
+
+        Repeaters = new Core.Radio.RepeaterStore(Path.Combine(MapSettings.AppFolder, "repeaters.json"));
+        if (Repeaters.LoadError != null)
+            StartupMessages.Add(Repeaters.LoadError);
 
         Imagery = new ImageryService(Settings, Core.Imagery.ImageryCatalog.LoadOrEmpty(Path.Combine(ContentFolder, "imagery-sources.json")), () => Store.Root);
         Imagery.Apply();

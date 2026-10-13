@@ -373,6 +373,27 @@ forest-service roads, avalanche/rockfall areas, highway km markers and exits. Op
 connected; cached, labelled "LIVE DATA – fetched hh:mm"): DriveBC and Alberta 511 events, BC Wildfire
 perimeters, BC evacuation orders/alerts, ECCC weather alerts.
 
+## Radio: repeaters, predicted coverage and cell coverage
+
+* **Repeaters** on the map (Layers → Radio and cell coverage, or *Repeaters…*), coloured by kind: our own, event
+  (add one at any point from *What's here?*), amateur (import your club's CSV), **RepeaterBook** (import the JSON
+  export from your own RepeaterBook account – their terms allow personal, non-commercial use and no
+  redistribution, so check before sharing it) and **licensed land-mobile stations from ISED** (import the
+  land-mobile CSV from ISED's Spectrum Management System downloads; stations with separate transmit and receive
+  frequencies inside the map area are kept). Tap one: frequency, offset, tone, mode, owner, site elevation, copy
+  for the radio log, directions to the site.
+* **Predicted coverage** (tap a repeater → *Handheld* or *Vehicle radio*): green likely, amber marginal, red
+  unlikely, over 25, 50 or 80 km. Worked out on the laptop from the elevation model: free-space or
+  ground-reflection loss, diffraction over the main ridge in the path (4/3-earth curvature), against the radio's
+  sensitivity with a 10 dB fade margin. Uses the repeater's antenna height and ERP (15 m / 50 W assumed when not
+  recorded). An estimate to plan with – trees, buildings and several ridges in a row make real coverage smaller.
+* **Elevation**: *Update map data* now also fetches NRCan's Canadian Digital Elevation Model for the region
+  (64 m cells; about 620 MB for BC, 310 MB for Alberta, 680 MB combined; Open Government Licence – Canada). It
+  travels in USB packages and gives the ground height in *What's here?*.
+* **Cell coverage (LTE / 5G)**: import the national mobile coverage map (KML/KMZ, all carriers combined) from the
+  CRTC or the Atlas of Canada under *Data & updates → Cell coverage*; only the part over the installed map is
+  kept. It shows what carriers report, not measured service.
+
 ## Search and "What's here?"
 
 * Addresses (with interpolation), places, intersections ("Main St & 5th Ave", "main and 5th"), facility names

@@ -103,7 +103,27 @@ public static partial class MapFileImporter
 
     public static readonly string[] Extensions = { ".kml", ".kmz", ".gpx", ".geojson", ".json", ".csv", ".txt" };
 
-    private const int MaxPoints = 500_000;
+    private const int DefaultMaxPoints = 500_000;
+
+    // Event files stay small; national coverage maps are allowed more (see LoadLarge).
+    [ThreadStatic]
+    private static int _maxPointsOverride;
+
+    private static int MaxPoints => _maxPointsOverride > 0 ? _maxPointsOverride : DefaultMaxPoints;
+
+    /// <summary>Loads a large data file (e.g. a national coverage map) with a higher point limit.</summary>
+    public static MapFileContent LoadLarge(string path, int maxPoints)
+    {
+        _maxPointsOverride = maxPoints;
+        try
+        {
+            return Load(path);
+        }
+        finally
+        {
+            _maxPointsOverride = 0;
+        }
+    }
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
     public static bool CanRead(string path) => Extensions.Contains(Path.GetExtension(path).ToLowerInvariant());

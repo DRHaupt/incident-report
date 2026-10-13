@@ -41,13 +41,17 @@ public sealed class LayersPanel : SidePanel
         AddText("Map", FontRole.Heading);
         AddToggle("Breadcrumb trail", s.ShowBreadcrumbs, on => { s.ShowBreadcrumbs = on; Save(); }, $"{AppServices.Breadcrumbs.Items.Count:N0} positions in the last 24 hours");
         AddToggle("Incident drawings", s.ShowDrawings, on => { s.ShowDrawings = on; Save(); }, $"{AppServices.Drawings.Items.Count} drawings");
-        AddText("Terrain / hillshade: not installed (planned from NRCan MRDEM, Open Government Licence – Canada).", FontRole.Normal, Brand.Muted);
+        AddText(data.HasTerrain
+            ? "Elevation: installed (NRCan Canadian Digital Elevation Model, 64 m; Open Government Licence – Canada). Used for ground height in What's here? and for repeater coverage."
+            : "Elevation: not installed – Update map data adds it (BC about 620 MB, Alberta about 310 MB).", FontRole.Normal, Brand.Muted);
         foreach (var r in data.Regions)
         {
             var src = r.Manifest.Sources.FirstOrDefault();
             AddText($"Base map – {r.Manifest.RegionName}: {string.Join(", ", r.Manifest.Sources.Select(x => x.Name))}; built {r.Manifest.BuiltUtc:yyyy-MM-dd}, data {r.Manifest.DataDate:yyyy-MM-dd}" +
                     (src != null ? $" · {src.Licence}" : ""), FontRole.Normal, Brand.Muted);
         }
+
+        BuildRadio();
 
         AddText("APRS (amateur radio positions)", FontRole.Heading);
         var aprs = AppServices.Aprs;
@@ -81,6 +85,36 @@ public sealed class LayersPanel : SidePanel
     {
         AppServices.Settings.Save();
         Map.MapView.Invalidate();
+    }
+
+    // ------------------------------------------------------------------ radio
+
+    private void BuildRadio()
+    {
+        var s = AppServices.Settings;
+        var data = AppServices.Data;
+        AddText("Radio and cell coverage", FontRole.Heading);
+        AddToggle($"Repeaters ({AppServices.Repeaters.All.Count:N0})", s.ShowRepeaters, on => { s.ShowRepeaters = on; Save(); },
+            "Our own, event, amateur, RepeaterBook and licensed (ISED) repeaters. Tap one for details and predicted coverage.");
+        AddToggle($"Predicted repeater coverage ({AppServices.Coverage.Items.Count})", s.ShowCoverage, on => { s.ShowCoverage = on; Save(); },
+            "Green likely, amber marginal, red unlikely – an estimate from terrain, not a guarantee.");
+        var cell = data.CellCoverage;
+        AddToggle("Cell coverage (LTE / 5G)", s.ShowCellCoverage && cell != null, on =>
+        {
+            if (on && cell == null)
+            {
+                MessageBox.Show(FindForm(), "No cell coverage map is installed yet. Import the Government of Canada coverage file (KML/KMZ) under Data & updates → Cell coverage.",
+                    "Cell coverage", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Map.ShowPanel(new LayersPanel(Map));
+                return;
+            }
+            s.ShowCellCoverage = on;
+            Save();
+        }, cell != null
+            ? $"Purple 5G, blue LTE, teal 3G – all carriers combined, as reported by the carriers (not verified). {cell.Metadata.GetValueOrDefault("description", "")}"
+            : "Not installed – Data & updates → Cell coverage.");
+        AddButtons(Btn("Repeaters…", ButtonStyle.Secondary, () => Map.ShowPanel(new RepeatersPanel(Map))),
+                   Btn("Data & updates", ButtonStyle.Secondary, () => AppServices.Windows.Open(Views.DataWindow.ToolId)));
     }
 
     // ------------------------------------------------------------------ event layers
