@@ -65,6 +65,12 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         toolbar.Controls.Add(ToolButton("Directions", ButtonStyle.Secondary, () => ShowPanel(new DirectionsPanel(this, null, null))));
         toolbar.Controls.Add(ToolButton("Draw", ButtonStyle.Secondary, () => ShowPanel(new DrawPanel(this))));
         toolbar.Controls.Add(ToolButton("What's here?", ButtonStyle.Secondary, () => ShowWhatsHere(MyPositionOrCenter, null)));
+        // Only while event files are imported.
+        var eventItems = ToolButton("Event items", ButtonStyle.Secondary, () => ShowPanel(new EventItemsPanel(this)));
+        eventItems.Visible = AppServices.Overlays.Layers.Count > 0;
+        void SyncEventItems() => eventItems.Visible = AppServices.Overlays.Layers.Count > 0;
+        AppServices.Overlays.Changed += (_, _) => { if (!IsDisposed) BeginInvoke(SyncEventItems); };
+        toolbar.Controls.Add(eventItems);
         toolbar.Controls.Add(ToolButton("More ▾", ButtonStyle.Secondary, ShowMoreMenu));
 
         // Overlay buttons on the map (big, for gloves).
@@ -393,6 +399,7 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
         menu.Items.Add(new ToolStripMenuItem("Spoken directions", null, (_, _) => { _voice = !_voice; AppServices.Settings.Voice = _voice; AppServices.Settings.Save(); }) { Checked = _voice });
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Import map file (KML, KMZ, GPX, GeoJSON, CSV)…", null, (_, _) => ChooseMapFiles());
+        menu.Items.Add("Event items (everything in the imported files)", null, (_, _) => ShowPanel(new EventItemsPanel(this)));
         menu.Items.Add("APRS stations", null, (_, _) => ShowPanel(new AprsPanel(this)));
         menu.Items.Add("APRS messages", null, (_, _) => ShowPanel(new AprsMessagesPanel(this)));
         menu.Items.Add("APRS settings…", null, (_, _) => { using var d = new AprsSettingsDialog(); d.ShowDialog(this); });
@@ -585,6 +592,23 @@ public sealed class MapWindow : ToolWindow, IAcceptsState
     {
         _map.Marker = null;
         _map.Invalidate();
+    }
+
+    /// <summary>Goes to an event-layer item (switching its layer on), marks it and shows its details.</summary>
+    public void ShowOverlayFeature(Core.Overlays.OverlayLayer layer, Core.Overlays.OverlayFeature f)
+    {
+        if (!layer.Info.Visible)
+            AppServices.Overlays.SetVisible(layer.Info.Id, true);
+        if (f.Geometry == Core.Overlays.OverlayGeometry.Point || f.Bounds.IsEmpty)
+            CenterOn(f.Anchor, Math.Max(_map.Zoom, 17));
+        else
+        {
+            SetFollowing(false);
+            _map.ZoomToFit(f.Bounds.Expand(60));
+        }
+        _map.Marker = f.Anchor;
+        _map.Invalidate();
+        ShowPanel(new OverlayFeaturePanel(this, layer, f));
     }
 
     public void CenterOn(GeoPoint p, double? zoom = null)

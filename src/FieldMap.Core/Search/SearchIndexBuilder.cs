@@ -30,13 +30,16 @@ CREATE INDEX km_ref ON km_markers(ref, km);
 CREATE TABLE places (id INTEGER PRIMARY KEY, name TEXT, kind TEXT, rank INTEGER, population INTEGER, lat REAL, lon REAL);
 CREATE TABLE pois (id INTEGER PRIMARY KEY, layer TEXT, kind TEXT, name TEXT, lat REAL, lon REAL, props TEXT, source TEXT, last_verified TEXT, source_id TEXT);
 CREATE INDEX pois_layer ON pois(layer);
+CREATE TABLE businesses (id INTEGER PRIMARY KEY, name TEXT, kind TEXT, kind_norm TEXT, lat REAL, lon REAL, address TEXT, phone TEXT, hours TEXT, website TEXT);
+CREATE INDEX businesses_kind ON businesses(kind_norm);
+CREATE VIRTUAL TABLE businesses_rtree USING rtree(id, min_lat, max_lat, min_lon, max_lon);
 ";
 
     /// <param name="progress">Fraction done (0–1), reported as each part is written.</param>
     public static void Build(MapData data, RoadGraph? graph, string path, IDictionary<string, string> meta, CancellationToken cancel = default, IProgress<double>? progress = null)
     {
         // Rough share of the work per part, so the bar moves evenly on a province.
-        var work = Math.Max(1.0, data.Places.Count + data.Pois.Count + data.Roads.Count * 0.2 + data.Addresses.Count + (graph?.NodeCount ?? 0) * 0.5);
+        var work = Math.Max(1.0, data.Places.Count + data.Pois.Count + data.Businesses.Count + data.Roads.Count * 0.2 + data.Addresses.Count + (graph?.NodeCount ?? 0) * 0.5);
         var finalShare = 0.25; // building the full-text index at the end
         double done = 0;
         var lastReport = -1.0;
@@ -96,6 +99,22 @@ CREATE INDEX pois_layer ON pois(layer);
                 var loc = localities.Nearest(p.Lat, p.Lon);
                 Entry("poi", p.Name, p.KindLabel + (loc != null ? ", " + loc : ""), p.Lat, p.Lon, p.Layer, LayerRank(p.Layer), p.Id);
             }
+        }
+
+        // Businesses (shops, restaurants, offices, hotels…): searchable by name, and by type ("restaurant").
+        var biz = Prepare(db, tx, "INSERT INTO businesses (id,name,kind,kind_norm,lat,lon,address,phone,hours,website) VALUES ($id,$n,$k,$kn,$lat,$lon,$a,$p,$h,$w)");
+        var bizRtree = Prepare(db, tx, "INSERT INTO businesses_rtree VALUES ($id,$lat,$lat,$lon,$lon)");
+        foreach (var b in data.Businesses)
+        {
+            cancel.ThrowIfCancellationRequested();
+            Set(biz, ("$id", b.Id), ("$n", b.Name), ("$k", b.Kind), ("$kn", TextNormalizer.Normalize(b.Kind)), ("$lat", b.Lat), ("$lon", b.Lon),
+                ("$a", b.Address), ("$p", b.Phone), ("$h", b.Hours), ("$w", b.Website));
+            biz.ExecuteNonQuery();
+            Set(bizRtree, ("$id", b.Id), ("$lat", b.Lat), ("$lon", b.Lon));
+            bizRtree.ExecuteNonQuery();
+            var where = b.Address.Length > 0 ? b.Address : localities.Nearest(b.Lat, b.Lon);
+            Entry("business", b.Name, b.Kind + (where is { Length: > 0 } ? ", " + where : ""), b.Lat, b.Lon, null, 45, b.Id);
+            Advance(1);
         }
 
         // Streets: one entry per street name per ~5 km cluster, labelled with the locality.

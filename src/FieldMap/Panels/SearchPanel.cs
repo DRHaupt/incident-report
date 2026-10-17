@@ -14,10 +14,12 @@ public sealed class SearchPanel : SidePanel
     {
         AddText($"Searching for \"{query}\"…", FontRole.Bold);
         List<SearchResult> results;
+        var near = Map.MyPositionOrCenter;
+        // Imported event files first: at an event that's usually what people look for ("medic 2", "gate C").
+        var events = Core.Overlays.OverlaySearch.Search(AppServices.Overlays.Layers, query, near, 30);
         try
         {
-            var near = Map.MyPositionOrCenter;
-            results = await Task.Run(() => AppServices.Data.Search.Search(query, near, 25));
+            results = AppServices.Data.HasData ? await Task.Run(() => AppServices.Data.Search.Search(query, near, 25)) : new List<SearchResult>();
         }
         catch (Exception ex) when (ex is InvalidOperationException or Microsoft.Data.Sqlite.SqliteException)
         {
@@ -29,10 +31,27 @@ public sealed class SearchPanel : SidePanel
             return;
         Clear();
         Title = $"Search: {query}";
-        if (results.Count == 0)
+        if (events.Count > 0)
+        {
+            AddText($"In event files ({events.Count}{(events.Count == 30 ? "+" : "")})", FontRole.Heading);
+            foreach (var m in events.Take(15))
+            {
+                var match = m;
+                var kind = m.Feature.Geometry switch { Core.Overlays.OverlayGeometry.Point => "Point", Core.Overlays.OverlayGeometry.Line => "Line", _ => "Area" };
+                AddRow(m.Feature.Name.Length > 0 ? m.Feature.Name : $"({kind.ToLowerInvariant()})",
+                    $"{kind} · {m.Layer.Info.Name}{(m.Feature.Folder.Length > 0 ? " › " + m.Feature.Folder : "")}" +
+                    (m.MatchedIn != "name" ? $" · found in {m.MatchedIn}" : "") + " · " + GeoMath.FormatDistance(m.Feature.Anchor.DistanceTo(near)),
+                    () => Map.ShowOverlayFeature(match.Layer, match.Feature), Brand.Amber);
+            }
+            if (events.Count > 15)
+                AddButton($"All matches in event files…", ButtonStyle.Secondary, () => Map.ShowPanel(new EventItemsPanel(Map, null, query)));
+            if (results.Count > 0)
+                AddText("On the map", FontRole.Heading);
+        }
+        if (results.Count == 0 && events.Count == 0)
         {
             AddText($"Nothing found for \"{query}\".", FontRole.Bold);
-            AddText("Try a street name, \"Main St & 5th Ave\", a facility (\"hospital\", \"AED\"), \"Hwy 97 km 120\", an address (\"150 Main St\") or coordinates in decimal, DMS or MGRS.");
+            AddText("Try a street name, \"Main St & 5th Ave\", a facility (\"hospital\", \"AED\"), a business or type (\"Tim Hortons\", \"restaurant\"), \"Hwy 97 km 120\", an address (\"150 Main St\"), coordinates in decimal, DMS or MGRS, or anything in an imported event file.");
             Refit();
             return;
         }
@@ -44,6 +63,7 @@ public sealed class SearchPanel : SidePanel
                 ResultKind.Category => Brand.Amber,
                 ResultKind.Poi when r.Layer is { } l && LayerCatalog.Find(l) is { } def => Color.FromArgb(unchecked((int)def.Color)),
                 ResultKind.Coordinate => Brand.Success,
+                ResultKind.Business => Color.FromArgb(0x6D, 0x4C, 0x41),
                 _ => Brand.Navy
             };
             var detail = r.Detail + (r.Approximate ? " (approximate)" : "");
@@ -60,6 +80,12 @@ public sealed class SearchPanel : SidePanel
         {
             case ResultKind.Category when r.Layer != null:
                 Map.ShowPanel(new NearestPanel(Map, Map.MyPositionOrCenter, r.Layer));
+                return;
+            case ResultKind.Business when r.PoiId is { } key && AppServices.Data.Search.GetBusiness(key) is { } business:
+                Map.CenterOn(business.Point, 17);
+                Map.MapView.Marker = business.Point;
+                Map.MapView.Invalidate();
+                Map.ShowPanel(new BusinessPanel(Map, business));
                 return;
             case ResultKind.Poi when r.PoiId is { } id && AppServices.Data.FindPoi(id) is { } poi:
                 Map.CenterOn(poi.Point, 16.5);

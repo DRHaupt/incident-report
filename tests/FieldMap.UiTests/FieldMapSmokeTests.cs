@@ -459,6 +459,29 @@ public class FieldMapSmokeTests
         AppServices.NotifyDrawingsChanged();
         // The fence (an area) is found by tapping inside it.
         Assert.Equal("Fence", map.MapView.HitOverlayShape(Point.Round(map.MapView.GeoToScreen(SampleRegion.At(150, 880)))) ?.Feature.Name);
+
+        // The search bar finds event-file items (first) and businesses; the event items panel lists and filters them.
+        map.ShowPanel(new SearchPanel(map, "medic"));
+        PumpUntil(() => PanelText(map).Contains("In event files"), 20_000, "event search results");
+        Assert.Contains("Medic tent", PanelText(map));
+        map.ShowPanel(new EventItemsPanel(map));
+        Pump(200);
+        Assert.Contains("Medic tent", PanelText(map));
+        Assert.Contains("Fence", PanelText(map));
+        map.ShowPanel(new EventItemsPanel(map, layer.Info.Id, "fence"));
+        Pump(200);
+        Assert.Contains("1 match", PanelText(map));
+        map.ShowOverlayFeature(layer, layer.Content.Features.First(f => f.Name == "Fence"));
+        Pump(200);
+        Assert.Contains("Area", PanelText(map));
+        map.ShowPanel(new SearchPanel(map, "diner"));
+        PumpUntil(() => PanelText(map).Contains("Sampleton Diner"), 20_000, "business search results");
+        var dinerResult = AppServices.Data.Search.Search("sampleton diner", SampleRegion.Origin).First(r => r.Kind == FieldMap.Core.Search.ResultKind.Business);
+        map.ShowPanel(new BusinessPanel(map, AppServices.Data.Search.GetBusiness(dinerResult.PoiId!.Value)!));
+        Pump(100);
+        Assert.Contains("212 Main Street", PanelText(map));
+        map.ShowPanel(new SearchPanel(map, "restaurant"));
+        PumpUntil(() => PanelText(map).Contains("Sampleton Diner"), 20_000, "business type results");
         AppServices.Overlays.Remove(layer.Info.Id);
         map.ClosePanel();
         Directory.Delete(dir, true);

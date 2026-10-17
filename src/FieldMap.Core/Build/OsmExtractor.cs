@@ -94,6 +94,7 @@ public sealed class OsmExtractor
     private readonly List<(MapWay Way, string Kind)> _pendingAreas = new();
     private readonly List<(MapWay Way, LayerDef Layer, string Kind)> _pendingWayPois = new();
     private readonly List<MapWay> _addressWays = new();
+    private readonly List<(MapWay Way, string Kind)> _pendingWayBusinesses = new();
 
     public static MapData Extract(string path, IProgress<(string Stage, double Fraction)>? progress = null, CancellationToken cancel = default) =>
         Extract(new[] { path }, progress, cancel);
@@ -241,6 +242,11 @@ public sealed class OsmExtractor
                 _x._pendingWayPois.Add((W(), poi.Layer, poi.Kind));
                 keep = true;
             }
+            else if (!IsRoad(tags) && Search.BusinessKinds.Classify(tags) is { } business)
+            {
+                _x._pendingWayBusinesses.Add((W(), business));
+                keep = true;
+            }
             if (tags.Has("addr:housenumber") && tags.Has("addr:street"))
             {
                 _x._addressWays.Add(W());
@@ -279,6 +285,8 @@ public sealed class OsmExtractor
             var d = _x._data;
             if (LayerCatalog.Classify(tags) is { } poi)
                 d.Pois.Add(MakePoi(poi.Layer, poi.Kind, tags, lat, lon, "node/" + id));
+            else if (Search.BusinessKinds.Classify(tags) is { } business)
+                d.Businesses.Add(Search.BusinessKinds.Make(tags, business, lat, lon));
             if (tags["place"] is { } place && tags["name"] is { Length: > 0 } placeName &&
                 place is "city" or "town" or "village" or "hamlet" or "suburb" or "neighbourhood" or "locality")
             {
@@ -376,6 +384,14 @@ public sealed class OsmExtractor
             var c = IsClosed(way.NodeIds) ? Geometry.Centroid(pts) : pts[pts.Length / 2];
             d.Pois.Add(MakePoi(layer, kind, way.Tags, c.Lat, c.Lon, "way/" + way.Id));
         }
+        foreach (var (way, kind) in _pendingWayBusinesses)
+        {
+            var pts = Resolve(way.NodeIds);
+            if (pts.Length == 0)
+                continue;
+            var c = IsClosed(way.NodeIds) ? Geometry.Centroid(pts) : pts[pts.Length / 2];
+            d.Businesses.Add(Search.BusinessKinds.Make(way.Tags, kind, c.Lat, c.Lon));
+        }
         foreach (var way in _addressWays)
         {
             var pts = Resolve(way.NodeIds);
@@ -391,6 +407,8 @@ public sealed class OsmExtractor
         var nextId = 1L;
         foreach (var p in d.Pois)
             p.Id = nextId++;
+        for (var i = 0; i < d.Businesses.Count; i++)
+            d.Businesses[i].Id = i + 1;
         _memberWays.Clear();
         _nodes = NodeStore.Empty;
     }

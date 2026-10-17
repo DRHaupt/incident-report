@@ -31,6 +31,13 @@ Attribution shown in the app and on every exported map:
 Contains information licensed under the Open Government Licence – British Columbia · Contains information licensed
 under the Open Government Licence – Alberta" (only the licences of installed layers are listed).
 
+## Businesses (search only)
+
+Named OpenStreetMap features with `shop`, `amenity` (restaurant, café, bank, library, place of worship…),
+`tourism` (hotel, motel, campground…), `leisure` (arena, pool, park…), `office`, `craft` or `healthcare` tags that
+no map layer claims are kept in the search index with a plain-English type (ODbL, same as the base map). They are
+not drawn on the map. Names, hours and phone numbers are as mapped by volunteers and may be out of date.
+
 ## Layers and how they are derived
 
 | Layer | OpenStreetMap tags | Official data merged |

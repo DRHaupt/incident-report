@@ -398,6 +398,14 @@ perimeters, BC evacuation orders/alerts, ECCC weather alerts.
 * Addresses (with interpolation), places, intersections ("Main St & 5th Ave", "main and 5th"), facility names
   and categories ("AED", "fire hall"), highway + km ("Hwy 97 km 120"), and coordinates in decimal, DMS, DDM,
   MGRS or UTM. Typos and abbreviations are tolerated ("Kamloosp", "Ft St John", "Lougheed Hwy").
+* **Businesses** from OpenStreetMap – shops, restaurants, cafés, hotels and motels, campgrounds, offices, arenas,
+  parks… – by name ("Tim Hortons", misspellings tolerated) or by type ("restaurant", "hotels", "grocery": the nearest
+  ones). Tap one for its type, address, phone, hours, directions and *Copy for dispatch*. (Run *Update map data* once
+  after updating the app so the map data includes them.)
+* **Event files**: the search bar also searches every imported KML/KMZ/GPX/GeoJSON/CSV – item names, folders,
+  descriptions and attribute values ("medic 2", "gate C", "first aid") – and lists those matches first. **Event
+  items** (toolbar, or Layers → Event layers → *All items* / *Items*) lists everything in the files by file and folder,
+  with a filter box and a points-only switch; tap an item to go to it.
 * Tap and hold → **What's here?**: nearest address/intersection/road, every coordinate format, radio read-out,
   and **Copy for dispatch** (the same block as Field Toolkit's Location tool).
 

@@ -1,3 +1,5 @@
+using FieldMap.Core.Geo;
+
 namespace FieldMap.Core.Overlays;
 
 /// <summary>An imported map file kept as a toggleable layer.</summary>
@@ -123,4 +125,54 @@ public sealed class OverlayLibrary
     }
 
     private static string Safe(string name) => string.Concat(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+}
+
+/// <summary>A feature of an imported event layer that matched a search.</summary>
+public sealed record OverlayMatch(OverlayLayer Layer, OverlayFeature Feature, double Score, string MatchedIn);
+
+/// <summary>Searching imported event layers by name, folder, description and attribute values.</summary>
+public static class OverlaySearch
+{
+    /// <summary>
+    /// Features whose name matches best (exact, starts with, contains, or close spelling), then those matching in their
+    /// folder, description or attributes. Hidden layers are searched too. Ties go to the nearer feature.
+    /// </summary>
+    public static List<OverlayMatch> Search(IEnumerable<OverlayLayer> layers, string query, GeoPoint? near = null, int limit = 30)
+    {
+        var q = FieldMap.Core.Search.TextNormalizer.Normalize(query);
+        var results = new List<OverlayMatch>();
+        if (q.Length == 0)
+            return results;
+        foreach (var layer in layers)
+            foreach (var f in layer.Content.Features)
+            {
+                if (f.Parts.Count == 0 || f.Parts[0].Count == 0)
+                    continue;
+                var name = FieldMap.Core.Search.TextNormalizer.Normalize(f.Name);
+                double score;
+                string where;
+                if (name == q)
+                    (score, where) = (1.0, "name");
+                else if (name.StartsWith(q + " ", StringComparison.Ordinal) || name.StartsWith(q, StringComparison.Ordinal) && q.Length >= 3)
+                    (score, where) = (0.95, "name");
+                else if (q.Length >= 2 && (" " + name + " ").Contains(" " + q + " "))
+                    (score, where) = (0.92, "name");
+                else if (q.Length >= 3 && name.Contains(q))
+                    (score, where) = (0.88, "name");
+                else if (name.Length > 0 && FieldMap.Core.Search.TextNormalizer.Similarity(q, name) is var sim and >= 0.72)
+                    (score, where) = (0.6 + sim * 0.3, "name");
+                else if (q.Length >= 3 && FieldMap.Core.Search.TextNormalizer.Normalize(f.Folder).Contains(q))
+                    (score, where) = (0.7, "folder " + f.Folder);
+                else if (q.Length >= 3 && f.Properties.FirstOrDefault(p => FieldMap.Core.Search.TextNormalizer.Normalize(p.Value).Contains(q)) is { Key: { } key })
+                    (score, where) = (0.65, key);
+                else if (q.Length >= 3 && FieldMap.Core.Search.TextNormalizer.Normalize(f.Description).Contains(q))
+                    (score, where) = (0.6, "description");
+                else
+                    continue;
+                if (near is { } n && n != default)
+                    score -= Math.Min(0.05, n.DistanceTo(f.Anchor) / 1_000_000);
+                results.Add(new OverlayMatch(layer, f, score, where));
+            }
+        return results.OrderByDescending(r => r.Score).Take(limit).ToList();
+    }
 }

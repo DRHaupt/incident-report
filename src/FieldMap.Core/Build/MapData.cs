@@ -50,6 +50,22 @@ public sealed class AddressPoint
 }
 
 /// <summary>A point of interest on one of the catalogue layers.</summary>
+/// <summary>A named shop, restaurant, office, hotel… from OpenStreetMap: searchable, not drawn as a map layer.</summary>
+public sealed class Business
+{
+    public long Id { get; set; }
+    public string Name { get; set; } = "";
+    /// <summary>Plain-English type: "Restaurant", "Grocery store", "Hotel".</summary>
+    public string Kind { get; set; } = "";
+    public double Lat { get; set; }
+    public double Lon { get; set; }
+    public string Address { get; set; } = "";
+    public string Phone { get; set; } = "";
+    public string Hours { get; set; } = "";
+    public string Website { get; set; } = "";
+    public GeoPoint Point => new(Lat, Lon);
+}
+
 public sealed class Poi
 {
     public long Id { get; set; }
@@ -117,6 +133,7 @@ public sealed class MapData
     public List<MapArea> Hazards { get; } = new();
     public List<Place> Places { get; } = new();
     public List<Poi> Pois { get; } = new();
+    public List<Business> Businesses { get; } = new();
     public List<AddressPoint> Addresses { get; } = new();
 
     /// <summary>Turn restrictions (no left turn, only straight on…), for routing.</summary>

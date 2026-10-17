@@ -19,7 +19,9 @@ public enum ResultKind
     Intersection,
     KmMarker,
     Exit,
-    Category
+    Category,
+    /// <summary>A shop, restaurant, office, hotel… (<see cref="SearchResult.PoiId"/> identifies it for <see cref="SearchEngine.GetBusiness"/>).</summary>
+    Business
 }
 
 public sealed record SearchResult(ResultKind Kind, string Name, string Detail, GeoPoint Point, double Score, string? Layer = null, long? PoiId = null, bool Approximate = false)
@@ -124,6 +126,7 @@ public sealed class SearchEngine : IDisposable
         if (QueryParser.TryAddress(query, out var number, out var street))
             results.AddRange(FindAddress(number, street, near));
         results.AddRange(FindEntries(norm, near));
+        results.AddRange(FindBusinessesOfKind(norm, near));
 
         return results
             .GroupBy(r => (r.Kind, r.Name, Math.Round(r.Point.Lat, 3), Math.Round(r.Point.Lon, 3)))
@@ -368,12 +371,112 @@ public sealed class SearchEngine : IDisposable
                         "place" => ResultKind.Place,
                         "poi" => ResultKind.Poi,
                         "exit" => ResultKind.Exit,
+                        "business" => ResultKind.Business,
                         _ => ResultKind.Street
                     };
                     var score = sim * 0.85 + rank / 1000.0 - ProximityPenalty(near, p);
-                    results.Add(new SearchResult(kind, name, r.IsDBNull(3) ? "" : r.GetString(3), p, score, r.IsDBNull(6) ? null : r.GetString(6), r.IsDBNull(8) ? null : r.GetInt64(8)));
+                    long? id = r.IsDBNull(8) ? null : r.GetInt64(8);
+                    if (kind == ResultKind.Business && id is { } bid)
+                        id = BusinessKey(_regions.IndexOf(region), bid);
+                    results.Add(new SearchResult(kind, name, r.IsDBNull(3) ? "" : r.GetString(3), p, score, r.IsDBNull(6) ? null : r.GetString(6), id));
                 }
             }
+        return results;
+    }
+
+    // Business ids are per region; results carry region * 1e9 + id.
+    private const long BusinessRegionStride = 1_000_000_000L;
+
+    private static long BusinessKey(int region, long id) => region * BusinessRegionStride + id;
+
+    /// <summary>A business found by search (id from <see cref="SearchResult.PoiId"/>), or null.</summary>
+    public Business? GetBusiness(long key)
+    {
+        var ri = (int)(key / BusinessRegionStride);
+        if (ri < 0 || ri >= _regions.Count)
+            return null;
+        var region = _regions[ri];
+        lock (region.Lock)
+        {
+            try
+            {
+                using var c = region.Db.CreateCommand();
+                c.CommandText = "SELECT name,kind,lat,lon,address,phone,hours,website FROM businesses WHERE id=$id";
+                c.Parameters.AddWithValue("$id", key % BusinessRegionStride);
+                using var r = c.ExecuteReader();
+                if (!r.Read())
+                    return null;
+                return new Business
+                {
+                    Id = key, Name = r.GetString(0), Kind = r.GetString(1), Lat = r.GetDouble(2), Lon = r.GetDouble(3),
+                    Address = r.IsDBNull(4) ? "" : r.GetString(4), Phone = r.IsDBNull(5) ? "" : r.GetString(5),
+                    Hours = r.IsDBNull(6) ? "" : r.GetString(6), Website = r.IsDBNull(7) ? "" : r.GetString(7)
+                };
+            }
+            catch (SqliteException)
+            {
+                return null; // map data built before businesses were added
+            }
+        }
+    }
+
+    /// <summary>
+    /// "restaurant", "hotels", "grocery": the nearest businesses of that type (straight line), when the query names a
+    /// business type.
+    /// </summary>
+    private IEnumerable<SearchResult> FindBusinessesOfKind(string norm, GeoPoint? near)
+    {
+        var results = new List<SearchResult>();
+        if (norm.Length < 3 || norm.Split(' ').Length > 3)
+            return results;
+        var forms = new HashSet<string> { norm };
+        if (norm.EndsWith("ies", StringComparison.Ordinal)) forms.Add(norm[..^3] + "y");
+        if (norm.EndsWith("es", StringComparison.Ordinal)) forms.Add(norm[..^2]);
+        if (norm.EndsWith('s')) forms.Add(norm[..^1]);
+        var found = new List<(Business B, int Region)>();
+        for (var ri = 0; ri < _regions.Count; ri++)
+        {
+            var region = _regions[ri];
+            lock (region.Lock)
+            {
+                try
+                {
+                    using var c = region.Db.CreateCommand();
+                    var clauses = new List<string>();
+                    var i = 0;
+                    foreach (var f in forms)
+                    {
+                        clauses.Add($"kind_norm = $f{i} OR kind_norm LIKE $s{i} OR kind_norm LIKE $e{i}");
+                        c.Parameters.AddWithValue("$f" + i, f);
+                        c.Parameters.AddWithValue("$s" + i, f + " %");
+                        c.Parameters.AddWithValue("$e" + i, "% " + f);
+                        i++;
+                    }
+                    var order = "";
+                    if (near is { } n && n != default)
+                    {
+                        // Parameters, not text: a negative longitude written into the SQL would read as "--" (a comment).
+                        order = "ORDER BY (lat-$nlat)*(lat-$nlat) + 0.4*(lon-$nlon)*(lon-$nlon)";
+                        c.Parameters.AddWithValue("$nlat", n.Lat);
+                        c.Parameters.AddWithValue("$nlon", n.Lon);
+                    }
+                    c.CommandText = $"SELECT id,name,kind,lat,lon,address FROM businesses WHERE {string.Join(" OR ", clauses)} {order} LIMIT 15";
+                    using var r = c.ExecuteReader();
+                    while (r.Read())
+                        found.Add((new Business { Id = r.GetInt64(0), Name = r.GetString(1), Kind = r.GetString(2), Lat = r.GetDouble(3), Lon = r.GetDouble(4), Address = r.IsDBNull(5) ? "" : r.GetString(5) }, ri));
+                }
+                catch (SqliteException)
+                {
+                    // Older map data without businesses.
+                }
+            }
+        }
+        foreach (var (b, ri) in found)
+        {
+            // Below a matching name, above loose matches; nearer first.
+            var score = 0.8 - ProximityPenalty(near, b.Point);
+            results.Add(new SearchResult(ResultKind.Business, b.Name, b.Kind + (b.Address.Length > 0 ? ", " + b.Address : ""), b.Point, score, null, BusinessKey(ri, b.Id)));
+        }
         return results;
     }
 

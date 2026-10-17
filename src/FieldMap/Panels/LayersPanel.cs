@@ -126,7 +126,11 @@ public sealed class LayersPanel : SidePanel
         var lib = AppServices.Overlays;
         AddText("Event layers (imported map files)", FontRole.Heading);
         AddText("KML, KMZ (including site-plan images), GPX, GeoJSON or CSV from an event or agency. Drag files onto the map, or:", FontRole.Normal, Brand.Muted);
-        AddButton("Import map file…", ButtonStyle.Primary, () => Map.ChooseMapFiles());
+        if (lib.Layers.Count > 0)
+            AddButtons(Btn("Import map file…", ButtonStyle.Primary, () => Map.ChooseMapFiles()),
+                       Btn($"All items ({lib.Layers.Sum(l => l.Content.Features.Count):N0})", ButtonStyle.Secondary, () => Map.ShowPanel(new EventItemsPanel(Map))));
+        else
+            AddButton("Import map file…", ButtonStyle.Primary, () => Map.ChooseMapFiles());
         foreach (var l in lib.Layers)
         {
             var layer = l;
@@ -135,6 +139,7 @@ public sealed class LayersPanel : SidePanel
                 (layer.Content.Warnings.Count > 0 ? $" · {layer.Content.Warnings.Count} note(s)" : ""));
             var buttons = new List<Button>
             {
+                Btn("Items", ButtonStyle.Secondary, () => Map.ShowPanel(new EventItemsPanel(Map, layer.Info.Id))),
                 Btn("Zoom to", ButtonStyle.Secondary, () =>
                 {
                     if (!layer.Content.Bounds.IsEmpty)

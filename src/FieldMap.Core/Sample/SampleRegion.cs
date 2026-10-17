@@ -186,6 +186,15 @@ public static class SampleRegion
             N(StreetX(4) - 30, AvenueY(4) + 40, ("amenity", "social_facility"), ("social_facility", "shelter"), ("name", "Sampleton Community Hall – reception centre (SAMPLE)"));
             N(StreetX(3) + 80, AvenueY(7) + 40, ("emergency", "assembly_point"), ("name", "Sample Park muster point (SAMPLE)"));
 
+            // Businesses (searchable by name and type, not drawn as a layer).
+            N(StreetX(4) + 30, AvenueY(2) + 30, ("amenity", "restaurant"), ("name", "Sampleton Diner (SAMPLE)"), ("addr:housenumber", "212"), ("addr:street", Streets[4]),
+                ("phone", "+1-555-0142"), ("opening_hours", "Mo-Su 06:00-21:00"));
+            N(StreetX(5) + 40, AvenueY(3) + 40, ("shop", "supermarket"), ("name", "Valley Foods (SAMPLE)"));
+            N(StreetX(2) + 40, AvenueY(5) + 40, ("amenity", "cafe"), ("name", "Bean There Cafe (SAMPLE)"));
+            N(StreetX(6) + 50, -320, ("tourism", "motel"), ("name", "Riverside Motel (SAMPLE)"));
+            var store = new[] { N(StreetX(1) + 20, AvenueY(1) + 20), N(StreetX(1) + 80, AvenueY(1) + 20), N(StreetX(1) + 80, AvenueY(1) + 80), N(StreetX(1) + 20, AvenueY(1) + 80) };
+            Way(store.Append(store[0]).ToArray(), ("building", "retail"), ("shop", "hardware"), ("name", "Sample Hardware (SAMPLE)"));
+
             // AEDs, some with a recorded check date.
             Node(new GeoPoint(h.Lat + 0.0001, h.Lon), ("emergency", "defibrillator"), ("name", "Hospital main entrance AED"), ("defibrillator:location", "Inside main entrance, left wall"), ("check_date", "2026-03-14"), ("access", "yes"), ("opening_hours", "24/7"));
             N(StreetX(5) + 60, AvenueY(1) + 40, ("emergency", "defibrillator"), ("name", "Elementary school AED"), ("defibrillator:location", "Gym lobby"), ("check_date", "2025-09-02"), ("opening_hours", "Mo-Fr 08:00-16:00"));
