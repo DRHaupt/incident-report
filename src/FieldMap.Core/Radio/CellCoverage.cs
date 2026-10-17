@@ -6,7 +6,15 @@ using FieldMap.Core.Overlays;
 namespace FieldMap.Core.Radio;
 
 /// <summary>What one cell-coverage import contained.</summary>
-public sealed record CellCoverageSummary(int Areas, IReadOnlyDictionary<string, int> ByKind, int Tiles, IReadOnlyList<string> Warnings);
+public sealed record CellCoverageSummary(int Areas, IReadOnlyDictionary<string, int> ByKind, int Tiles, IReadOnlyList<string> Warnings)
+{
+    /// <summary>Per technology, the year kept when the files hold several years (e.g. the Atlas of Canada series 2013–2024).</summary>
+    public IReadOnlyDictionary<string, int> Years { get; init; } = new Dictionary<string, int>();
+
+    /// <summary>"LTE (4G) 2024, 5G 2024".</summary>
+    public string Description => string.Join(", ", ByKind.Keys.OrderBy(k => Array.IndexOf(CellCoverage.Kinds, k))
+        .Select(k => CellCoverage.KindLabel(k) + (Years.TryGetValue(k, out var y) ? " " + y : "")));
+}
 
 /// <summary>
 /// Mobile (cell) coverage from the Government of Canada's published coverage maps (CRTC / ISED – LTE and 5G, all
@@ -51,9 +59,8 @@ public static class CellCoverage
     /// </summary>
     public static CellCoverageSummary Build(IEnumerable<string> files, string outputPath, GeoBounds? clip, IProgress<double>? progress = null, CancellationToken cancel = default)
     {
-        var areas = new List<MapArea>();
+        var found = new List<(MapArea Area, int? Year)>();
         var warnings = new List<string>();
-        var byKind = new Dictionary<string, int>();
         foreach (var file in files)
         {
             cancel.ThrowIfCancellationRequested();
@@ -68,24 +75,61 @@ public static class CellCoverage
                 area.Outers.Add(f.Parts[0].ToArray());
                 foreach (var hole in f.Parts.Skip(1))
                     area.Inners.Add(hole.ToArray());
-                areas.Add(area);
-                byKind[kind] = byKind.GetValueOrDefault(kind) + 1;
+                found.Add((area, YearOf(f)));
             }
         }
+        // Coverage series (one map per year) stack on top of each other: keep the newest year of each technology.
+        var years = new Dictionary<string, int>();
+        foreach (var g in found.Where(x => x.Year != null).GroupBy(x => x.Area.Kind))
+        {
+            var newest = g.Max(x => x.Year!.Value);
+            years[g.Key] = newest;
+            var older = g.Select(x => x.Year!.Value).Where(y => y < newest).Distinct().OrderBy(y => y).ToList();
+            if (older.Count > 0)
+                warnings.Add($"{KindLabel(g.Key)}: kept {newest}; older years left out ({older.First()}–{older.Last()}).");
+        }
+        var areas = found.Where(x => x.Year == null || !years.TryGetValue(x.Area.Kind, out var keep) || x.Year == keep).Select(x => x.Area).ToList();
+        var byKind = areas.GroupBy(a => a.Kind).ToDictionary(g => g.Key, g => g.Count());
         if (areas.Count == 0)
             throw new InvalidDataException("No coverage areas (polygons) were found" + (clip != null ? " over the installed map area." : "."));
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
         var temp = outputPath + ".partial";
         if (File.Exists(temp))
             File.Delete(temp);
+        var summary = new CellCoverageSummary(areas.Count, byKind, 0, warnings) { Years = years };
         var tiles = TileBuilder.BuildCoverageMbTiles(areas, temp, new Dictionary<string, string>
         {
             ["name"] = "Cell coverage",
-            ["description"] = string.Join(", ", files.Select(Path.GetFileName)),
+            ["description"] = summary.Description + " – " + string.Join(", ", files.Select(Path.GetFileName)),
             ["built"] = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture)
         }, progress: progress, cancel: cancel);
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         File.Move(temp, outputPath, overwrite: true);
-        return new CellCoverageSummary(areas.Count, byKind, tiles, warnings);
+        return summary with { Tiles = tiles };
+    }
+
+    /// <summary>
+    /// The year a coverage area is for, from a property named like "year" (a year, or a date/epoch-milliseconds value
+    /// as ArcGIS exports it), or null.
+    /// </summary>
+    public static int? YearOf(OverlayFeature f)
+    {
+        foreach (var (key, value) in f.Properties)
+        {
+            var k = key.ToLowerInvariant();
+            if (!(k is "year" or "annee" or "année" || k.Contains("year") || k.Contains("date")))
+                continue;
+            var v = value.Trim();
+            if (long.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n))
+            {
+                if (n is >= 1900 and <= 2100)
+                    return (int)n;
+                if (n > 100_000_000_000) // epoch milliseconds
+                    return DateTimeOffset.FromUnixTimeMilliseconds(n).UtcDateTime.Year;
+            }
+            if (DateTime.TryParse(v, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var d) && d.Year is >= 1900 and <= 2100)
+                return d.Year;
+        }
+        return null;
     }
 }

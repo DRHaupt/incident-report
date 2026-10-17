@@ -845,9 +845,14 @@ public static class MapRenderer
             foreach (var t in tiles)
                 if (t.Tile.Fills.TryGetValue("coverage:" + kind, out var path))
                 {
+                    // Clip to the tile itself: areas reach a little past the edge, and the translucent fill
+                    // would otherwise be drawn twice along every tile seam.
+                    canvas.Save();
                     canvas.SetMatrix(t.Matrix);
+                    canvas.ClipRect(new SKRect(0, 0, 4096, 4096));
                     fill.Color = scene.Style.Symbol(CellCoverageColor(kind)).WithAlpha(kind == "5g" ? (byte)70 : (byte)55);
                     canvas.DrawPath(path, fill);
+                    canvas.Restore();
                 }
         canvas.ResetMatrix();
     }

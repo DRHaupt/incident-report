@@ -186,4 +186,24 @@ public sealed class RepeaterTests : IDisposable
 
         Assert.Throws<InvalidDataException>(() => CellCoverage.Build(new[] { kml }, output, new GeoBounds(0, 0, 1, 1)));
     }
+
+    [Fact]
+    public void Atlas_of_canada_coverage_keeps_only_the_newest_year_per_technology()
+    {
+        static string Square(string speed, int year, double lon)
+        {
+            var ms = new DateTimeOffset(year, 1, 1, 0, 0, 0, TimeSpan.Zero).ToUnixTimeMilliseconds();
+            var ring = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"[{lon},50],[{lon + 0.5},50],[{lon + 0.5},50.5],[{lon},50.5],[{lon},50]");
+            return "{\"type\":\"Feature\",\"properties\":{\"Speed\":\"" + speed + "\",\"Year\":" + ms + "}," +
+                   "\"geometry\":{\"type\":\"MultiPolygon\",\"coordinates\":[[[" + ring + "]]]}}";
+        }
+        var path = File("coverage.geojson", "{\"type\":\"FeatureCollection\",\"features\":[" + string.Join(",",
+            Square("LTE", 2022, -121), Square("LTE", 2024, -120), Square("LTE", 2024, -119), Square("5G", 2023, -121), Square("5G", 2024, -120)) + "]}");
+        var summary = CellCoverage.Build(new[] { path }, Path.Combine(_dir, CellCoverage.FileName), new GeoBounds(48, -140, 60, -110));
+        Assert.Equal(3, summary.Areas);
+        Assert.Equal(2, summary.ByKind["lte"]);
+        Assert.Equal(1, summary.ByKind["5g"]);
+        Assert.Equal("5G 2024, LTE (4G) 2024", summary.Description);
+        Assert.Equal(2, summary.Warnings.Count(w => w.Contains("older years left out")));
+    }
 }

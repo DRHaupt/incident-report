@@ -441,6 +441,7 @@ public sealed class DataWindow : ToolWindow
             AppServices.Data.Load();
             _log = $"Cell coverage imported from {string.Join(", ", files.Select(Path.GetFileName))}: {summary.Areas:N0} areas (" +
                    string.Join(", ", summary.ByKind.Select(k => $"{Core.Radio.CellCoverage.KindLabel(k.Key)} {k.Value:N0}")) + ")." +
+                   (summary.Years.Count > 0 ? $" Showing: {summary.Description}." : "") +
                    (summary.Warnings.Count > 0 ? "\n" + string.Join("\n", summary.Warnings.Take(10)) : "") +
                    (summary.ByKind.ContainsKey("other") ? "\nSome areas didn't say which technology they are for and are shown as 'other' (grey)." : "");
         }
