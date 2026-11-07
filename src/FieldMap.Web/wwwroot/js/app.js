@@ -34,7 +34,7 @@ export const save = () => saveSettings(app.settings);
 async function start() {
   document.body.dataset.ui = THEMES[app.settings.theme]?.ui ?? 'dark';
   const bottom = $('#bottom');
-  new ResizeObserver(() => { document.documentElement.style.setProperty('--bottom-h', `${bottom.offsetHeight}px`); fitPadding(); }).observe(bottom);
+  new ResizeObserver(() => { document.documentElement.style.setProperty('--bottom-h', `${bottom.offsetHeight}px`); queueFit(); }).observe(bottom);
   app.panel = new Panel($('#panel'), { onResize: fitPadding });
   setAuthHandler(() => V.showLogin());
   for (const b of document.querySelectorAll('#tabs button'))
@@ -44,7 +44,12 @@ async function start() {
   $('#btn-compass').addEventListener('click', () => toggleHeadingUp());
   $('#status-coords').addEventListener('click', () => cycleCoordFormat());
   $('#route-banner').addEventListener('click', () => app.route && V.openDirections(app.route.to, app.route.toLabel, { push: false }));
-  window.matchMedia('(min-width: 700px)').addEventListener('change', fitPadding);
+  window.addEventListener('resize', queueFit);
+  window.visualViewport?.addEventListener('resize', queueFit);
+  new ResizeObserver(queueFit).observe($('#panel'));
+  // Optional fold reporting (behind feature flags in Safari): the layout already works without it.
+  navigator.devicePosture?.addEventListener?.('change', queueFit);
+  fitPadding();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && app.settings.keepAwake) keepAwake(true); });
 
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost'))
@@ -107,6 +112,7 @@ function createMap() {
     touchPitch: false,
     maxZoom: 19
   });
+  fitPadding();
   app.map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: '© OpenStreetMap contributors' }), 'bottom-left');
   app.map.addControl(new maplibregl.ScaleControl({ unit: 'metric', maxWidth: 90 }), 'bottom-left');
   app.map.on('style.load', () => { addImages(); addOverlays(); });
@@ -136,18 +142,32 @@ export function setTheme(theme) {
 
 /** Keeps the map's centre in the part of the screen the panel doesn't cover. */
 function fitPadding() {
-  if (!app.map) return;
   const p = $('#panel');
-  const wide = getComputedStyle(p).getPropertyValue('--sheet').trim() !== '1';
+  const split = getComputedStyle(p).getPropertyValue('--sheet').trim() !== '1';
+  document.body.dataset.layout = split ? 'split' : 'sheet';
   const open = app.panel?.isOpen;
-  // offset* ignore the slide-in transform, so this is where the panel ends up, not where it is mid-animation.
-  const padding = { top: 70, left: 0, right: 0, bottom: 0 };
-  if (open && wide) padding.left = Math.max(0, p.offsetLeft + p.offsetWidth);
+  document.body.classList.toggle('panel-open', !!open);
+  if (!app.map) return;
+  // offset* ignore the slide-in transform, so this is where the panel sits when open, even while it's closed or moving.
+  const top = $('#top');
+  const padding = { top: split ? 16 : top.offsetTop + top.offsetHeight + 8, left: 0, right: 0, bottom: 0 };
+  // Two panes: the map always centres on the right-hand side, so your position never sits on the fold and the map
+  // doesn't jump when the panel opens or closes.
+  if (split) padding.left = Math.max(0, Math.min(p.offsetLeft + p.offsetWidth, window.innerWidth - 200));
   else if (open) padding.bottom = Math.max(0, Math.min(p.offsetHeight, window.innerHeight * 0.6));
+  const same = (a, b) => ['top', 'left', 'right', 'bottom'].every((k) => Math.abs(a[k] - b[k]) < 1);
+  if (same(app.map.getPadding(), padding)) return;
   // Changing the padding jumps the camera, which would cut short a fly-to that's under way.
   if (app.map.isMoving()) app.map.once('moveend', () => app.map.setPadding(padding));
   else app.map.setPadding(padding);
-  document.body.classList.toggle('panel-open', !!open);
+}
+
+// Opening or closing a foldable (or rotating, or Split View) changes the size without a reload: re-fit once per frame.
+let fitQueued = false;
+function queueFit() {
+  if (fitQueued) return;
+  fitQueued = true;
+  requestAnimationFrame(() => { fitQueued = false; fitPadding(); });
 }
 
 // ------------------------------------------------------------------ map symbols

@@ -45,7 +45,6 @@ svg { width: 100%; height: 100%; display: block; }
 .maplibregl-ctrl-attrib.maplibregl-compact, .maplibregl-ctrl-attrib { background: var(--panel) !important; color: var(--muted); }
 .maplibregl-ctrl-attrib a { color: var(--muted); }
 body:not([data-ui="light"]) .maplibregl-ctrl-attrib-button { filter: invert(1) brightness(.8); }
-body.panel-open .maplibregl-ctrl-bottom-left { opacity: 0; pointer-events: none; }
 
 /* ------------------------------------------------------------------ top: search pill and route banner */
 
@@ -91,14 +90,20 @@ body[data-ui="night"] #status-gps { color: var(--text); filter: brightness(.6); 
 #status-coords { flex: 1 1 auto; min-width: 0; text-align: left; background: none; border: 0; padding: 6px 0; color: var(--text); font-variant-numeric: tabular-nums; font-size: 15px; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 #status-speed { font-weight: 600; color: var(--text); }
 #status-data { font-size: 12px; }
-@media (max-width: 560px) { #status-data { display: none; } }
+@media (max-width: 560px), (max-height: 560px) { #status-data { display: none; } }
 #tabs { display: grid; grid-template-columns: repeat(5, 1fr); height: 60px; }
 #tabs button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; background: none; color: var(--muted); font-size: 12px; cursor: pointer; }
 #tabs svg { width: 24px; height: 24px; }
 #tabs button.active { color: var(--accent); }
 body[data-ui="night"] #tabs button.active { color: var(--text); }
 
-/* ------------------------------------------------------------------ the panel: a bottom sheet on phones */
+/* ------------------------------------------------------------------ layout
+   Three sizes, chosen only by the viewport (never by device or user agent), and switched live when a foldable is
+   opened or closed – the panel and its contents stay as they are, only the CSS changes:
+   1. narrow (≈380–480 px): one column; the panel slides up from the bottom.
+   2. middle (≈480–700 px): the same sheet, inset from the edges, with roomier content.
+   3. two panes (≥700 px, or ≥560 px when short and wide): the panel on the left, the map on the right. The left
+      pane never reaches the middle of the screen, so nothing important sits on a fold. */
 
 #panel {
   --sheet: 1;
@@ -116,41 +121,78 @@ body[data-ui="night"] #tabs button.active { color: var(--text); }
 .panel-title { flex: 1; margin: 0; font-size: 19px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .panel-back { margin-left: -10px; }
 .icon-btn { width: 44px; height: 44px; padding: 10px; border: 0; border-radius: 22px; background: var(--btn); color: var(--text); cursor: pointer; flex: none; }
-.panel-body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 0 16px 20px; }
+.panel-body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 0 16px 20px; container-type: inline-size; }
 
-/* ------------------------------------------------------------------ wide screens: a side panel next to the map */
+body[data-layout="sheet"].panel-open #fabs { opacity: 0; pointer-events: none; }
+body[data-layout="sheet"].panel-open .maplibregl-ctrl-bottom-left { opacity: 0; pointer-events: none; }
 
-@media (min-width: 700px) {
-  #top { right: auto; width: 380px; }
+/* 2. Middle: the sheet floats a little in from the edges. */
+@media (min-width: 480px) {
+  #panel { left: calc(var(--safe-l) + 10px); right: calc(var(--safe-r) + 10px); }
+  .panel-body { padding: 0 20px 20px; }
+}
+
+/* 3. Two panes. --pane-w keeps the left pane clear of the centre line: 12 px gutter, pane, 12 px gap ≤ half. */
+@media (min-width: 700px), (min-width: 560px) and (max-height: 520px) {
+  :root { --pane-w: clamp(280px, calc(50vw - 24px - var(--safe-l)), 420px); --pane-end: calc(var(--safe-l) + var(--pane-w) + 24px); }
+  #top { right: auto; width: var(--pane-w); }
   #panel {
     --sheet: 0;
-    left: calc(var(--safe-l) + 12px); right: auto; width: 380px; top: calc(var(--safe-t) + 68px); bottom: calc(var(--bottom-h) + 12px);
+    left: calc(var(--safe-l) + 12px); right: auto; width: var(--pane-w); top: calc(var(--safe-t) + 68px); bottom: calc(var(--bottom-h) + 12px);
     max-height: none; border-radius: var(--radius); border-bottom: 1px solid var(--line);
-    transform: translateX(calc(-100% - 40px));
+    transform: translateX(calc(-100% - 40px - var(--safe-l)));
   }
   #panel.full { height: auto; max-height: none; }
   .panel-grab { display: none; }
   .panel-head { padding-top: 12px; }
-  #route-banner { left: auto; right: calc(var(--safe-r) + 84px); width: min(460px, calc(100% - 520px)); top: calc(var(--safe-t) + 8px); }
-  body:not(.panel-open) #route-banner { left: calc(var(--safe-l) + 404px); right: auto; }
-  #tabs { max-width: 520px; margin: 0 auto; }
-}
-@media (min-width: 700px) and (max-height: 500px) { #status-data { display: none; } }
-@media (max-width: 699px) {
-  body.routing #fabs { bottom: calc(var(--bottom-h) + 18px); }
-  body.panel-open #fabs { opacity: 0; pointer-events: none; }
+  .panel-body { padding: 0 16px 20px; }
+  /* Everything about the map lives in the right half. */
+  #route-banner { left: max(calc(50vw + 16px), var(--pane-end)); right: calc(var(--safe-r) + 12px); top: calc(var(--safe-t) + 8px); }
+  .maplibregl-ctrl-bottom-left { left: var(--pane-end); }
+  #toast { left: calc(var(--pane-end) + (100vw - var(--pane-end) - var(--safe-r)) / 2); max-width: calc(100vw - var(--pane-end) - var(--safe-r) - 24px); }
+  #splash { padding-right: calc(100vw - var(--pane-end)); }
+  /* One bottom row: tabs under the left pane, status under the map. */
+  #bottom { display: grid; grid-template-columns: calc(var(--pane-w) + 24px) minmax(0, 1fr); grid-template-areas: "tabs status"; }
+  #tabs { grid-area: tabs; }
+  #status { grid-area: status; height: auto; padding: 0 12px 0 24px; }
 }
 
-/* Foldables with a hinge or two screens: the panel fills the left screen and the map the right one. */
-@media (horizontal-viewport-segments: 2) {
-  #top, #panel { width: calc(env(viewport-segment-width 0 0, 400px) - 24px - var(--safe-l)); }
-  #panel { --sheet: 0; left: calc(var(--safe-l) + 12px); right: auto; top: calc(var(--safe-t) + 68px); bottom: calc(var(--bottom-h) + 12px); max-height: none; border-radius: var(--radius); }
-  #route-banner { left: calc(env(viewport-segment-left 1 0, 50%) + 12px); right: calc(var(--safe-r) + 84px); width: auto; }
+/* Short screens (open foldable in landscape, phones on their side, Split View): smaller chrome, more map. */
+@media (max-height: 560px) {
+  #tabs { height: 50px; }
+  #tabs button { font-size: 11px; gap: 1px; }
+  #tabs svg { width: 22px; height: 22px; }
+  #status { height: 28px; font-size: 13px; }
+  #search-pill { height: 44px; }
+  #top { top: calc(var(--safe-t) + 6px); }
+  .fab { width: 48px; height: 48px; padding: 12px; }
+  #fabs { gap: 8px; bottom: calc(var(--bottom-h) + 10px); }
+  #route-banner { top: calc(var(--safe-t) + 56px); padding: 8px 12px; font-size: 15px; }
+  .panel-title { font-size: 17px; }
 }
-/* Folded like a laptop: map on the top half, panel on the bottom half. */
+@media (max-height: 560px) and (min-width: 560px) {
+  #route-banner { top: calc(var(--safe-t) + 6px); }
+  #panel { top: calc(var(--safe-t) + 58px); }
+}
+
+/* Optional extras when Safari reports the fold (Viewport Segments / Device Posture; off by default). The layout
+   above already works without them; with them the panes line up exactly with the two halves. */
+@media (horizontal-viewport-segments: 2) {
+  :root { --pane-w: calc(env(viewport-segment-width 0 0, 50vw) - 24px - var(--safe-l)); --pane-end: env(viewport-segment-left 1 0, 50vw); }
+  #route-banner { left: calc(env(viewport-segment-left 1 0, 50vw) + 12px); }
+}
+/* Half-closed like a laptop: map on the top half, panel on the bottom half. */
 @media (vertical-viewport-segments: 2) {
-  #panel { --sheet: 0; left: var(--safe-l); right: var(--safe-r); width: auto; top: env(viewport-segment-top 0 1, 50%); bottom: var(--bottom-h); max-height: none; height: auto; border-radius: 0; }
-  #fabs { bottom: calc(100dvh - env(viewport-segment-bottom 0 0, 50%) + 16px); }
+  #panel { --sheet: 0; left: var(--safe-l); right: var(--safe-r); width: auto; top: env(viewport-segment-top 0 1, 50%); bottom: var(--bottom-h); max-height: none; height: auto; border-radius: 0; transform: translateY(calc(100% + var(--bottom-h))); }
+  #panel.open { transform: none; }
+  #fabs { bottom: calc(100dvh - env(viewport-segment-bottom 0 0, 50dvh) + 12px); }
+}
+
+/* Wider panel content (middle sheet or a roomy pane) uses the space instead of stretching rows. */
+@container (min-width: 520px) {
+  .coords { display: grid; grid-template-columns: 1fr 1fr; }
+  .coord:nth-child(odd) { border-right: 1px solid var(--line); }
+  .actions .btn { flex: 1 1 auto; }
 }
 
 /* ------------------------------------------------------------------ panel content */

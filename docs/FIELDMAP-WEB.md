@@ -20,9 +20,22 @@ and can add it to the Home Screen like an app.
 | Works with no signal | Map only (areas you've viewed or saved) | Everything |
 | Drawing, printing, APRS, radio coverage prediction, imagery, terrain | – | ✓ |
 
-The layout adapts to the screen: a bottom sheet on a phone held upright, and a side panel next to the map on
-wider screens (landscape, tablets, and foldable phones when opened). On foldables that report a hinge, the panel
-sits on one half and the map on the other.
+The layout follows the screen size only (it never checks which phone it is), and changes live when a foldable
+such as the iPhone Duo is opened or closed. Search text, the open panel and the map position stay as they are.
+
+| Screen width | Layout |
+|---|---|
+| about 380–480 px (closed foldable, Split View, regular iPhones) | One column: the panel slides up from the bottom |
+| about 480–700 px (middle sizes, open foldable held upright) | The same sheet, inset from the edges; wider content (coordinates in two columns) |
+| 700 px and up, or 560 px and up on a short screen (open foldable in landscape, phones on their side, tablets) | Two panes: panel and tabs on the left, map and status on the right |
+
+In two panes the left pane always stops short of the middle of the screen, so no button or text sits on the
+fold. The map keeps your position in the right half, and the map doesn't shift when the panel opens or closes.
+Short screens (down to about 370 px high) get smaller bars so more of the map shows. Where Safari reports the fold
+(the Viewport Segments and Device Posture feature flags), the panes line up exactly with the two halves, and a
+half-closed "laptop" pose puts the map on top and the panel below. Without those flags everything still works.
+
+To try it in Xcode's iPhone Duo simulator, open and close the phone while a panel is open; nothing should reload.
 
 ## Install on Ubuntu
 
