@@ -26,6 +26,13 @@ SkiaSharp, SkiaSharp.Views.WindowsForms (Field Map)
   SkiaSharp-LICENSE.txt.
   Skia and its bundled libraries (BSD-3-Clause and others) – SkiaSharp-THIRD-PARTY-NOTICES.txt.
 
+Field Map web server and phone app (separate Linux download, FieldMapWeb-*-linux-x64.tar.gz)
+  ASP.NET Core 8 runtime – Copyright (c) .NET Foundation and Contributors. MIT licence – dotnet-LICENSE.txt.
+  MapLibre GL JS 5.24.0 – Copyright (c) 2023 MapLibre contributors; Copyright (c) 2020 Mapbox; and others listed
+    in its licence. BSD-3-Clause and others – wwwroot/vendor/maplibre/LICENSE.txt in the download.
+  Map label glyphs from smp-noto-glyphs (MIT) – rendered from Noto Sans / GoNotoKurrent, SIL Open Font
+    License 1.1 – wwwroot/fonts/LICENSE.txt in the download.
+
 DATA (Field Map and Field Toolkit)
 
 OpenStreetMap

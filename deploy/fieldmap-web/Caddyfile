@@ -1,0 +1,6 @@
+# Caddy gets and renews the HTTPS certificate by itself. Phones need HTTPS for GPS.
+# Replace the name with your server's DNS name, then: sudo cp Caddyfile /etc/caddy/Caddyfile && sudo systemctl reload caddy
+maps.example.org {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:5080
+}

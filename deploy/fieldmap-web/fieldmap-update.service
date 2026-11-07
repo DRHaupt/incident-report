@@ -1,0 +1,15 @@
+[Unit]
+Description=Field Map: download the latest map data and rebuild the region
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=fieldmap
+Group=fieldmap
+EnvironmentFile=/etc/fieldmap-web/update.env
+# Each region in REGIONS (e.g. "bc ab") is updated in turn; the web server switches to new data by itself.
+ExecStart=/bin/sh -c 'for r in $REGIONS; do /opt/fieldmap-web/mapbuilder/MapBuilder update --region "$r" --data /var/lib/fieldmap || exit 1; done'
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=12h

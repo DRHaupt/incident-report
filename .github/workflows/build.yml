@@ -31,6 +31,12 @@ jobs:
       - name: Test Field Map core (import, tiles, search, routing, updates, rendering)
         run: dotnet test tests/FieldMap.Tests -c Release --no-build
 
+      - name: Test Field Map web server (API against the sample region)
+        run: dotnet test tests/FieldMap.Web.Tests -c Release --no-build
+
+      - name: Test Field Map phone app (coordinate formats match the desktop)
+        run: node --test tests/web/coords.test.mjs
+
       - name: Test (UI smoke test – opens every window)
         run: dotnet test tests/FieldToolkit.UiTests -c Release --no-build
         timeout-minutes: 15
@@ -159,6 +165,24 @@ jobs:
           if (Test-Path $menu) { throw "Uninstall left the Start menu folder" }
           Write-Host "Install, update, start and uninstall OK"
 
+      - name: Package the Field Map web server for Ubuntu (linux-x64, no .NET install needed)
+        shell: pwsh
+        run: |
+          $root = "webpkg/fieldmap-web"
+          dotnet publish src/FieldMap.Web/FieldMap.Web.csproj -c Release -r linux-x64 --self-contained true -p:Version=$env:SUITE_VERSION -o "$root/server"
+          if ($LASTEXITCODE -ne 0) { throw "web server publish failed" }
+          dotnet publish tools/MapBuilder/MapBuilder.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:Version=$env:SUITE_VERSION -o "$root/mapbuilder"
+          if ($LASTEXITCODE -ne 0) { throw "MapBuilder publish failed" }
+          Copy-Item deploy/fieldmap-web "$root/deploy" -Recurse
+          Copy-Item docs/FIELDMAP-WEB.md "$root/README.md"
+          Copy-Item installer/licenses "$root/licenses" -Recurse
+          Get-ChildItem webpkg -Recurse -Filter *.pdb | Remove-Item
+          foreach ($f in "server/FieldMap.Web", "server/wwwroot/index.html", "server/wwwroot/vendor/maplibre/maplibre-gl.js", "mapbuilder/MapBuilder", "mapbuilder/regions.json", "deploy/install.sh") {
+            if (-not (Test-Path "$root/$f")) { throw "Missing from the web server package: $f" } }
+          tar -czf "release/FieldMapWeb-$env:SUITE_VERSION-linux-x64.tar.gz" -C webpkg fieldmap-web
+          if ($LASTEXITCODE -ne 0) { throw "tar failed" }
+          Write-Host "FieldMapWeb package: $([math]::Round((Get-Item release/FieldMapWeb-*.tar.gz).Length / 1MB)) MB"
+
       - name: Publish the release (installed apps update from it)
         if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
         shell: pwsh
@@ -167,7 +191,7 @@ jobs:
         run: |
           $tag = "v$env:SUITE_VERSION"
           $subject = git log -1 --pretty=%s
-          $notes = "$subject`n`nInstall: download the .msi below, or let installed apps update themselves (Settings > Check for Field Suite updates).`nOffline: copy both files into a FieldSuite-Updates folder on a USB stick."
+          $notes = "$subject`n`nInstall: download the .msi below, or let installed apps update themselves (Settings > Check for Field Suite updates).`nOffline: copy the .msi and fieldsuite-update.json into a FieldSuite-Updates folder on a USB stick.`nPhones: FieldMapWeb-*-linux-x64.tar.gz is the Field Map web server for Ubuntu (see docs/FIELDMAP-WEB.md)."
           gh release create $tag (Get-ChildItem release/*).FullName --title "Field Suite $env:SUITE_VERSION" --notes $notes --target $env:GITHUB_SHA
           if ($LASTEXITCODE -ne 0) { throw "gh release create failed" }
           # Keep the ten newest releases; the updater only needs the latest.

@@ -1,0 +1,10 @@
+[Unit]
+Description=Field Map: weekly map data update
+
+[Timer]
+OnCalendar=Sun *-*-* 03:30
+RandomizedDelaySec=45m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

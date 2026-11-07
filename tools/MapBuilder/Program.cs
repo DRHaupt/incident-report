@@ -107,6 +107,8 @@ internal static class Program
                 }
                 case "imagery":
                     return Imagery(opts);
+                case "coverage":
+                    return Coverage(opts);
                 default:
                     Console.Error.WriteLine($"Unknown command '{args[0]}'.\n\n{Usage}");
                     return 2;
@@ -118,6 +120,31 @@ internal static class Program
             Console.Error.WriteLine("Error: " + ex.Message);
             return 1;
         }
+    }
+
+    /// <summary>
+    /// Builds the cell-coverage layer from government KML/KMZ/GeoJSON files, clipped to the installed regions, into the
+    /// data folder (the same place the Field Map Data window puts it, so the web server and the app both find it).
+    /// </summary>
+    private static int Coverage(Options opts)
+    {
+        var store = new RegionStore(opts.Require("data"));
+        var files = opts.All("file").ToList();
+        if (files.Count == 0)
+            throw new ArgumentException("Give at least one --file <coverage.kml|kmz|geojson>.");
+        var bounds = store.InstalledRegions().Select(store.CurrentManifest).OfType<RegionManifest>()
+            .Select(m => new FieldMap.Core.Geo.GeoBounds(m.MinLat, m.MinLon, m.MaxLat, m.MaxLon))
+            .Aggregate(FieldMap.Core.Geo.GeoBounds.Empty, (a, b) => a.Include(b));
+        var output = Path.Combine(store.ImportsDir, FieldMap.Core.Radio.CellCoverage.Folder, FieldMap.Core.Radio.CellCoverage.FileName);
+        Directory.CreateDirectory(Path.GetDirectoryName(output)!);
+        var temp = output + ".building";
+        var summary = FieldMap.Core.Radio.CellCoverage.Build(files, temp, bounds.IsEmpty ? null : bounds, new Progress<double>(f => Console.Error.Write($"\rBuilding coverage {f,6:P0}")));
+        File.Move(temp, output, overwrite: true);
+        Console.Error.WriteLine();
+        Console.WriteLine($"Cell coverage: {summary.Areas:N0} areas ({summary.Description}), {summary.Tiles:N0} tiles -> {output}");
+        foreach (var w in summary.Warnings.Take(10))
+            Console.WriteLine("  " + w);
+        return 0;
     }
 
     private static int Publish(RegionStore store, string region, string staging)
@@ -199,6 +226,8 @@ internal static class Program
                                                        Write an offline update package (for USB)
           install --package <file.fmupdate> --data <folder>
                                                        Verify and install an update package
+          coverage --data <folder> --file <coverage.kml|kmz|geojson> [--file …]
+                                                       Build the cell-coverage layer, clipped to the installed regions
           imagery (--source <id> [--catalog imagery-sources.json] | --url <xyz template> | --wms <url> --layers <names>)
                   --bbox minLon,minLat,maxLon,maxLat --zoom 10-17 --out <file.mbtiles> --accept-terms
                   [--key <token>] [--name <text>] [--attribution <text>] [--licence <text>] [--max-tiles 500000]

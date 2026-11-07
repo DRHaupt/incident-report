@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FieldMap.Web</RootNamespace>
+    <AssemblyName>FieldMap.Web</AssemblyName>
+    <Description>Field Map for phones: a small Linux web server that serves the region map data, search, nearest and directions built by MapBuilder, with a touch-first web app.</Description>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FieldMap.Core\FieldMap.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Shared.Core" />
+    <Using Include="Shared.Core.Geo" />
+    <Using Include="FieldMap.Core.Geo" />
+    <InternalsVisibleTo Include="FieldMap.Web.Tests" />
+  </ItemGroup>
+
+</Project>

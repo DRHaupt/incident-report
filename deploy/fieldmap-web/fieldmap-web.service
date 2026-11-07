@@ -1,0 +1,26 @@
+[Unit]
+Description=Field Map web server (map, search and directions for phones)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=fieldmap
+Group=fieldmap
+WorkingDirectory=/opt/fieldmap-web/server
+ExecStart=/opt/fieldmap-web/server/FieldMap.Web
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5080
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+Restart=always
+RestartSec=5
+# Hardening: the server only needs the data folder (it reads it; SQLite may keep small lock files there).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/fieldmap
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

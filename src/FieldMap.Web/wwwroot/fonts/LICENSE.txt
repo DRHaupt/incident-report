@@ -1,0 +1,4 @@
+Map label glyphs (*.pbf.gz) come from the smp-noto-glyphs package (MIT licence,
+https://github.com/digidem/styled-map-package). They are signed-distance-field renderings of
+Noto Sans / GoNotoKurrent, licensed under the SIL Open Font License 1.1
+(https://openfontlicense.org/). Used here for map labels only.
