@@ -65,7 +65,7 @@ public static class Api
 
         // ------------------------------------------------------------------ tiles and fonts
 
-        app.MapGet("/tiles/{region}/{z:int}/{x:int}/{y:int}.pbf", (string region, int z, int x, int y, MapHost host, HttpContext http) =>
+        app.MapGet("/tiles/{region}/{z:int}/{x:int}/{y:int}.pbf", (string region, int z, int x, int y, MapHost host, AccessGate gate, HttpContext http) =>
         {
             var s = host.Current;
             var tiles = region == "coverage" ? s.Coverage : s.Regions.FirstOrDefault(r => r.Id == region)?.Tiles;
@@ -76,8 +76,9 @@ public static class Api
             var raw = tiles.GetRaw(z, x, y);
             if (raw == null || raw.Length == 0)
                 return Results.NoContent();
-            // URLs carry ?v=<data version>, so a tile never changes under the same URL.
-            http.Response.Headers.CacheControl = "public, max-age=604800, immutable";
+            // URLs carry ?v=<data version>, so a tile never changes under the same URL. With an access code they're
+            // "private": a CDN in front (e.g. a Cloudflare cache rule) must not hand them to phones that aren't signed in.
+            http.Response.Headers.CacheControl = (gate.Enabled ? "private" : "public") + ", max-age=604800, immutable";
             if (raw.Length > 2 && raw[0] == 0x1f && raw[1] == 0x8b)
                 http.Response.Headers.ContentEncoding = "gzip";
             return Results.Bytes(raw, "application/x-protobuf");

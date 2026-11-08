@@ -39,8 +39,9 @@ To try it in Xcode's iPhone Duo simulator, open and close the phone while a pane
 
 ## Install on Ubuntu
 
-You need Ubuntu 22.04 or 24.04 (64-bit Intel/AMD), a DNS name pointing at the server (for HTTPS), and ports 80 and
-443 open. Phones only allow GPS on HTTPS sites.
+You need Ubuntu 22.04 or 24.04 (64-bit Intel/AMD) and a way to reach it over HTTPS. Phones only allow GPS on
+HTTPS sites. The usual setup is a **Cloudflare Tunnel**: no ports to open and no certificates to manage. Caddy also
+works (see the end of step 3).
 
 1. **Download** `FieldMapWeb-<version>-linux-x64.tar.gz` from the latest GitHub release and unpack it:
 
@@ -69,16 +70,26 @@ You need Ubuntu 22.04 or 24.04 (64-bit Intel/AMD), a DNS name pointing at the se
    `sudo chown -R fieldmap:fieldmap /var/lib/fieldmap`.
    You can also use `MapBuilder export` on the PC and `MapBuilder install --package` on the server.
 
-3. **Add HTTPS** with Caddy, which gets and renews the certificate by itself:
+3. **Connect it to the internet with a Cloudflare Tunnel.** The server only listens on `127.0.0.1:5080`, so
+   nothing is exposed until the tunnel is set up.
+   - Install `cloudflared` on the server and create a tunnel (Cloudflare dashboard → Zero Trust → Networks →
+     Tunnels), then add a **Public Hostname** such as `maps.example.org` with service `http://localhost:5080`.
+     For a tunnel managed from the command line, `deploy/cloudflared-config.yml` has the config.
+   - Cloudflare provides the HTTPS. The server reads Cloudflare's headers, so each phone is known by its own
+     address (wrong access codes only slow down that phone) and the sign-in cookie is marked secure.
+   - In the Cloudflare dashboard for the domain: turn **Rocket Loader off** (it rewrites the app's scripts). If
+     phones get "No connection to the server" while the site opens fine in a browser, check that **Bot Fight
+     Mode** or a WAF rule isn't challenging `/api/` and `/tiles/` requests. Leave caching at the defaults; there's
+     no need for a "cache everything" rule. With an access code set, map tiles are marked private anyway, so
+     Cloudflare won't serve them to phones that aren't signed in.
+   - Set an **access code** (see Settings below), since the site is on the internet. Cloudflare Access (Zero Trust
+     sign-in with email codes) can go in front as well for per-person sign-in. When an Access session expires, the
+     installed app shows "No connection to the server" until the site is opened again and signed in, so set a
+     long session duration (e.g. a month).
 
-   ```sh
-   sudo apt install caddy
-   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile   # then edit the name on the first line
-   sudo systemctl reload caddy
-   ```
-
-   Using nginx instead? Proxy `https://your-name/` to `http://127.0.0.1:5080` and pass `X-Forwarded-For` and
-   `X-Forwarded-Proto`. Serve it at the root of its own name (e.g. `maps.example.org`), not in a sub-folder.
+   Not using Cloudflare? Caddy gets and renews a certificate by itself (ports 80 and 443 open):
+   `sudo apt install caddy`, copy `deploy/Caddyfile` to `/etc/caddy/Caddyfile`, put your name on the first
+   line, then `sudo systemctl reload caddy`.
 
 4. **Open it on a phone**: go to `https://your-name/`, allow location, then Share → **Add to Home Screen** (iPhone)
    or menu → **Install app** (Android).
@@ -89,7 +100,7 @@ You need Ubuntu 22.04 or 24.04 (64-bit Intel/AMD), a DNS name pointing at the se
 
 | Setting | Meaning |
 |---|---|
-| `AccessCode` | When set, each phone must enter this code once. Changing it signs every phone out. Recommended if the server is on the internet, especially with event files. |
+| `AccessCode` | When set, each phone must enter this code once. Changing it signs every phone out. Set one whenever the server is reachable from the internet (e.g. through the tunnel), especially with event files. |
 | `Regions` | Only serve these regions, e.g. `["bc"]`. Empty: every installed region. |
 | `EventsDir` | Folder of shared event files. Default `/var/lib/fieldmap/events`. |
 | `MaxUploadMb` | Largest event file a phone may add (it's converted and kept on that phone only). |

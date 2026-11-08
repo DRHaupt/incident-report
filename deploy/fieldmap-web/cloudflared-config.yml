@@ -1,0 +1,13 @@
+# Cloudflare Tunnel for the Field Map web server (only needed for a locally managed tunnel; with a tunnel made in the
+# Cloudflare dashboard, just add a Public Hostname pointing at http://localhost:5080 instead).
+#   cloudflared tunnel create fieldmap
+#   cloudflared tunnel route dns fieldmap maps.example.org
+#   sudo cp cloudflared-config.yml /etc/cloudflared/config.yml   # fill in the tunnel ID and name
+#   sudo cloudflared service install
+tunnel: <TUNNEL-ID>
+credentials-file: /etc/cloudflared/<TUNNEL-ID>.json
+
+ingress:
+  - hostname: maps.example.org
+    service: http://localhost:5080
+  - service: http_status:404

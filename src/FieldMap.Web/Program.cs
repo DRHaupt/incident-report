@@ -31,6 +31,21 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals);
 
 var app = builder.Build();
+// Behind a Cloudflare Tunnel, cloudflared connects from this machine and Cloudflare's edge says who the phone is
+// (CF-Connecting-IP) and whether it used HTTPS (CF-Visitor). Only trusted from a local connection, where only the
+// tunnel or a local proxy can be; the edge always overwrites these headers, so phones can't fake them.
+app.Use((http, next) =>
+{
+    var h = http.Request.Headers;
+    if (http.Connection.RemoteIpAddress is { } ip && System.Net.IPAddress.IsLoopback(ip))
+    {
+        if (h.TryGetValue("CF-Connecting-IP", out var client) && System.Net.IPAddress.TryParse(client.ToString(), out _))
+            h["X-Forwarded-For"] = client.ToString();
+        if (h.TryGetValue("CF-Visitor", out var visitor) && visitor.ToString().Contains("\"https\"", StringComparison.Ordinal))
+            h["X-Forwarded-Proto"] = "https";
+    }
+    return next(http);
+});
 app.UseForwardedHeaders();
 app.UseResponseCompression();
 

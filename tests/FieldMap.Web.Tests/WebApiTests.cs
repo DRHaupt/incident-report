@@ -195,5 +195,14 @@ public sealed class WebApiTests : IClassFixture<ServerFixture>
         Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/api/login", new { code = "wrong" })).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/login", new { code = "blue-heron-42" })).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/info")).StatusCode);
+
+        // Behind a CDN (Cloudflare) the tiles must not be cached for everyone once they need the code.
+        var info = await client.GetFromJsonAsync<JsonElement>("/api/info");
+        var b = info.GetProperty("regions")[0].GetProperty("bounds").EnumerateArray().Select(x => x.GetDouble()).ToArray();
+        var (x, y) = Core.Geo.WebMercator.Tile((b[1] + b[3]) / 2, (b[0] + b[2]) / 2, 12);
+        var tile = await client.GetAsync($"/tiles/sample/12/{x}/{y}.pbf?v=1");
+        Assert.Equal(HttpStatusCode.OK, tile.StatusCode);
+        Assert.True(tile.Headers.CacheControl?.Private);
+        Assert.False(tile.Headers.CacheControl?.Public);
     }
 }

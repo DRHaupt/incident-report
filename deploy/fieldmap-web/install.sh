@@ -31,5 +31,6 @@ if ! ls /var/lib/fieldmap/regions/*/current.json >/dev/null 2>&1; then
   echo "  sudo -u fieldmap /opt/fieldmap-web/mapbuilder/MapBuilder update --region bc --data /var/lib/fieldmap"
   echo "  (or try the small sample first: sudo -u fieldmap /opt/fieldmap-web/mapbuilder/MapBuilder build-sample --data /var/lib/fieldmap)"
 fi
-echo "Next: put HTTPS in front of it (phones need HTTPS for GPS) - see the Caddyfile next to this script."
+echo "Next: connect it to the internet over HTTPS (phones need HTTPS for GPS): a Cloudflare Tunnel to http://localhost:5080"
+echo "      (see cloudflared-config.yml next to this script), or Caddy (see the Caddyfile). Then set an access code."
 echo "Settings: /etc/fieldmap-web/appsettings.json (access code, regions). Weekly data update: /etc/fieldmap-web/update.env"
