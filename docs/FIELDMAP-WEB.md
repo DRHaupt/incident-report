@@ -112,6 +112,21 @@ works (see the end of step 3).
 - **On one phone only:** Layers → Add a file from this phone. The server converts it and keeps nothing; the phone
   stores it.
 
+## AED lists
+
+Copy the list (Excel, CSV, GeoJSON, KML/KMZ or GPX) to the server and run, after the region is installed:
+
+```sh
+sudo -u fieldmap /opt/fieldmap-web/mapbuilder/MapBuilder aed --data /var/lib/fieldmap --file AED_Locations.xlsx --rebuild
+```
+
+Sites with coordinates are used as they are. Sites with only a street address (such as the BC PAD Program list) are
+placed with the region's offline address search and marked approximate. Sites that can't be placed (no house
+number, or the address isn't in the map data) are written to `/var/lib/fieldmap/imports/aed-not-placed/` for
+checking. The placed sites are merged into every later build, including the weekly update. Without `--rebuild`
+they appear at the next update. Don't just copy the list into `imports/aed`: builds skip sites without
+coordinates, so address-only sites would be left out.
+
 ## Cell coverage and repeaters
 
 - Cell coverage: copy the coverage file to the server and run

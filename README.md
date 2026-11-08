@@ -481,6 +481,7 @@ MapBuilder export --region bc --data E:\FieldMapData --out F:\
 MapBuilder install --package F:\FieldMap-bc-2026-10-02_1.fmupdate --data E:\FieldMapData
 MapBuilder imagery --wms <url> --layers <name> --bbox <minLon,minLat,maxLon,maxLat> --zoom 12-17 --out area.mbtiles --accept-terms
 MapBuilder coverage --data E:\FieldMapData --file coverage.geojson
+MapBuilder aed --data E:\FieldMapData --file AED_Locations.xlsx --rebuild
 ```
 
 MapBuilder also runs on Linux; the phone version's server uses it to keep its own data up to date

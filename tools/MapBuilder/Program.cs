@@ -109,6 +109,8 @@ internal static class Program
                     return Imagery(opts);
                 case "coverage":
                     return Coverage(opts);
+                case "aed":
+                    return Aed(opts, progress);
                 default:
                     Console.Error.WriteLine($"Unknown command '{args[0]}'.\n\n{Usage}");
                     return 2;
@@ -145,6 +147,102 @@ internal static class Program
         foreach (var w in summary.Warnings.Take(10))
             Console.WriteLine("  " + w);
         return 0;
+    }
+
+    /// <summary>
+    /// Imports an AED list the way Field Map's Data window does: sites with only a street address are placed with the
+    /// installed regions' offline address search, the placed sites are stored as the CSV every build merges, and the
+    /// rest are written to a list for checking. Builds only read sites that have a position, so lists like the BC PAD
+    /// Program's (addresses only) must go through this step first.
+    /// </summary>
+    private static int Aed(Options opts, IProgress<(string Stage, double Fraction)> progress)
+    {
+        var store = new RegionStore(opts.Require("data"));
+        var file = opts.Require("file");
+        var name = Path.GetFileNameWithoutExtension(file);
+        var rows = AedFile.Read(file, opts.Get("source") ?? name, opts.Get("sheet"));
+        if (rows.Count == 0)
+            throw new InvalidDataException("No AED sites found. The list needs a name or address column, and latitude/longitude columns or street addresses.");
+
+        using var search = new FieldMap.Core.Search.SearchEngine();
+        var regions = 0;
+        foreach (var id in store.InstalledRegions())
+            if (store.CurrentDir(id) is { } dir && File.Exists(Path.Combine(dir, RegionBuilder.SearchFile)))
+            {
+                search.AddRegion(Path.Combine(dir, RegionBuilder.SearchFile), null);
+                regions++;
+            }
+        var report = AedFile.Locate(rows, regions > 0 ? q => search.Search(q, null, 8) : null);
+        var placed = rows.Where(r => r.HasPosition).ToList();
+        var notPlaced = rows.Where(r => !r.HasPosition).ToList();
+
+        Console.WriteLine($"{rows.Count:N0} AED sites in {Path.GetFileName(file)} ({rows.Sum(r => r.Count ?? 1):N0} AEDs):");
+        Console.WriteLine($"  {report.Given:N0} with coordinates");
+        if (report.FromText > 0)
+            Console.WriteLine($"  {report.FromText:N0} from coordinates written in the list");
+        if (report.ByAddress > 0)
+            Console.WriteLine($"  {report.ByAddress:N0} placed by street address (approximate, shown as such)");
+        if (report.NotPlaced > 0)
+            Console.WriteLine($"  {report.NotPlaced:N0} could not be placed" + (regions == 0
+                ? " – no map data is installed to look addresses up; install the region first, then run this again"
+                : " (address not in the map data, or no house number)"));
+        foreach (var g in rows.GroupBy(r => r.Source))
+            Console.WriteLine($"    {g.Key}: {g.Count(r => r.HasPosition):N0} of {g.Count():N0} placed");
+        if (placed.Count == 0)
+        {
+            Console.WriteLine("Nothing could be placed; nothing was imported.");
+            return 1;
+        }
+
+        var safe = string.Concat(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+        var temp = Path.Combine(Path.GetTempPath(), "mapbuilder-aed-" + Guid.NewGuid().ToString("N")[..6]);
+        Directory.CreateDirectory(temp);
+        try
+        {
+            var csv = Path.Combine(temp, safe + ".csv");
+            AedFile.WriteCsv(csv, placed, DateTime.UtcNow);
+            var stored = UpdateService.AddAedImport(store, csv, opts.Get("source") ?? name);
+            Console.WriteLine($"Stored {placed.Count:N0} placed sites in {stored}; every build from now on merges them.");
+        }
+        finally
+        {
+            Directory.Delete(temp, true);
+        }
+        if (notPlaced.Count > 0)
+        {
+            var dir = Path.Combine(store.ImportsDir, "aed-not-placed");
+            Directory.CreateDirectory(dir);
+            var list = Path.Combine(dir, safe + "-not-placed.csv");
+            AedFile.WriteCsv(list, notPlaced, DateTime.UtcNow);
+            Console.WriteLine($"{notPlaced.Count:N0} sites without a position are listed in {list}. Add latitude/longitude there and import that file too.");
+        }
+
+        if (opts.Get("rebuild") == null)
+        {
+            Console.WriteLine("They appear on the map after the next build: run `MapBuilder update --region <id> --data <folder>` (or add --rebuild here).");
+            return 0;
+        }
+        // Apply now from the source files already downloaded (as the Data window does).
+        var service = new UpdateService(store);
+        var catalog = RegionCatalog.LoadOrDefault(opts.Get("catalog") ?? DefaultCatalog());
+        var ok = true;
+        foreach (var id in store.InstalledRegions().ToList())
+        {
+            UpdateResult r;
+            if (id == SampleRegion.RegionId)
+                r = service.InstallSample(progress);
+            else if (catalog.Find(id) is { } def && service.CachedSources(def) is { } files)
+                r = service.BuildAndPublish(def, files, progress, CancellationToken.None);
+            else
+            {
+                Console.WriteLine($"{id}: the downloaded sources aren't on this machine; run `MapBuilder update --region {id}` to merge the AEDs.");
+                continue;
+            }
+            Console.Error.WriteLine();
+            Console.WriteLine($"{id}: {r.Message}");
+            ok &= r.Success;
+        }
+        return ok ? 0 : 1;
     }
 
     private static int Publish(RegionStore store, string region, string staging)
@@ -226,6 +324,9 @@ internal static class Program
                                                        Write an offline update package (for USB)
           install --package <file.fmupdate> --data <folder>
                                                        Verify and install an update package
+          aed --data <folder> --file <list.xlsx|csv|geojson|kml> [--sheet <name>] [--source <name>] [--rebuild]
+                                                       Import an AED list; sites with only an address are placed
+                                                       with the installed map data's address search
           coverage --data <folder> --file <coverage.kml|kmz|geojson> [--file …]
                                                        Build the cell-coverage layer, clipped to the installed regions
           imagery (--source <id> [--catalog imagery-sources.json] | --url <xyz template> | --wms <url> --layers <names>)
