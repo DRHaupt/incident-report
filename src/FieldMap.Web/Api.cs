@@ -26,7 +26,10 @@ public static class Api
             return problem == null ? Results.Json(new { ok = true }) : Results.Json(new { ok = false, error = problem }, statusCode: 403);
         });
 
-        app.MapGet("/api/info", (MapHost host, EventFiles events) =>
+        app.MapGet("/imagery/{id}/{z:int}/{x:int}/{y:int}", (string id, int z, int x, int y, ImageryProxy imagery, HttpContext http, CancellationToken cancel) =>
+            imagery.TileAsync(id, z, x, y, http, cancel));
+
+        app.MapGet("/api/info", (MapHost host, EventFiles events, ImageryProxy imagery) =>
         {
             var s = host.Current;
             return Results.Json(new
@@ -57,6 +60,11 @@ public static class Api
                     count = s.PoisByLayer.TryGetValue(l.Id, out var list) ? list.Count : 0
                 }),
                 coverage = s.Coverage == null ? null : new { maxZoom = s.Coverage.MaxZoom, description = s.Coverage.Metadata.GetValueOrDefault("description", "") },
+                imagery = imagery.Sources.Select(i => new
+                {
+                    id = i.Id, name = i.Name, attribution = i.Attribution, terms = i.Terms, licence = i.Licence,
+                    notes = i.Notes, minZoom = i.MinZoom, maxZoom = i.MaxZoom, bounds = i.Bounds
+                }),
                 repeaters = s.Repeaters.Count,
                 events = events.List().Count,
                 problems = s.Problems

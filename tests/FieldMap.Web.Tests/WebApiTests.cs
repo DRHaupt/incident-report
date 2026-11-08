@@ -75,6 +75,10 @@ public sealed class WebApiTests : IClassFixture<ServerFixture>
         Assert.Equal("sample", region.GetProperty("id").GetString());
         Assert.Contains(info.GetProperty("layers").EnumerateArray(), l => l.GetProperty("id").GetString() == "hospital" && l.GetProperty("count").GetInt32() > 0);
         Assert.Equal(1, info.GetProperty("events").GetInt32());
+        // The imagery list shipped with the apps: online satellite out of the box, with its terms.
+        var imagery = info.GetProperty("imagery").EnumerateArray().ToList();
+        Assert.Contains(imagery, i => i.GetProperty("id").GetString() == "esri-world-imagery" && i.GetProperty("terms").GetString()!.Length > 20);
+        Assert.DoesNotContain(imagery, i => i.GetProperty("id").GetString() == "esri-world-imagery-export"); // needs a key
     }
 
     [Fact]
@@ -204,5 +208,93 @@ public sealed class WebApiTests : IClassFixture<ServerFixture>
         Assert.Equal(HttpStatusCode.OK, tile.StatusCode);
         Assert.True(tile.Headers.CacheControl?.Private);
         Assert.False(tile.Headers.CacheControl?.Public);
+    }
+}
+
+/// <summary>Online imagery: only configured sources, real images passed on, behind the access code.</summary>
+public sealed class ImageryProxyTests : IClassFixture<ServerFixture>, IDisposable
+{
+    private readonly ServerFixture _fx;
+    private readonly System.Net.HttpListener _upstream = new();
+    private readonly string _catalog = Path.Combine(Path.GetTempPath(), "fm-imagery-" + Guid.NewGuid().ToString("N") + ".json");
+    private static readonly byte[] Png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==");
+    public int Requests;
+
+    public ImageryProxyTests(ServerFixture fx)
+    {
+        _fx = fx;
+        var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        l.Start();
+        var port = ((System.Net.IPEndPoint)l.LocalEndpoint).Port;
+        l.Stop();
+        _upstream.Prefixes.Add($"http://127.0.0.1:{port}/");
+        _upstream.Start();
+        _ = Task.Run(async () =>
+        {
+            while (_upstream.IsListening)
+            {
+                System.Net.HttpListenerContext ctx;
+                try { ctx = await _upstream.GetContextAsync(); } catch { return; }
+                Interlocked.Increment(ref Requests);
+                // "/tile/5/10/12" is a real image; "/tile/5/0/0" answers with an HTML error page like some services do.
+                var empty = ctx.Request.Url!.AbsolutePath.EndsWith("/0/0");
+                var body = empty ? "<html>no imagery</html>"u8.ToArray() : Png;
+                ctx.Response.ContentType = empty ? "text/html" : "image/png";
+                ctx.Response.OutputStream.Write(body);
+                ctx.Response.Close();
+            }
+        });
+        File.WriteAllText(_catalog, $$"""
+            { "sources": [
+              { "id": "test-sat", "name": "Test imagery", "kind": "xyz", "url": "http://127.0.0.1:{{port}}/tile/{z}/{x}/{y}", "maxZoom": 18,
+                "attribution": "TEST", "licence": "test", "terms": "Test terms", "enabled": true },
+              { "id": "off", "name": "Not enabled", "kind": "xyz", "url": "https://example.org/{z}/{x}/{y}", "attribution": "x", "licence": "x", "terms": "x", "enabled": false },
+              { "id": "keyed", "name": "Needs a key", "kind": "xyz", "url": "https://example.org/{z}/{x}/{y}?k={key}", "needsKey": true, "attribution": "x", "licence": "x", "terms": "x", "enabled": true },
+              { "id": "remote-http", "name": "Plain http elsewhere", "kind": "xyz", "url": "http://example.org/{z}/{x}/{y}", "attribution": "x", "licence": "x", "terms": "x", "enabled": true }
+            ] }
+            """);
+    }
+
+    private Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory<Program> Factory(string? code = null) =>
+        _fx.Factory(code).WithWebHostBuilder(b => b.UseSetting("FieldMap:ImageryCatalog", _catalog));
+
+    [Fact]
+    public async Task Only_enabled_https_or_local_sources_without_missing_keys_are_offered_and_served()
+    {
+        using var factory = Factory();
+        var http = factory.CreateClient();
+        var info = await http.GetFromJsonAsync<JsonElement>("/api/info");
+        var ids = info.GetProperty("imagery").EnumerateArray().Select(i => i.GetProperty("id").GetString()).ToList();
+        Assert.Equal(new[] { "test-sat" }, ids);
+        Assert.Equal("Test terms", info.GetProperty("imagery")[0].GetProperty("terms").GetString());
+
+        var tile = await http.GetAsync("/imagery/test-sat/5/10/12");
+        Assert.Equal(HttpStatusCode.OK, tile.StatusCode);
+        Assert.Equal("image/png", tile.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(Png, await tile.Content.ReadAsByteArrayAsync());
+        Assert.True(tile.Headers.CacheControl?.Private);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await http.GetAsync("/imagery/test-sat/5/0/0")).StatusCode); // not an image
+        Assert.Equal(HttpStatusCode.NoContent, (await http.GetAsync("/imagery/test-sat/19/0/0")).StatusCode); // beyond max zoom
+        Assert.Equal(HttpStatusCode.NotFound, (await http.GetAsync("/imagery/off/1/0/0")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await http.GetAsync("/imagery/keyed/1/0/0")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await http.GetAsync("/imagery/remote-http/1/0/0")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await http.GetAsync("/imagery/test-sat/3/9/0")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Imagery_needs_the_access_code_when_one_is_set()
+    {
+        using var factory = Factory("heron");
+        var http = factory.CreateClient();
+        var before = Requests;
+        Assert.Equal(HttpStatusCode.Unauthorized, (await http.GetAsync("/imagery/test-sat/5/10/12")).StatusCode);
+        Assert.Equal(before, Requests); // nothing fetched for a phone that isn't signed in
+    }
+
+    public void Dispose()
+    {
+        _upstream.Close();
+        File.Delete(_catalog);
     }
 }

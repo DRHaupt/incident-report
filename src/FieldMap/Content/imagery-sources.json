@@ -1,10 +1,27 @@
 {
-  // Online imagery sources for Layers → Base map. Every source is OFF ("enabled": false) until an administrator has
-  // checked that its terms allow the intended use (operational/commercial use, keeping tiles offline) and set it on.
+  // Online imagery sources for Layers → Base map (Windows app and the phone version). "enabled": true lists a source;
+  // the first time someone picks it, its terms are shown and must be accepted. Turn a source off ("enabled": false)
+  // if its terms don't fit your organisation's use.
   // "kind": "xyz" uses {z}/{x}/{y} (and {key} for a key entered in the app); "wms" requests WMS 1.1.1 GetMap in
   // EPSG:3857 with "layers". "allowOffline": true enables caching tiles on disk and "Save this area for offline use".
   // Installed MBTiles packages in <data folder>\imagery\ need no entry here.
   "sources": [
+    {
+      "id": "esri-world-imagery",
+      "name": "Esri World Imagery (online only)",
+      "kind": "xyz",
+      "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      "format": "image/jpeg",
+      "minZoom": 0,
+      "maxZoom": 19,
+      "attribution": "Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+      "licence": "Esri Master License Agreement (World Imagery terms of use)",
+      "terms": "Detailed worldwide satellite and aerial imagery from Esri, viewed online only (it can't be saved for offline use). Esri's terms ask users to have an ArcGIS account, and Esri staff have said it isn't for commercial use without an ArcGIS licence. Use it only if that fits your organisation.",
+      "allowOffline": false,
+      "enabled": true,
+      "verified": "public tile endpoint; terms summarised from Esri community answers found by web search (Nov 2026)",
+      "notes": "Worldwide, up to about 0.3–1 m in towns."
+    },
     {
       "id": "bc-imagery-wms",
       "name": "BC Government imagery (orthophotos)",
@@ -33,9 +50,9 @@
       "maxZoom": 13,
       "attribution": "Sentinel-2 cloudless – https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016 & 2017)",
       "licence": "Data CC BY 4.0 (2016 version); later years are CC BY-NC-SA 4.0. Use of EOX's tile servers: see cloudless.eox.at/pricing",
-      "terms": "10 m satellite mosaic from 2016–2017: good for terrain, forest and clearings, not street detail. The 2016 data is CC BY 4.0; confirm that using EOX's tile service fits your use (commercial use may need a subscription).",
+      "terms": "10 m satellite mosaic from 2016–2017: good for terrain, forest and clearings, not street detail. Viewed online only. EOX's tile service is free for non-commercial use with attribution; commercial use needs an EOX licence.",
       "allowOffline": false,
-      "enabled": false,
+      "enabled": true,
       "verified": "licence checked by web search (Oct 2026); tile URL pattern to confirm",
       "notes": "Worldwide."
     },

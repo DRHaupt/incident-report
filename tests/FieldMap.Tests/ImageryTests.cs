@@ -130,16 +130,24 @@ public class ImageryTests
     }
 
     [Fact]
-    public void ShippedCatalogueKeepsEverySourceOff()
+    public void Shipped_catalogue_only_turns_on_view_only_sources_with_terms_and_credit()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "FieldMap", "Content", "imagery-sources.json");
         var catalog = ImageryCatalog.LoadOrEmpty(path);
         Assert.NotEmpty(catalog.Sources);
         Assert.All(catalog.Sources, s =>
         {
-            Assert.False(s.Enabled, $"{s.Id} must ship disabled");
             Assert.False(string.IsNullOrWhiteSpace(s.Licence));
             Assert.False(string.IsNullOrWhiteSpace(s.Terms));
+            if (!s.Enabled)
+                return;
+            // Listed out of the box: shown online only (never saved offline), no key, and the terms are asked first.
+            Assert.True(s.IsOnline, s.Id);
+            Assert.False(s.AllowOffline, $"{s.Id} must not be kept offline by default");
+            Assert.False(s.NeedsKey, s.Id);
+            Assert.False(string.IsNullOrWhiteSpace(s.Attribution), s.Id);
+            Assert.StartsWith("https://", s.Url);
         });
+        Assert.Contains(catalog.Sources, s => s.Enabled && s.MaxZoom >= 18); // detailed imagery when online
     }
 }

@@ -333,19 +333,22 @@ The **Map / Sat / Hyb** button on every map (and *Layers → Base map*) switches
 imagery with roads and labels (**hybrid**). Facilities, drawings, routes, APRS units and the GPS stay on top; Night
 dims the photo.
 
-Field Map **ships without imagery**. OpenStreetMap doesn't provide imagery of its own: the satellite layers in OSM
-editors (Esri, Bing and others) are licensed only for tracing map data into OpenStreetMap, not for display or
-offline use in other apps. We found no free imagery that is current, detailed, covers all of BC and
-Alberta and may be kept offline (see [docs/FIELDMAP-DATA-SOURCES.md](docs/FIELDMAP-DATA-SOURCES.md#imagery)).
-Imagery comes from:
+**Online imagery works out of the box when there's a connection**: *Layers → Base map* lists **Esri World Imagery**
+(detailed, worldwide) and **Sentinel-2 cloudless** (EOX, 10 m). The first time you choose one, its terms are shown
+and must be accepted. Online imagery is only viewed, never saved: Esri's terms ask for an ArcGIS account and don't
+cover commercial use without a licence, and EOX's free service is for non-commercial use. If those terms don't fit
+your organisation, set the source's `"enabled"` to `false` in `Content\imagery-sources.json`. Without signal, the
+map shows wherever imagery hasn't loaded.
 
-* **Imagery packages** (MBTiles of JPEG/PNG tiles), fully offline: *Data & updates → Install imagery package*. Make
-  them from a source you're licensed for with `MapBuilder imagery …` on a connected PC, or export them from your
-  organisation's GIS.
-* An **online source** your administrator enables in `Content\imagery-sources.json` (BC Government imagery WMS,
-  Sentinel-2 cloudless 2016 and Esri World Imagery for Export are listed, all **off** until their terms are
-  confirmed). Its terms are shown before first use; tiles are cached as you view them when the terms allow, and
-  *Save imagery of this area for offline use* stores the area on screen before you lose signal.
+For imagery that works **offline**:
+
+* **Imagery packages** (MBTiles of JPEG/PNG tiles): *Data & updates → Install imagery package*. Make them from a
+  source you're licensed for with `MapBuilder imagery …` on a connected PC, or export them from your organisation's
+  GIS. (The satellite layers in OpenStreetMap editors are licensed only for tracing map data into OpenStreetMap.)
+* An online source whose terms allow caching (e.g. Esri World Imagery for Export with your ArcGIS token, or the BC
+  Government imagery WMS once GeoBC confirms its terms), turned on in `Content\imagery-sources.json`: tiles are
+  cached as you view them, and *Save imagery of this area for offline use* stores the area on screen before you
+  lose signal.
 
 ```
 MapBuilder imagery --source esri-world-imagery-export --key <ArcGIS token> --accept-terms ^

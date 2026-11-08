@@ -15,6 +15,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The same imagery source list as the Windows app. -->
+    <None Include="..\FieldMap\Content\imagery-sources.json" Link="Content\imagery-sources.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Shared.Core" />
     <Using Include="Shared.Core.Geo" />
     <Using Include="FieldMap.Core.Geo" />

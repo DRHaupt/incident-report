@@ -103,14 +103,19 @@ quietly to the cache when offline.
 
 ## Imagery
 
-Checked by web search in October 2026. **No imagery is bundled**: we found no free source that is current,
-detailed, covers all of BC and Alberta, and may be stored offline for operational use. Sources listed in
-`Content/imagery-sources.json` ship **disabled**; an administrator enables one after confirming its terms.
+Checked by web search in October and November 2026. **No imagery is bundled or stored offline by default**: we
+found no free source that is current, detailed, covers all of BC and Alberta, and may be stored offline for
+operational use. Two sources are listed **for online viewing only** (Windows app and phones): Esri World Imagery and
+Sentinel-2 cloudless. Each user sees and accepts the source's terms before first use. Esri's terms ask for an ArcGIS
+account and staff answers say commercial use needs an ArcGIS licence; EOX's free tile service is non-commercial. An
+administrator sets `"enabled": false` for any source whose terms don't fit; the others in `imagery-sources.json`
+stay off until their terms are confirmed.
 
 | Source | Coverage / detail | Licence and terms | Offline |
 |---|---|---|---|
 | ✓ BC Government Imagery Web Map Service (`openmaps.gov.bc.ca`, WMS) | BC; orthophotos 0.5 m–30 m depending on area | ◻ BC Data Catalogue lists it as "Access Only"; GeoBC says orthophotos are under OGL – BC. Confirm with GeoBC before caching | Off until confirmed |
-| ✓ Sentinel-2 cloudless 2016 (EOX, s2maps.eu) | Worldwide, 10 m (no street detail), 2016–17 | ✓ 2016 data CC BY 4.0 (2018+ is CC BY-NC-SA 4.0, non-commercial). ◻ EOX tile-service terms for commercial use (cloudless.eox.at/pricing) | Build packages from the source GeoTIFFs (AWS `eox-s2maps`) to be safe |
+| ✓ Sentinel-2 cloudless 2016 (EOX, s2maps.eu) | Worldwide, 10 m (no street detail), 2016–17 | ✓ 2016 data CC BY 4.0 (2018+ is CC BY-NC-SA 4.0, non-commercial). ◻ EOX tile service: free for non-commercial use with attribution; commercial use needs an EOX licence (cloudless.eox.at/documentation/license) | **On for online viewing only**; for offline, build packages from the source GeoTIFFs (AWS `eox-s2maps`) |
+| ✓ Esri World Imagery (standard layer, `server.arcgisonline.com`) | Worldwide, sub-metre in towns | ◻ Esri terms of use: an ArcGIS account is expected; not for commercial use without an ArcGIS licence (Esri community answers, Nov 2026); not to be exported or cached | **On for online viewing only** |
 | ✓ Esri World Imagery (for Export) | Worldwide, sub-metre in towns | ✓ Needs an ArcGIS Online subscription; Esri Master License Agreement; export of small areas only (150,000 tiles per export); standard World Imagery layer may not be exported | Yes, within the export limits |
 | ✓ NRCan Aerial Imagery of Canada (AWS open data, COG) | National Air Photo Library time series and Parks Canada mosaics; partial coverage | ◻ Open Government Licence – Canada expected; confirm per collection | Could be converted to packages where it covers the area |
 | ✓ Alberta | No province-wide open current orthophoto found (historical 1949–51 mosaics via ABMI; municipal imagery through partnerships; AltaLIS imagery is licensed) | Varies | Per licence |

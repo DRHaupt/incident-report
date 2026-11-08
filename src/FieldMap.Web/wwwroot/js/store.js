@@ -13,6 +13,9 @@ export const DEFAULTS = {
   profile: 'car',
   keepAwake: false,
   headingUp: false,
+  baseMode: 'map',         // 'map' | 'imagery' | 'hybrid'
+  imageryId: null,
+  acceptedImagery: [],     // imagery sources whose terms this phone's user accepted
   view: null
 };
 

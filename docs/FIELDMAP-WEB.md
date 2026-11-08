@@ -18,7 +18,9 @@ and can add it to the Home Screen like an app.
 | Cell coverage layer, repeaters (own, event, amateur, licensed) | ✓ (if installed on the server) | ✓ |
 | Coordinates in decimal, DMS, deg-min, MGRS, UTM; copy for dispatch | ✓ | ✓ |
 | Works with no signal | Map only (areas you've viewed or saved) | Everything |
-| Drawing, printing, APRS, radio coverage prediction, imagery, terrain | – | ✓ |
+| Satellite / hybrid base map when online (Esri World Imagery, Sentinel-2) | ✓ | ✓ |
+| Imagery that works offline (imagery packages) | – | ✓ |
+| Drawing, printing, APRS, radio coverage prediction, terrain | – | ✓ |
 
 The layout follows the screen size only (it never checks which phone it is), and changes live when a foldable
 such as the iPhone Duo is opened or closed. Search text, the open panel and the map position stay as they are.
@@ -111,6 +113,19 @@ works (see the end of step 3).
   them on the next start (or More → Check for new data). Remove a file to take it off.
 - **On one phone only:** Layers → Add a file from this phone. The server converts it and keeps nothing; the phone
   stores it.
+
+## Satellite imagery
+
+Layers → **Base map** → *Satellite* or *Hybrid* (imagery with roads and labels) when the phone has a connection.
+The server fetches the imagery for the phones, so it works through the tunnel and behind the access code. Nothing is
+stored, on the server or the phone. The sources are the same as the Windows app's (`imagery-sources.json`, shipped
+with the server): Esri World Imagery and Sentinel-2 cloudless. Each phone sees a source's terms once before using
+it. Without signal, the map shows instead.
+
+- To change the list, copy `/opt/fieldmap-web/server/Content/imagery-sources.json` to
+  `/etc/fieldmap-web/imagery-sources.json`, edit it (`"enabled": false` hides a source), and restart the service.
+- For a source that needs a key (e.g. your organisation's ArcGIS token), add it on the server only:
+  `"ImageryKeys": { "esri-world-imagery-export": "<token>" }` in `appsettings.json`.
 
 ## AED lists
 

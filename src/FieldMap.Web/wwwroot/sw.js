@@ -74,7 +74,8 @@ self.addEventListener('fetch', (e) => {
     })());
     return;
   }
-  if (url.pathname.startsWith('/api/')) return;
+  // Online imagery is only viewed, never kept by the app (most imagery terms don't allow storing it).
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/imagery/')) return;
 
   // The app: network first so updates arrive straight away, cached copy when offline.
   e.respondWith((async () => {

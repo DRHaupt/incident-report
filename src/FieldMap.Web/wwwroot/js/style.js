@@ -154,11 +154,15 @@ function regionLayers(src, t) {
   return L;
 }
 
-/** A complete MapLibre style for the server's regions. */
-export function buildStyle(info, theme, origin) {
+/**
+ * A complete MapLibre style for the server's regions. `base` chooses the base map: { mode: 'map' | 'imagery' |
+ * 'hybrid', source } where source is one of info.imagery. Imagery is drawn on top of the map's own areas, so when a
+ * phone loses signal the imagery tiles that don't arrive simply let the map show through.
+ */
+export function buildStyle(info, theme, origin, base = { mode: 'map' }) {
   const t = THEMES[theme] ?? THEMES.standard;
   const sources = {};
-  const layers = [{ id: 'background', type: 'background', paint: { 'background-color': t.background } }];
+  const regionLayers_ = [];
   for (const r of info.regions) {
     const src = `region-${r.id}`;
     sources[src] = {
@@ -167,12 +171,41 @@ export function buildStyle(info, theme, origin) {
       minzoom: r.minZoom ?? 0, maxzoom: r.maxZoom ?? 14, bounds: r.bounds,
       attribution: '© OpenStreetMap contributors'
     };
-    layers.push(...regionLayers(src, t));
+    regionLayers_.push(...regionLayers(src, t));
   }
-  // Labels from every region go on top of every region's roads.
-  const labelTypes = new Set(['symbol']);
-  layers.sort((a, b) => (labelTypes.has(a.type) ? 1 : 0) - (labelTypes.has(b.type) ? 1 : 0));
+  const fills = regionLayers_.filter((l) => l.type === 'fill');
+  const lines = regionLayers_.filter((l) => l.type === 'line');
+  const labels = regionLayers_.filter((l) => l.type === 'symbol');
+  const layers = [{ id: 'background', type: 'background', paint: { 'background-color': t.background } }];
+  const img = base.mode !== 'map' ? base.source : null;
+  if (!img) {
+    // Labels from every region go on top of every region's roads.
+    layers.push(...fills, ...lines, ...labels);
+  } else {
+    sources.imagery = {
+      type: 'raster', tileSize: 256,
+      tiles: [`${origin}/imagery/${encodeURIComponent(img.id)}/{z}/{x}/{y}`],
+      minzoom: img.minZoom ?? 0, maxzoom: img.maxZoom ?? 18,
+      ...(img.bounds?.length === 4 ? { bounds: img.bounds } : {}),
+      attribution: img.attribution
+    };
+    const raster = {
+      id: 'imagery', type: 'raster', source: 'imagery',
+      paint: theme === 'night'
+        ? { 'raster-brightness-max': 0.45, 'raster-saturation': -0.4, 'raster-fade-duration': 150 }
+        : { 'raster-fade-duration': 150 }
+    };
+    if (base.mode === 'imagery') layers.push(...fills, ...lines, raster);
+    else layers.push(...fills, raster, ...lines.map((l) => dimForImagery(l)), ...labels);
+  }
   return { version: 8, glyphs: `${origin}/fonts/{fontstack}/{range}.pbf`, sources, layers };
+}
+
+// Over imagery, minor roads and area outlines would hide what's on the ground: keep main roads, thin the rest.
+function dimForImagery(l) {
+  if (!l.id.includes(':road-') && !l.id.endsWith(':rail') && !l.id.endsWith(':boundaries')) return l;
+  const minor = /:road-(case-)?(minor|service|track|path)$/.test(l.id);
+  return { ...l, paint: { ...l.paint, 'line-opacity': minor ? 0.55 : 0.85 } };
 }
 
 /** Dims a symbol colour for the Night theme, like the desktop app. */

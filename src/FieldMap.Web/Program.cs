@@ -16,6 +16,7 @@ builder.Services.AddSingleton(options);
 builder.Services.AddSingleton<MapHost>();
 builder.Services.AddSingleton<EventFiles>();
 builder.Services.AddSingleton<AccessGate>();
+builder.Services.AddSingleton<ImageryProxy>();
 builder.Services.AddResponseCompression(o =>
 {
     o.EnableForHttps = true;

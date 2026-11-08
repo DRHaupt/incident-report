@@ -102,7 +102,7 @@ function createMap() {
   const view = app.info?.hasData ? initialView() : { center: [-120, 53], zoom: 4 };
   app.map = new maplibregl.Map({
     container: 'map',
-    style: buildStyle(app.info ?? { regions: [], version: '0' }, app.settings.theme, app.origin),
+    style: buildStyle(app.info ?? { regions: [], version: '0' }, app.settings.theme, app.origin, currentBase()),
     ...view,
     maxPitch: 0,
     pitchWithRotate: false,
@@ -137,7 +137,23 @@ export function setTheme(theme) {
   save();
   document.body.dataset.ui = THEMES[theme].ui;
   document.querySelector('meta[name=theme-color]').setAttribute('content', THEMES[theme].background);
-  app.map.setStyle(buildStyle(app.info, theme, app.origin), { diff: false });
+  app.map.setStyle(buildStyle(app.info, theme, app.origin, currentBase()), { diff: false });
+}
+
+/** The base map in use: the plain map, or online imagery (alone or with roads and labels) once its terms are accepted. */
+export function currentBase() {
+  const list = app.info?.imagery ?? [];
+  const source = list.find((i) => i.id === app.settings.imageryId) ?? null;
+  if (app.settings.baseMode === 'map' || !source || !app.settings.acceptedImagery.includes(source.id)) return { mode: 'map' };
+  return { mode: app.settings.baseMode, source };
+}
+
+export function setBase(mode, imageryId = app.settings.imageryId) {
+  app.settings.baseMode = mode;
+  app.settings.imageryId = imageryId;
+  save();
+  app.map.setStyle(buildStyle(app.info, app.settings.theme, app.origin, currentBase()), { diff: false });
+  if (mode !== 'map' && !navigator.onLine) toast('Imagery needs a connection – the map shows until it’s back.');
 }
 
 /** Keeps the map's centre in the part of the screen the panel doesn't cover. */

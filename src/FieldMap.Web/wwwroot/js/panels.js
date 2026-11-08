@@ -1,6 +1,6 @@
 // The panel views: search, place details, directions, nearest, layers, event items, more, sign-in.
 
-import { app, save, select, clearSelection, fitTo, showRoute, clearRoute, setTheme, setLayerVisible, setEventVisible,
+import { app, save, select, clearSelection, fitTo, showRoute, clearRoute, setTheme, setBase, currentBase, setLayerVisible, setEventVisible,
   addLocalEvent, removeEventLayers, keepAwake, myPositionOrCentre, updateStatus, loadEventList } from './app.js';
 import * as C from './coords.js';
 import { getJson, postJson, postFile, qs } from './api.js';
@@ -340,6 +340,21 @@ export function layersView() {
       add(body, heading('Map style'),
         segmented(Object.entries(THEMES).map(([id, t]) => ({ id, label: t.name })), app.settings.theme, (id) => { setTheme(id); app.panel.refresh(); }));
 
+      const imagery = app.info.imagery ?? [];
+      if (imagery.length) {
+        const base = currentBase();
+        add(body, heading('Base map'),
+          segmented([{ id: 'map', label: 'Map' }, { id: 'imagery', label: 'Satellite' }, { id: 'hybrid', label: 'Hybrid' }], base.mode,
+            (mode) => chooseImagery(mode, base.source?.id ?? app.settings.imageryId ?? imagery[0].id)),
+          base.mode === 'map' ? note('Satellite and Hybrid (imagery with roads and labels) need a connection. Without signal the map shows instead.', 'muted') : null);
+        if (imagery.length > 1 || base.mode !== 'map')
+          for (const i of imagery)
+            add(body, row({
+              title: (base.source?.id === i.id ? '✓ ' : '') + i.name, detail: i.notes || i.attribution,
+              onClick: () => chooseImagery(base.mode === 'map' ? 'hybrid' : base.mode, i.id)
+            }));
+      }
+
       add(body, heading('Event files'));
       const events = [...app.events.values()];
       if (!events.length) add(body, note('No event files yet. Files placed in the server’s events folder show up for everyone; files added here stay on this phone.', 'muted'));
@@ -378,6 +393,29 @@ export function layersView() {
           h('div', { class: 'legend' }, h('span', { class: 'sw', style: { background: '#8e3fd6' } }), '5G ', h('span', { class: 'sw', style: { background: '#1e7ae6' } }), 'LTE ', h('span', { class: 'sw', style: { background: '#00a0b0' } }), '3G'));
     }
   };
+}
+
+// Each imagery service has its own terms: show them once, on this phone, before the first use.
+function chooseImagery(mode, id) {
+  if (mode === 'map') { setBase('map'); app.panel.refresh(); return; }
+  const source = app.info.imagery.find((i) => i.id === id) ?? app.info.imagery[0];
+  if (app.settings.acceptedImagery.includes(source.id)) { setBase(mode, source.id); app.panel.refresh(); return; }
+  app.panel.show({
+    tab: 'layers', title: 'Imagery terms',
+    render(body) {
+      add(body, h('h2', { class: 'place-head' }, source.name),
+        note(source.terms),
+        source.licence ? note('Licence: ' + source.licence, 'muted') : null,
+        note('Credit shown on the map: ' + source.attribution, 'muted'),
+        h('div', { class: 'actions' },
+          button('Accept and use', () => {
+            app.settings.acceptedImagery = [...new Set([...app.settings.acceptedImagery, source.id])];
+            setBase(mode, source.id);
+            app.panel.back();
+          }, 'primary'),
+          button('Not now', () => app.panel.back())));
+    }
+  }, { push: true });
 }
 
 async function importFile(file) {

@@ -33,7 +33,7 @@ public sealed class AccessGate
 
     public static bool IsProtectedPath(PathString path) =>
         (path.StartsWithSegments("/api") && !path.StartsWithSegments("/api/login") && !path.StartsWithSegments("/api/status")) ||
-        path.StartsWithSegments("/tiles");
+        path.StartsWithSegments("/tiles") || path.StartsWithSegments("/imagery");
 
     /// <summary>Checks a code. Returns null when accepted, or the reason it wasn't.</summary>
     public string? TryLogin(HttpContext http, string? code)
