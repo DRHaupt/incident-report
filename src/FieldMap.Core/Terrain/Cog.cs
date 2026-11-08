@@ -35,11 +35,13 @@ public sealed class HttpRangeSource : IRangeSource
 {
     private readonly HttpClient _http;
     private readonly Uri _url;
+    private readonly Action<long>? _onBytes;
 
-    public HttpRangeSource(HttpClient http, Uri url)
+    public HttpRangeSource(HttpClient http, Uri url, Action<long>? onBytes = null)
     {
         _http = http;
         _url = url;
+        _onBytes = onBytes;
     }
 
     public async Task<byte[]> ReadAsync(long offset, int length, CancellationToken cancel)
@@ -53,7 +55,9 @@ public sealed class HttpRangeSource : IRangeSource
                 using var resp = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancel);
                 if (resp.StatusCode != System.Net.HttpStatusCode.PartialContent)
                     throw new IOException($"The elevation server answered {(int)resp.StatusCode} to a range request.");
-                return await resp.Content.ReadAsByteArrayAsync(cancel);
+                var data = await resp.Content.ReadAsByteArrayAsync(cancel);
+                _onBytes?.Invoke(data.Length);
+                return data;
             }
             catch (Exception ex) when (attempt < 4 && !cancel.IsCancellationRequested && ex is HttpRequestException or IOException or TaskCanceledException)
             {

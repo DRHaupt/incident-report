@@ -55,20 +55,49 @@ public sealed class UpdateService
     /// <summary>The full update for one region.</summary>
     public async Task<UpdateResult> UpdateAsync(RegionDefinition region, IProgress<(string Stage, double Fraction)>? progress = null, CancellationToken cancel = default)
     {
+        var sources = region.Sources.Where(s => s.Enabled).ToList();
+        var results = new SourceFile?[sources.Count];
+        var errors = new Exception?[sources.Count];
+        var meter = new DownloadMeter(progress);
+
+        // The files come from different organisations' servers. Each server gets one connection at a time (Geofabrik in
+        // particular caps its bandwidth and blocks heavy users), but different servers download at the same time, so a
+        // slow one no longer holds up the rest.
+        var byHost = sources.Select((s, i) => (Source: s, Index: i))
+            .GroupBy(x => Uri.TryCreate(x.Source.Url, UriKind.Absolute, out var u) ? u.Host : x.Source.Url);
+        await Task.WhenAll(byHost.Select(async group =>
+        {
+            foreach (var (source, i) in group)
+            {
+                if (cancel.IsCancellationRequested)
+                    return;
+                try
+                {
+                    results[i] = await DownloadSourceAsync(region.Id, source, meter.For(source.Name), cancel).ConfigureAwait(false);
+                }
+                catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidDataException or TaskCanceledException && !cancel.IsCancellationRequested)
+                {
+                    errors[i] = ex;
+                }
+                finally
+                {
+                    meter.Finished(source.Name);
+                }
+            }
+        })).ConfigureAwait(false);
+        cancel.ThrowIfCancellationRequested();
+
         var files = new List<SourceFile>();
         var warnings = new List<string>();
-        foreach (var source in region.Sources.Where(s => s.Enabled))
+        for (var i = 0; i < sources.Count; i++)
         {
-            cancel.ThrowIfCancellationRequested();
-            try
+            if (results[i] is { } f)
+                files.Add(f);
+            else if (errors[i] is { } ex)
             {
-                files.Add(await DownloadSourceAsync(region.Id, source, progress, cancel).ConfigureAwait(false));
-            }
-            catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidDataException or TaskCanceledException && !cancel.IsCancellationRequested)
-            {
-                if (source.Required)
-                    return new UpdateResult(false, $"Could not download {source.Name}: {ex.Message}\nThe map data in use was not changed. Try again to resume the download.");
-                warnings.Add($"{source.Name} was skipped ({ex.Message}).");
+                if (sources[i].Required)
+                    return new UpdateResult(false, $"Could not download {sources[i].Name}: {ex.Message}\nThe map data in use was not changed. Try again to resume the download.");
+                warnings.Add($"{sources[i].Name} was skipped ({ex.Message}).");
             }
         }
         var result = await Task.Run(() => BuildAndPublish(region, files, progress, cancel), cancel).ConfigureAwait(false);
@@ -85,7 +114,8 @@ public sealed class UpdateService
         var dest = Path.Combine(DownloadDir(regionId), source.FileName);
         var stage = $"Downloading {source.Name}";
         var info = await _downloader.DownloadAsync(source.Url, dest, hash, source.ChecksumType ?? "sha256",
-            new Progress<(long Done, long? Total)>(p => progress?.Report((stage, p.Total is > 0 ? (double)p.Done / p.Total.Value : 0))), cancel).ConfigureAwait(false);
+            new Progress<(long Done, long? Total)>(p => progress?.Report((stage, p.Total is > 0 ? (double)p.Done / p.Total.Value : 0))), cancel,
+            bytes => (progress as DownloadMeter.Part)?.AddBytes(bytes)).ConfigureAwait(false);
         return new SourceFile(source, dest, Describe(source, dest, DateTime.UtcNow, info.LastModifiedUtc));
     }
 
@@ -105,7 +135,7 @@ public sealed class UpdateService
             Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
             try
             {
-                await Terrain.TerrainExtractor.ExtractAsync(new Terrain.HttpRangeSource(_downloader.Http, new Uri(source.Url)),
+                await Terrain.TerrainExtractor.ExtractAsync(new Terrain.HttpRangeSource(_downloader.Http, new Uri(source.Url), progress is DownloadMeter.Part part ? part.AddBytes : null),
                     new Geo.GeoBounds(b[0], b[1], b[2], b[3]), source.PixelMetres, dest,
                     new Progress<double>(f => progress?.Report((stage, f))), cancel).ConfigureAwait(false);
             }
@@ -376,5 +406,99 @@ public static class UpdatePackage
             try { Directory.Delete(staging, true); } catch (IOException) { }
             return new UpdateResult(false, $"The package was not installed: {ex.Message}\nThe map data in use was not changed.");
         }
+    }
+}
+
+/// <summary>
+/// Combines the progress of downloads running side by side into one line for the progress bar: which files are still
+/// coming, how far along they are, and the total speed ("Downloading OpenStreetMap 45%, Addresses 20% – 11.8 MB/s").
+/// </summary>
+internal sealed class DownloadMeter
+{
+    private readonly IProgress<(string Stage, double Fraction)>? _target;
+    private readonly object _lock = new();
+    private readonly Dictionary<string, double> _fractions = new();
+    private readonly HashSet<string> _done = new();
+    private readonly System.Diagnostics.Stopwatch _clock = System.Diagnostics.Stopwatch.StartNew();
+    private long _bytes, _windowBytes;
+    private double _windowStart, _speed, _lastReport = -1;
+
+    public DownloadMeter(IProgress<(string Stage, double Fraction)>? target) => _target = target;
+
+    public Part For(string name)
+    {
+        lock (_lock)
+            _fractions[name] = 0;
+        return new Part(this, name);
+    }
+
+    public void Finished(string name)
+    {
+        lock (_lock)
+        {
+            _fractions[name] = 1;
+            _done.Add(name);
+        }
+        Report(force: true);
+    }
+
+    private void Update(string name, double fraction)
+    {
+        lock (_lock)
+            if (!_done.Contains(name))
+                _fractions[name] = Math.Clamp(fraction, 0, 1);
+        Report(force: false);
+    }
+
+    private void Count(long bytes)
+    {
+        lock (_lock)
+        {
+            _bytes += bytes;
+            _windowBytes += bytes;
+        }
+    }
+
+    private void Report(bool force)
+    {
+        string text;
+        double overall;
+        lock (_lock)
+        {
+            var now = _clock.Elapsed.TotalSeconds;
+            if (!force && now - _lastReport < 0.25)
+                return;
+            _lastReport = now;
+            // Speed over the last ~2 seconds, so it follows changes without jumping around.
+            if (now - _windowStart >= 2)
+            {
+                _speed = _windowBytes / (now - _windowStart);
+                _windowBytes = 0;
+                _windowStart = now;
+            }
+            var active = _fractions.Where(f => !_done.Contains(f.Key)).Select(f => $"{f.Key} {f.Value:P0}").ToList();
+            overall = _fractions.Count == 0 ? 0 : _fractions.Values.Average();
+            text = active.Count == 0 ? "Downloads finished" : "Downloading " + string.Join(", ", active);
+            if (_speed > 0 && active.Count > 0)
+                text += $" – {_speed / 1e6:0.0} MB/s";
+        }
+        _target?.Report((text, overall));
+    }
+
+    /// <summary>The progress of one file, passed to the code that downloads it.</summary>
+    public sealed class Part : IProgress<(string Stage, double Fraction)>
+    {
+        private readonly DownloadMeter _meter;
+        private readonly string _name;
+
+        public Part(DownloadMeter meter, string name)
+        {
+            _meter = meter;
+            _name = name;
+        }
+
+        public void Report((string Stage, double Fraction) value) => _meter.Update(_name, value.Fraction);
+
+        public void AddBytes(long bytes) => _meter.Count(bytes);
     }
 }

@@ -231,6 +231,9 @@ public static class TerrainExtractor
     /// Writes the tiles of the level nearest <paramref name="pixelMetres"/> that cover <paramref name="bounds"/> to
     /// <paramref name="outputPath"/>. Neighbouring tiles are fetched together in requests of up to 16 MB.
     /// </summary>
+    /// <summary>Range requests kept in flight at once while extracting.</summary>
+    public const int ParallelRequests = 4;
+
     public static async Task<long> ExtractAsync(IRangeSource source, GeoBounds bounds, double pixelMetres, string outputPath,
         IProgress<double>? progress = null, CancellationToken cancel = default)
     {
@@ -281,7 +284,10 @@ public static class TerrainExtractor
                         wanted.Add((c, r, offsets[i], counts[i]));
                 }
             wanted.Sort((a, b) => a.Offset.CompareTo(b.Offset));
-            var done = 0;
+            // Group neighbouring tiles into requests, then keep a few requests in flight at once: the elevation model
+            // is on Amazon S3, which is built for parallel range requests, and one at a time leaves most of a fast
+            // connection idle. Results are written in order, so the file comes out the same.
+            var chunks = new List<(int First, int End, long Start, long Stop)>();
             for (var i = 0; i < wanted.Count;)
             {
                 var start = wanted[i].Offset;
@@ -292,21 +298,46 @@ public static class TerrainExtractor
                     end = Math.Max(end, wanted[j].Offset + wanted[j].Count);
                     j++;
                 }
-                var chunk = await cog.ReadAsync(start, (int)(end - start), cancel);
-                for (var k = i; k < j; k++)
-                {
-                    var t = wanted[k];
-                    var data = new byte[t.Count];
-                    Array.Copy(chunk, t.Offset - start, data, 0, t.Count);
-                    insert.Parameters["$c"].Value = t.Col;
-                    insert.Parameters["$r"].Value = t.Row;
-                    insert.Parameters["$d"].Value = data;
-                    insert.ExecuteNonQuery();
-                    bytes += t.Count;
-                }
-                done += j - i;
-                progress?.Report((double)done / wanted.Count);
+                chunks.Add((i, j, start, end));
                 i = j;
+            }
+            var done = 0;
+            var inFlight = new Queue<((int First, int End, long Start, long Stop) Chunk, Task<byte[]> Data)>();
+            var nextChunk = 0;
+            using var stop = CancellationTokenSource.CreateLinkedTokenSource(cancel);
+            try
+            {
+                while (nextChunk < chunks.Count || inFlight.Count > 0)
+                {
+                    while (inFlight.Count < ParallelRequests && nextChunk < chunks.Count)
+                    {
+                        var ch = chunks[nextChunk++];
+                        inFlight.Enqueue((ch, cog.ReadAsync(ch.Start, (int)(ch.Stop - ch.Start), stop.Token)));
+                    }
+                    var (c, task) = inFlight.Dequeue();
+                    var chunk = await task;
+                    for (var k = c.First; k < c.End; k++)
+                    {
+                        var t = wanted[k];
+                        var data = new byte[t.Count];
+                        Array.Copy(chunk, t.Offset - c.Start, data, 0, t.Count);
+                        insert.Parameters["$c"].Value = t.Col;
+                        insert.Parameters["$r"].Value = t.Row;
+                        insert.Parameters["$d"].Value = data;
+                        insert.ExecuteNonQuery();
+                        bytes += t.Count;
+                    }
+                    done += c.End - c.First;
+                    progress?.Report((double)done / wanted.Count);
+                }
+            }
+            catch
+            {
+                // Stop the requests still running before the error goes up.
+                stop.Cancel();
+                foreach (var (_, t) in inFlight)
+                    try { await t; } catch (Exception) { }
+                throw;
             }
 
             using var meta = db.CreateCommand();

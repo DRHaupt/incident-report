@@ -57,7 +57,7 @@ public sealed class Downloader
     /// deletes the partial file and throws <see cref="InvalidDataException"/>. Returns what the server reported.
     /// </summary>
     public async Task<RemoteInfo> DownloadAsync(string url, string destination, string? expectedHash = null, string hashType = "sha256",
-        IProgress<(long Done, long? Total)>? progress = null, CancellationToken cancel = default)
+        IProgress<(long Done, long? Total)>? progress = null, CancellationToken cancel = default, Action<long>? onBytes = null)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(destination))!);
         var part = destination + ".part";
@@ -114,9 +114,9 @@ public sealed class Downloader
             };
             File.WriteAllText(metaPath, Json.Serialize(meta));
             await using (var input = await resp.Content.ReadAsStreamAsync(cancel).ConfigureAwait(false))
-            await using (var output = new FileStream(part, resumed ? FileMode.Append : FileMode.Create, FileAccess.Write, FileShare.None, 1 << 16))
+            await using (var output = new FileStream(part, resumed ? FileMode.Append : FileMode.Create, FileAccess.Write, FileShare.None, 1 << 20))
             {
-                var buffer = new byte[1 << 16];
+                var buffer = new byte[1 << 18];
                 var done = existing;
                 var lastReport = DateTime.MinValue;
                 int n;
@@ -124,6 +124,7 @@ public sealed class Downloader
                 {
                     await output.WriteAsync(buffer.AsMemory(0, n), cancel).ConfigureAwait(false);
                     done += n;
+                    onBytes?.Invoke(n);
                     if (DateTime.UtcNow - lastReport > TimeSpan.FromMilliseconds(250))
                     {
                         lastReport = DateTime.UtcNow;
