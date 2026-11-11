@@ -7,6 +7,7 @@ import { getJson, postJson, postFile, qs } from './api.js';
 import { saveLocalFile, deleteLocalFile } from './store.js';
 import { h, icon, row, toggle, segmented, button, note, heading, toast, copy, add, set } from './ui.js';
 import { THEMES } from './style.js';
+import { teamView, sharePinButton } from './team.js';
 
 const PROFILES = [
   { id: 'car', label: 'Car' }, { id: 'emergency', label: 'Emergency' }, { id: 'truck', label: 'Truck' }, { id: 'walking', label: 'Walk' }
@@ -139,7 +140,7 @@ function bboxOf(f) {
 // ------------------------------------------------------------------ place details
 
 /** A details view for any point. `lines` are extra rows of text; the address is looked up from the server. */
-function placeView({ title, kind, lat, lon, lines = [], warning, source, extraButtons = [], lookup = true, tab }) {
+export function placeView({ title, kind, lat, lon, lines = [], warning, source, extraButtons = [], lookup = true, tab }) {
   return {
     tab, title: title.length > 28 ? 'Details' : title,
     render(body) {
@@ -174,12 +175,12 @@ function coordsBlock(lat, lon) {
 
 export function openPoint(lat, lon, title, kind, { push = false } = {}) {
   select(lat, lon);
-  app.panel.show(placeView({ title, kind, lat, lon }), { push });
+  app.panel.show(placeView({ title, kind, lat, lon, extraButtons: [sharePinButton(lat, lon, title)] }), { push });
 }
 
 export function openWhatsHere(lat, lon) {
   select(lat, lon, { fly: false });
-  app.panel.show(placeView({ title: 'Dropped pin', kind: 'Touch and hold anywhere on the map to drop a pin', lat, lon }));
+  app.panel.show(placeView({ title: 'Dropped pin', kind: 'Touch and hold anywhere on the map to drop a pin', lat, lon, extraButtons: [sharePinButton(lat, lon)] }));
 }
 
 export async function openPoi(id, { push = false } = {}) {
@@ -506,7 +507,14 @@ export function moreView() {
     tab: 'more', title: 'More',
     render(body) {
       const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-      add(body, 
+      add(body,
+        heading('Team'),
+        row({
+          title: 'Team positions and shared pins',
+          detail: app.team?.available === false ? 'Off on this server (needs an access code)'
+            : `${app.settings.shareTeam ? 'Sharing your position' : 'Not sharing your position'} · ${app.team?.units.length ?? 0} units · ${app.team?.pins.length ?? 0} pins`,
+          badge: '●', color: '#00a389', onClick: () => app.panel.show(teamView(), { push: true })
+        }),
         heading('While driving'),
         toggle({ label: 'Keep the screen on', detail: 'Stops the phone locking while Field Map is open', checked: app.settings.keepAwake, onChange: (on) => keepAwake(on) }),
         heading('Coordinates in the status bar'),

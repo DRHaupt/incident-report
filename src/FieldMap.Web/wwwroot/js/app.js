@@ -7,6 +7,7 @@ import { getJson, qs, setAuthHandler } from './api.js';
 import { loadSettings, saveSettings, listLocalFiles } from './store.js';
 import { Panel, h, icon, toast, set } from './ui.js';
 import * as V from './panels.js';
+import * as T from './team.js';
 
 const maplibregl = window.maplibregl;
 const $ = (s) => document.querySelector(s);
@@ -90,6 +91,7 @@ export async function loadInfo() {
   createMap();
   loadEventList();
   startGps();
+  T.startTeam();
   if (app.settings.keepAwake) keepAwake(true);
 }
 
@@ -239,7 +241,7 @@ function refreshViewport() {
 
 // ------------------------------------------------------------------ map symbols
 
-function badgeImage(text, fill, textColor, size = 30) {
+export function badgeImage(text, fill, textColor, size = 30) {
   const ratio = 2, s = size * ratio;
   const c = document.createElement('canvas');
   c.width = c.height = s;
@@ -365,6 +367,8 @@ function addOverlays() {
   });
   INTERACTIVE.add('repeaters');
 
+  T.addTeamLayers(m);
+
   m.addSource('me-acc', { type: 'geojson', data: EMPTY });
   m.addLayer({ id: 'me-acc', type: 'fill', source: 'me-acc', paint: { 'fill-color': t.gps, 'fill-opacity': 0.12, 'fill-outline-color': t.gps } });
   m.addSource('me', { type: 'geojson', data: EMPTY });
@@ -418,7 +422,7 @@ function addEventLayers(ev) {
   });
   for (const k of ['pt', 'line', 'fill']) INTERACTIVE.add(`${src}-${k}`);
   // Keep event files under the route, POIs and the position marker.
-  for (const top of ['route-case', 'route', 'pois', 'repeaters', 'me-acc', 'me'])
+  for (const top of ['route-case', 'route', 'pois', 'repeaters', 'team-trails', 'team-units', 'team-unit-labels', 'team-pins', 'me-acc', 'me'])
     if (m.getLayer(top)) m.moveLayer(top);
 }
 
@@ -525,9 +529,11 @@ function onTap(e) {
   const feats = app.map.queryRenderedFeatures([[e.point.x - r, e.point.y - r], [e.point.x + r, e.point.y + r]], { layers });
   if (!feats.length) return;
   // Points beat lines beat areas; within a kind, the one drawn on top wins.
-  const rank = (f) => (f.layer.id === 'pois' || f.layer.id === 'repeaters' || f.layer.id.endsWith('-pt') ? 0 : f.layer.id.endsWith('-line') ? 1 : 2);
+  const rank = (f) => (['pois', 'repeaters', 'team-pins', 'team-units'].includes(f.layer.id) || f.layer.id.endsWith('-pt') ? 0 : f.layer.id.endsWith('-line') ? 1 : 2);
   const f = feats.sort((a, b) => rank(a) - rank(b))[0];
-  if (f.layer.id === 'pois') V.openPoi(f.properties.id);
+  if (f.layer.id === 'team-pins') T.openTeamPin(f.properties.id);
+  else if (f.layer.id === 'team-units') T.openTeamUnit(f.properties.device);
+  else if (f.layer.id === 'pois') V.openPoi(f.properties.id);
   else if (f.layer.id === 'repeaters') V.openRepeater(f.properties);
   else {
     const id = f.layer.id.replace(/^ev-/, '').replace(/-(pt|line|fill)$/, '');
@@ -583,6 +589,14 @@ export function select(lat, lon, { fly = true, zoom } = {}) {
   }
 }
 
+/** Moves the map to a point without the red selection marker (for things that have their own symbol). */
+export function focus(lat, lon, zoom = 15) {
+  clearSelection();
+  app.follow = false;
+  updateMeButton();
+  requestAnimationFrame(() => app.map.flyTo({ center: [lon, lat], zoom: Math.max(app.map.getZoom(), zoom), speed: 1.6 }));
+}
+
 export function clearSelection() {
   app.marker?.remove();
   app.selected = null;
@@ -630,6 +644,7 @@ function onPosition(p) {
   updateStatus();
   if (app.follow) followCamera(!prev);
   if (app.route) updateRouteProgress();
+  T.teamOnPosition(app.pos);
 }
 
 function drawPosition() {
