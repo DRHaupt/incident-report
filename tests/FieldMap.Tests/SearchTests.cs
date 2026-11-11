@@ -191,3 +191,30 @@ public class NormalizerAndParserTests
         Assert.InRange(back.Northing, 5599999, 5600001);
     }
 }
+
+[Collection("sample")]
+public class MultiRegionSearchTests
+{
+    private readonly SampleFixture _f;
+
+    public MultiRegionSearchTests(SampleFixture f) => _f = f;
+
+    [Fact]
+    public void Facility_ids_stay_unique_with_several_regions()
+    {
+        // BC and Alberta each number their facilities from 1. Loading the sample twice gives the same overlap.
+        using var two = new SearchEngine();
+        var db = Path.Combine(_f.Dir, FieldMap.Core.Data.RegionBuilder.SearchFile);
+        two.AddRegion(db, null);
+        two.AddRegion(db, null);
+        var pois = two.LoadPois();
+        Assert.Equal(pois.Count, pois.Select(p => p.Id).Distinct().Count());
+
+        // A search hit's id must lead back to that same facility (identical hits in both copies are merged into one).
+        var hits = two.Search("Sampleton General Hospital", SampleRegion.Origin).Where(r => r.Kind == ResultKind.Poi).ToList();
+        Assert.NotEmpty(hits);
+        foreach (var h in hits)
+            Assert.Contains(pois, p => p.Id == h.PoiId && p.Name == h.Name);
+        Assert.Contains(two.NearestPois("aed", SampleRegion.Origin, 10), p => p.Id >= 1_000_000_000L);
+    }
+}
