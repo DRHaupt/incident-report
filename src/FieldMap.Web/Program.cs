@@ -17,6 +17,7 @@ builder.Services.AddSingleton<MapHost>();
 builder.Services.AddSingleton<EventFiles>();
 builder.Services.AddSingleton<AccessGate>();
 builder.Services.AddSingleton<ImageryProxy>();
+builder.Services.AddSingleton<Team>();
 builder.Services.AddResponseCompression(o =>
 {
     o.EnableForHttps = true;
@@ -79,6 +80,7 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 Api.Map(app);
+TeamApi.Map(app);
 app.Services.GetRequiredService<MapHost>(); // load the data at start-up, not on the first request
 app.Run();
 

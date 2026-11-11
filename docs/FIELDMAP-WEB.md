@@ -17,6 +17,7 @@ and can add it to the Home Screen like an app.
 | Event files (KML, KMZ, GPX, GeoJSON, CSV), event items list, search in event files | ✓ | ✓ |
 | Cell coverage layer, repeaters (own, event, amateur, licensed) | ✓ (if installed on the server) | ✓ |
 | Coordinates in decimal, DMS, deg-min, MGRS, UTM; copy for dispatch | ✓ | ✓ |
+| Team positions with the last hour's trail, shared incident pins (needs an access code) | ✓ | – |
 | Works with no signal | Map only (areas you've viewed or saved) | Everything |
 | Satellite / hybrid base map when online (Esri World Imagery, Sentinel-2) | ✓ | ✓ |
 | Imagery that works offline (imagery packages) | – | ✓ |
@@ -106,6 +107,26 @@ works (see the end of step 3).
 | `Regions` | Only serve these regions, e.g. `["bc"]`. Empty: every installed region. |
 | `EventsDir` | Folder of shared event files. Default `/var/lib/fieldmap/events`. |
 | `MaxUploadMb` | Largest event file a phone may add (it's converted and kept on that phone only). |
+
+## Team positions and shared pins
+
+Crews can see each other on the map and share pins for an incident. These features only work when an **access code**
+is set (see Settings), because without one anyone who can reach the server would see where everyone is. Until then the
+Team screen says that they're off.
+
+- **Your name or callsign:** More → Team. Each phone picks the name others see (e.g. "Medic 12"). Phones are told
+  apart by a random id made on the phone, so two phones can use the same name.
+- **Share my position** (off until turned on): other phones see a green dot with the name and a dashed trail of the
+  last hour. A dot turns grey after 2 minutes without an update and disappears after 15. Turning sharing off removes
+  the position straight away. Positions are kept in the server's memory only; nothing is written to disk. A web app
+  can't use GPS in the background, so positions only go out while Field Map is open on screen (More → Keep the screen
+  on helps).
+- **Shared pins:** touch and hold the map, then **Share as pin**, or More → Team → Add a pin here. Pick a kind
+  (hazard, staging, road closed, command post, medical, note), a label and optional details. Everyone sees the pin
+  within a few seconds and anyone can edit, move or remove it; each pin shows who added and last changed it.
+  Pins are saved in `/var/lib/fieldmap/shared/pins.json` and kept until someone removes them; **Clear all pins** on
+  the Team screen removes them all after an incident.
+- Layers: More → Team → Show team on the map hides units, trails and pins on that phone.
 
 ## Event files
 

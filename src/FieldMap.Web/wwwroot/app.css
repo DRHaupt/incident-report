@@ -315,3 +315,13 @@ body[data-ui="night"] #toast { color: var(--text); }
 #splash.error p { color: var(--text); }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ------------------------------------------------------------------ team: name field, pin editor */
+
+.field { width: 100%; min-height: 48px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--btn); color: var(--text); font: inherit; font-size: 17px; }
+textarea.field { resize: vertical; min-height: 84px; line-height: 1.35; }
+.field:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.field-row { display: block; margin: 8px 0 12px; }
+.field-label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 14px; }
+.chips.wrap { flex-wrap: wrap; overflow: visible; }
+.chip-dot { display: inline-block; width: 12px; height: 12px; margin-right: 8px; border-radius: 6px; vertical-align: -1px; border: 1px solid rgba(255, 255, 255, .7); }
