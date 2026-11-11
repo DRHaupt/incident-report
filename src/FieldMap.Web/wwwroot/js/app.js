@@ -49,8 +49,8 @@ async function start() {
   new ResizeObserver(queueFit).observe($('#panel'));
   // Optional fold reporting (behind feature flags in Safari): the layout already works without it.
   navigator.devicePosture?.addEventListener?.('change', queueFit);
-  // Rotating or folding can leave iOS (Home Screen app) with the old, smaller window: the app then ends short of the
-  // screen edge and leaves an empty band. Re-applying the viewport tag makes Safari measure the screen again.
+  // Rotating or folding can leave iOS (Home Screen app) with a viewport smaller than the window: see fitWindow().
+  fitWindow();
   window.addEventListener('orientationchange', refreshViewport);
   screen.orientation?.addEventListener?.('change', refreshViewport);
   navigator.devicePosture?.addEventListener?.('change', refreshViewport);
@@ -174,8 +174,9 @@ function fitPadding() {
   const padding = { top: split ? 16 : top.offsetTop + top.offsetHeight + 8, left: 0, right: 0, bottom: 0 };
   // Two panes: the map always centres on the right-hand side, so your position never sits on the fold and the map
   // doesn't jump when the panel opens or closes.
-  if (split) padding.left = Math.max(0, Math.min(p.offsetLeft + p.offsetWidth, window.innerWidth - 200));
-  else if (open) padding.bottom = Math.max(0, Math.min(p.offsetHeight, window.innerHeight * 0.6));
+  const size = appSize();
+  if (split) padding.left = Math.max(0, Math.min(p.offsetLeft + p.offsetWidth, size.w - 200));
+  else if (open) padding.bottom = Math.max(0, Math.min(p.offsetHeight, size.h * 0.6));
   const same = (a, b) => ['top', 'left', 'right', 'bottom'].every((k) => Math.abs(a[k] - b[k]) < 1);
   if (same(app.map.getPadding(), padding)) return;
   // Changing the padding jumps the camera, which would cut short a fly-to that's under way.
@@ -188,23 +189,49 @@ let fitQueued = false;
 function queueFit() {
   if (fitQueued) return;
   fitQueued = true;
-  requestAnimationFrame(() => { fitQueued = false; fitPadding(); });
+  requestAnimationFrame(() => { fitQueued = false; fitWindow(); fitPadding(); });
+}
+
+// Some iPhones (seen on an iPhone Duo Home Screen app) give the page a viewport smaller than the window (innerWidth/
+// innerHeight below outerWidth/outerHeight): a strip the width of the Dynamic Island area goes missing on the right or
+// at the bottom and grows with each rotation, leaving an empty band. In a Home Screen app the window is the whole
+// screen, so outer* is the real size; html.fit-window in app.css then sizes the app to it. In Safari itself outer*
+// includes the browser's own bars, so this only runs in a Home Screen app.
+const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+let lastWindow = '';
+function fitWindow() {
+  const root = document.documentElement;
+  const w = standalone ? Math.max(window.innerWidth, window.outerWidth) : window.innerWidth;
+  const h = standalone ? Math.max(window.innerHeight, window.outerHeight) : window.innerHeight;
+  const short = w - window.innerWidth > 1 || h - window.innerHeight > 1;
+  const key = short ? `${w}x${h}/${window.innerWidth}` : '';
+  if (key === lastWindow) return;
+  lastWindow = key;
+  root.classList.toggle('fit-window', short);
+  if (short) {
+    root.style.setProperty('--win-w', `${w}px`);
+    root.style.setProperty('--win-h', `${h}px`);
+    root.style.setProperty('--gap-r', `${w - window.innerWidth}px`);
+  }
+  app.map?.resize();
+}
+
+// The app's size: the real window when fitWindow() is correcting it, else the viewport.
+function appSize() {
+  const b = document.body;
+  return document.documentElement.classList.contains('fit-window') ? { w: b.offsetWidth, h: b.offsetHeight } : { w: window.innerWidth, h: window.innerHeight };
 }
 
 // Called after a rotation or fold change. Waits for the rotation to settle, then: undoes any scroll the page picked up
-// (the app never scrolls, so a scrolled page leaves a gap under the fixed bars), re-applies the viewport tag so Safari
-// re-measures the window, and re-fits the map. Runs a second time in case the first came before Safari was done.
+// (the app never scrolls, so a scrolled page leaves a gap under the fixed bars), re-checks the window size and re-fits
+// the map. Runs a second time in case the first came before iOS was done.
 let viewportTimers = [];
 function refreshViewport() {
   viewportTimers.forEach(clearTimeout);
   viewportTimers = [250, 800].map((ms) => setTimeout(() => {
     if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
-    const meta = document.querySelector('meta[name="viewport"]');
-    if (meta) {
-      const content = meta.getAttribute('content');
-      meta.setAttribute('content', content + ', minimum-scale=1');
-      requestAnimationFrame(() => meta.setAttribute('content', content));
-    }
+    lastWindow = '-'; // re-apply even if the numbers look the same
+    fitWindow();
     app.map?.resize();
     queueFit();
   }, ms));

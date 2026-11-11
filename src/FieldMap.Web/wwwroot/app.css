@@ -7,6 +7,9 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
+  /* The app's size. Normally the viewport; see html.fit-window below for when iOS reports it too small. */
+  --app-w: 100vw;
+  --app-h: 100dvh;
   --radius: 16px;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
 }
@@ -33,6 +36,13 @@ body[data-ui="night"] {
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
+/* Some iPhones (seen on an iPhone Duo Home Screen app) give the page a viewport smaller than the window: a strip the
+   width of the Dynamic Island area is missing on the right or at the bottom, growing with each rotation. app.js then
+   sizes the body to the real window and makes it the box the fixed parts of the app are placed in (the transform), so
+   the map and bars reach the screen edges again. The island side is the right-hand strip, which iOS reports as safe
+   (0 px), so it's added to --safe-r to keep buttons and text out from under the island. */
+html.fit-window { --app-w: var(--win-w); --app-h: var(--win-h); --safe-r: max(env(safe-area-inset-right, 0px), var(--gap-r)); }
+html.fit-window body { position: fixed; left: 0; top: 0; width: var(--win-w); height: var(--win-h); transform: translateZ(0); }
 body { background: var(--bg); color: var(--text); font: 16px/1.35 var(--font); -webkit-text-size-adjust: 100%; touch-action: manipulation; }
 button { font: inherit; color: inherit; }
 svg { width: 100%; height: 100%; display: block; }
@@ -108,13 +118,13 @@ body[data-ui="night"] #tabs button.active { color: var(--text); }
 #panel {
   --sheet: 1;
   position: fixed; z-index: 7; left: var(--safe-l); right: var(--safe-r); bottom: var(--bottom-h);
-  display: flex; flex-direction: column; max-height: min(52dvh, calc(100dvh - var(--bottom-h) - var(--safe-t) - 70px));
+  display: flex; flex-direction: column; max-height: min(calc(var(--app-h) * 0.52), calc(var(--app-h) - var(--bottom-h) - var(--safe-t) - 70px));
   background: var(--panel); border: 1px solid var(--line); border-bottom: 0; border-radius: var(--radius) var(--radius) 0 0;
   box-shadow: var(--shadow); transform: translateY(calc(100% + var(--bottom-h))); transition: transform .25s ease, max-height .25s ease;
   visibility: hidden;
 }
 #panel.open { transform: none; visibility: visible; }
-#panel.full { max-height: calc(100dvh - var(--bottom-h) - var(--safe-t) - 8px); height: calc(100dvh - var(--bottom-h) - var(--safe-t) - 8px); }
+#panel.full { max-height: calc(var(--app-h) - var(--bottom-h) - var(--safe-t) - 8px); height: calc(var(--app-h) - var(--bottom-h) - var(--safe-t) - 8px); }
 .panel-grab { flex: none; height: 22px; display: flex; align-items: center; justify-content: center; cursor: grab; touch-action: none; }
 .panel-grab span { width: 44px; height: 5px; border-radius: 3px; background: var(--line); }
 .panel-head { flex: none; display: flex; align-items: center; gap: 4px; padding: 0 8px 6px 16px; }
@@ -134,7 +144,7 @@ body[data-layout="sheet"].panel-open .maplibregl-ctrl-bottom-left { opacity: 0; 
 
 /* 3. Two panes. --pane-w keeps the left pane clear of the centre line: 12 px gutter, pane, 12 px gap ≤ half. */
 @media (min-width: 700px), (min-width: 560px) and (max-height: 520px) {
-  :root { --pane-w: clamp(280px, calc(50vw - 24px - var(--safe-l)), 420px); --pane-end: calc(var(--safe-l) + var(--pane-w) + 24px); }
+  :root { --pane-w: clamp(280px, calc(var(--app-w) / 2 - 24px - var(--safe-l)), 420px); --pane-end: calc(var(--safe-l) + var(--pane-w) + 24px); }
   #top { right: auto; width: var(--pane-w); }
   #panel {
     --sheet: 0;
@@ -147,10 +157,10 @@ body[data-layout="sheet"].panel-open .maplibregl-ctrl-bottom-left { opacity: 0; 
   .panel-head { padding-top: 12px; }
   .panel-body { padding: 0 16px 20px; }
   /* Everything about the map lives in the right half. */
-  #route-banner { left: max(calc(50vw + 16px), var(--pane-end)); right: calc(var(--safe-r) + 12px); top: calc(var(--safe-t) + 8px); }
+  #route-banner { left: max(calc(var(--app-w) / 2 + 16px), var(--pane-end)); right: calc(var(--safe-r) + 12px); top: calc(var(--safe-t) + 8px); }
   .maplibregl-ctrl-bottom-left { left: var(--pane-end); }
-  #toast { left: calc(var(--pane-end) + (100vw - var(--pane-end) - var(--safe-r)) / 2); max-width: calc(100vw - var(--pane-end) - var(--safe-r) - 24px); }
-  #splash { padding-right: calc(100vw - var(--pane-end)); }
+  #toast { left: calc(var(--pane-end) + (var(--app-w) - var(--pane-end) - var(--safe-r)) / 2); max-width: calc(var(--app-w) - var(--pane-end) - var(--safe-r) - 24px); }
+  #splash { padding-right: calc(var(--app-w) - var(--pane-end)); }
   /* One bottom row: tabs under the left pane, status under the map. */
   #bottom { display: grid; grid-template-columns: calc(var(--pane-w) + 24px) minmax(0, 1fr); grid-template-areas: "tabs status"; }
   #tabs { grid-area: tabs; }
@@ -185,7 +195,7 @@ body[data-layout="sheet"].panel-open .maplibregl-ctrl-bottom-left { opacity: 0; 
 @media (vertical-viewport-segments: 2) {
   #panel { --sheet: 0; left: var(--safe-l); right: var(--safe-r); width: auto; top: env(viewport-segment-top 0 1, 50%); bottom: var(--bottom-h); max-height: none; height: auto; border-radius: 0; transform: translateY(calc(100% + var(--bottom-h))); }
   #panel.open { transform: none; }
-  #fabs { bottom: calc(100dvh - env(viewport-segment-bottom 0 0, 50dvh) + 12px); }
+  #fabs { bottom: calc(var(--app-h) - env(viewport-segment-bottom 0 0, 50dvh) + 12px); }
 }
 
 /* Wider panel content (middle sheet or a roomy pane) uses the space instead of stretching rows. */
