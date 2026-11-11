@@ -49,6 +49,11 @@ async function start() {
   new ResizeObserver(queueFit).observe($('#panel'));
   // Optional fold reporting (behind feature flags in Safari): the layout already works without it.
   navigator.devicePosture?.addEventListener?.('change', queueFit);
+  // Rotating or folding can leave iOS (Home Screen app) with the old, smaller window: the app then ends short of the
+  // screen edge and leaves an empty band. Re-applying the viewport tag makes Safari measure the screen again.
+  window.addEventListener('orientationchange', refreshViewport);
+  screen.orientation?.addEventListener?.('change', refreshViewport);
+  navigator.devicePosture?.addEventListener?.('change', refreshViewport);
   fitPadding();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && app.settings.keepAwake) keepAwake(true); });
 
@@ -184,6 +189,25 @@ function queueFit() {
   if (fitQueued) return;
   fitQueued = true;
   requestAnimationFrame(() => { fitQueued = false; fitPadding(); });
+}
+
+// Called after a rotation or fold change. Waits for the rotation to settle, then: undoes any scroll the page picked up
+// (the app never scrolls, so a scrolled page leaves a gap under the fixed bars), re-applies the viewport tag so Safari
+// re-measures the window, and re-fits the map. Runs a second time in case the first came before Safari was done.
+let viewportTimers = [];
+function refreshViewport() {
+  viewportTimers.forEach(clearTimeout);
+  viewportTimers = [250, 800].map((ms) => setTimeout(() => {
+    if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (meta) {
+      const content = meta.getAttribute('content');
+      meta.setAttribute('content', content + ', minimum-scale=1');
+      requestAnimationFrame(() => meta.setAttribute('content', content));
+    }
+    app.map?.resize();
+    queueFit();
+  }, ms));
 }
 
 // ------------------------------------------------------------------ map symbols
