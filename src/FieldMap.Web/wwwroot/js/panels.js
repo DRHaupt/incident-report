@@ -9,6 +9,7 @@ import { h, icon, row, toggle, segmented, button, note, heading, toast, copy, ad
 import { THEMES } from './style.js';
 import { teamView, sharePinButton } from './team.js';
 import { aprsLayerToggle } from './aprs.js';
+import { firstAidView } from './firstaid.js';
 
 const PROFILES = [
   { id: 'car', label: 'Car' }, { id: 'emergency', label: 'Emergency' }, { id: 'truck', label: 'Truck' }, { id: 'walking', label: 'Walk' }
@@ -511,6 +512,8 @@ export function moreView() {
     render(body) {
       const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
       add(body,
+        heading('Tools'),
+        row({ title: 'First aid & CPR', detail: 'Search by what’s happening, step-by-step topics, timers and a CPR metronome. Works offline.', badge: '+', color: '#2b8a3e', onClick: () => app.panel.show(firstAidView(), { push: true }) }),
         heading('Team'),
         row({
           title: 'Team positions and shared pins',

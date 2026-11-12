@@ -130,6 +130,23 @@ Team screen says that they're off.
   the Team screen removes them all after an incident.
 - Layers: More → Team → Show team on the map hides units, trails and pins on that phone.
 
+## First aid and CPR
+
+More → Tools → **First aid & CPR**: the Field Toolkit's first aid guide (41 topics) and CPR helper, loaded on the server
+with the toolkit's own loader and checks, with the emergency, poison-centre and crisis numbers from its `_guide.json`
+filled in. Phones download it once (about 220 KB) and keep it, so it works without signal.
+
+- **Search by what's happening** ("not breathing", "fitting", "bee sting"): the toolkit's symptom search, ported so
+  results match the Windows app. With an empty box, topics are listed by category, scene safety first.
+- **Topics:** when to call 911, numbered steps with cautions, warning signs, what not to do, related topics and sources.
+  Step buttons start **timers** (e.g. "Tourniquet applied"; kept on the phone across reloads), open the CPR helper or
+  another topic.
+- **CPR helper:** adult/child/infant, 30:2, 15:2 or hands-only, 100–120 per minute. A click on every beat (accented on
+  the first of each cycle), the compression count, breath pauses with a countdown, and a swap-compressors reminder
+  every 2 minutes. It keeps the screen on while running.
+- The guide's review status is shown on every screen. **The content is marked "Draft – awaiting clinical review"**:
+  have it reviewed by a qualified clinician (and update `_guide.json`) before relying on it operationally.
+
 ## APRS stations
 
 The server can listen to **APRS-IS** (the internet side of APRS, fed by I-gates) and show the stations it hears on the

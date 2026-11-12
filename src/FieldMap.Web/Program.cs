@@ -84,6 +84,7 @@ app.UseStaticFiles(new StaticFileOptions
 Api.Map(app);
 TeamApi.Map(app);
 AprsApi.Map(app);
+FirstAidApi.Map(app);
 app.Services.GetRequiredService<MapHost>(); // load the data at start-up, not on the first request
 app.Run();
 
