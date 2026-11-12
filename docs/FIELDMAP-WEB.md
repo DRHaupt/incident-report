@@ -17,6 +17,7 @@ and can add it to the Home Screen like an app.
 | Event files (KML, KMZ, GPX, GeoJSON, CSV), event items list, search in event files | ✓ | ✓ |
 | Cell coverage layer, repeaters (own, event, amateur, licensed) | ✓ (if installed on the server) | ✓ |
 | Coordinates in decimal, DMS, deg-min, MGRS, UTM; copy for dispatch | ✓ | ✓ |
+| Hazmat: ERG 2024 lookup (UN number, name, guide, placard), guides, isolation and protective-action zones on the map | ✓ (works offline once loaded) | Field Toolkit |
 | Team positions with the last hour's trail, shared incident pins (needs an access code) | ✓ | – |
 | Works with no signal | Map only (areas you've viewed or saved) | Everything |
 | Satellite / hybrid base map when online (Esri World Imagery, Sentinel-2) | ✓ | ✓ |
@@ -154,6 +155,22 @@ hundred kilobytes at most and only when something changed. The last good copy of
 - **Other feeds:** to change the list (for example to add the Alberta wildfire perimeters once you have its URL), copy
   `/opt/fieldmap-web/server/Content/live-feeds.json` to `/etc/fieldmap-web/live-feeds.json`, edit it and restart.
 - To turn live hazards off: `"Live": { "Enabled": false }`.
+
+## Hazmat (ERG 2024)
+
+More → Tools → **Hazmat**, or type a UN number (e.g. `1005`) in the search box. The guidebook data is the Field
+Toolkit's ERG 2024 import (62 guides, 2,771 materials, Table 1, placards); a phone downloads it once (about 200 KB
+compressed) and keeps it, so lookups work without signal.
+
+- **Search** by UN/NA number, material name or `guide 128`; with an empty box, pick a **placard** to get its initial
+  response guide. Results flag toxic inhalation hazards (Table 1), water-reactive materials and polymerization (P).
+- **Material:** the guide and the Table 1 initial isolation and protective-action distances (small/large spill,
+  day/night). **Guide:** every section as printed, plus General First Aid.
+- **Draw zones on the map:** pick the spill point (your position, the map centre or a dropped pin), small or large,
+  day or night, and the direction the wind is blowing from. The isolation circle and the downwind protective-action
+  zone (90° sector or the ERG square) are drawn, from Table 1 for highlighted materials and from the guide's
+  EVACUATION distances otherwise. Where Table 1 says "Refer to Table 3", the app says so instead of guessing. **Share
+  with team** adds a hazard pin with the distances.
 
 ## APRS stations
 

@@ -90,6 +90,7 @@ Api.Map(app);
 TeamApi.Map(app);
 AprsApi.Map(app);
 LiveApi.Map(app);
+HazmatApi.Map(app);
 app.Services.GetRequiredService<MapHost>(); // load the data at start-up, not on the first request
 app.Run();
 

@@ -62,7 +62,7 @@ self.addEventListener('fetch', (e) => {
   }
 
   // Map info and the event files: fresh from the server when possible, the last copy when offline.
-  if (url.pathname === '/api/info' || url.pathname.startsWith('/api/events')) {
+  if (url.pathname === '/api/info' || url.pathname === '/api/erg' || url.pathname.startsWith('/api/events')) {
     e.respondWith((async () => {
       try {
         const res = await fetch(req);

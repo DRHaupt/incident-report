@@ -10,6 +10,7 @@ import { THEMES } from './style.js';
 import { teamView, sharePinButton } from './team.js';
 import { aprsLayerToggle } from './aprs.js';
 import { liveLayerSection } from './live.js';
+import { hazmatView, loadErg, looksLikeUnNumber, searchErg, materialRow } from './hazmat.js';
 
 const PROFILES = [
   { id: 'car', label: 'Car' }, { id: 'emergency', label: 'Emergency' }, { id: 'truck', label: 'Truck' }, { id: 'walking', label: 'Walk' }
@@ -60,7 +61,9 @@ export function searchView() {
           set(results, ...events.map(eventRow), note(errorText(e), 'warn'));
           return;
         }
-        const rows = [...events.map(eventRow), ...server.map(resultRow)];
+        let erg = [];
+        if (looksLikeUnNumber(q)) { try { await loadErg(); erg = searchErg(q); } catch { /* offline without the guidebook yet */ } }
+        const rows = [...erg.map(materialRow), ...events.map(eventRow), ...server.map(resultRow)];
         set(results, ...(rows.length ? rows : [note(`Nothing found for “${q}”.`)]));
       };
       input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(run, 250); });
@@ -74,7 +77,7 @@ export function searchView() {
 
 function hints() {
   return h('div', { class: 'hints' },
-    note('Try a street address, an intersection (“Main & 5th”), a place, a business, a highway km (“Hwy 5 km 120”), coordinates or MGRS, or a type of place such as “hospital” or “hydrant”.'),
+    note('Try a street address, an intersection (“Main & 5th”), a place, a business, a highway km (“Hwy 5 km 120”), coordinates or MGRS, a type of place such as “hospital” or “hydrant”, or a UN number for hazmat (“1005”).'),
     app.events.size ? note('Names in your event files are searched too.') : null);
 }
 
@@ -513,6 +516,8 @@ export function moreView() {
     render(body) {
       const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
       add(body,
+        heading('Tools'),
+        row({ title: 'Hazmat (ERG 2024)', detail: 'UN number, name or placard → guide, isolation and protective-action zones on the map', badge: '!', color: '#e67700', onClick: () => app.panel.show(hazmatView(), { push: true }) }),
         heading('Team'),
         row({
           title: 'Team positions and shared pins',

@@ -334,3 +334,15 @@ textarea.field { resize: vertical; min-height: 84px; line-height: 1.35; }
 
 .feed-status { margin: 6px 0; }
 .feed-status .note { margin: 2px 0; }
+
+/* ------------------------------------------------------------------ hazmat (ERG) */
+
+.erg-table { margin: 6px 0 10px; overflow-x: auto; }
+.erg-table table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.erg-table th, .erg-table td { padding: 6px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.erg-table thead th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+.erg-table tbody th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+.erg-section { margin-bottom: 4px; }
+.erg-sub { margin: 10px 0 2px; font-weight: 700; font-size: 13px; }
+.erg-items { margin: 2px 0 6px; padding-left: 18px; }
+.erg-items li { margin: 3px 0; font-size: 14px; }
