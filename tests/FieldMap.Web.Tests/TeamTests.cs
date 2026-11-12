@@ -161,6 +161,50 @@ public sealed class TeamClockTests : IDisposable
     }
 
     [Fact]
+    public void Lines_and_areas_are_stored_checked_and_redrawn()
+    {
+        var team = NewTeam();
+        var square = new List<double[]> { new[] { -120.0, 50.0 }, new[] { -119.99, 50.0 }, new[] { -119.99, 50.01 }, new[] { -120.0, 50.01 }, new[] { -120.0, 50.0 } };
+        var (area, error) = team.AddPin(new Team.PinInput("phone-ffff-6666", "IC", "perimeter", "Hot zone", null, null, null, "area", square));
+        Assert.Null(error);
+        Assert.Equal("area", area!.Shape);
+        Assert.Equal(4, area.Points.Count);           // the repeated closing point is implied
+        Assert.Equal(50.005, area.Lat, 6);              // label at the area's centre
+        Assert.Equal(-119.995, area.Lon, 6);
+
+        Assert.Equal("An area needs at least 3 points.", team.AddPin(new Team.PinInput("d", "IC", "perimeter", "x", null, null, null, "area", square.Take(2).ToList())).Error);
+        Assert.Equal("A line needs at least 2 points.", team.AddPin(new Team.PinInput("d", "IC", "route", "x", null, null, null, "line", square.Take(1).ToList())).Error);
+        Assert.Equal("One of the points isn't valid.", team.AddPin(new Team.PinInput("d", "IC", "route", "x", null, null, null, "line", new() { new[] { -120.0, 50.0 }, new[] { 200.0, 50.0 } })).Error);
+
+        // Redrawn by someone else: new points, the label follows; a point's Lat/Lon is ignored for a shape.
+        var line = new List<double[]> { new[] { -120.0, 50.0 }, new[] { -120.0, 50.02 }, new[] { -120.0, 50.04 } };
+        var (redrawn, _) = team.UpdatePin(area.Id, new Team.PinInput("e", "Engine 3", null, null, null, 10, 10, null, square.Skip(1).ToList()));
+        Assert.Equal("Engine 3", redrawn!.UpdatedBy);
+        Assert.Equal(4, redrawn.Points.Count); // four different corners: nothing to drop
+        Assert.NotEqual(10, redrawn.Lat);
+
+        var (route, _) = team.AddPin(new Team.PinInput("e", "Engine 3", "route", "Access road", null, null, null, "line", line));
+        Assert.Equal(50.02, route!.Lat, 6); // a line's label sits on its middle point
+
+        // Saved and loaded again (a restart): shapes come back as they were.
+        var again = NewTeam().Pins();
+        Assert.Contains(again, p => p.Shape == "line" && p.Points.Count == 3 && p.Label == "Access road");
+    }
+
+    [Fact]
+    public void Pins_saved_before_shapes_load_as_points()
+    {
+        Directory.CreateDirectory(Path.Combine(_dir, "shared"));
+        File.WriteAllText(Path.Combine(_dir, "shared", "pins.json"), """
+            [ { "id": "old1", "kind": "hazard", "label": "Old pin", "note": "", "lat": 50, "lon": -120,
+                "createdBy": "A", "createdUtc": "2026-11-01T00:00:00Z", "updatedBy": "A", "updatedUtc": "2026-11-01T00:00:00Z" } ]
+            """);
+        var pin = Assert.Single(NewTeam().Pins());
+        Assert.Equal("point", pin.Shape);
+        Assert.Empty(pin.Points);
+    }
+
+    [Fact]
     public void Bad_input_is_refused()
     {
         var team = NewTeam();

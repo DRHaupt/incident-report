@@ -128,6 +128,11 @@ Team screen says that they're off.
   within a few seconds and anyone can edit, move or remove it; each pin shows who added and last changed it.
   Pins are saved in `/var/lib/fieldmap/shared/pins.json` and kept until someone removes them; **Clear all pins** on
   the Team screen removes them all after an incident.
+- **Shared lines and areas:** More → Team → **Draw a line** (a route, a closure) or **Draw an area** (a perimeter, a
+  hot zone, a staging area). Tap the map to add points; the bar shows the length or area as you go, with Undo, Done
+  and Cancel. Then pick the kind (Route and Perimeter join the pin kinds), a label and details, and share it. Everyone
+  sees it in the kind's colour with its label; tap it for the length or area, who drew it, Edit, Zoom to and Remove.
+  Stored with the pins (up to 500 points each) and removed with Clear all pins.
 - Layers: More → Team → Show team on the map hides units, trails and pins on that phone.
 
 ## APRS stations

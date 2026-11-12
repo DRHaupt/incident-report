@@ -2,7 +2,7 @@
 // phone sees and anyone can edit. Needs an access code on the server; without one the server answers "team-off" and
 // the app explains that instead. Positions only go out while Field Map is open: a web app can't use GPS in the background.
 
-import { app, save, focus, fitTo, INTERACTIVE, badgeImage, myPositionOrCentre } from './app.js';
+import { app, save, focus, fitTo, INTERACTIVE, badgeImage, myPositionOrCentre, clearSelection } from './app.js';
 import { placeView } from './panels.js';
 import * as C from './coords.js';
 import { getJson, postJson } from './api.js';
@@ -14,7 +14,9 @@ export const PIN_KINDS = {
   closure: { label: 'Road closed', glyph: '✕', color: '#8e24aa' },
   command: { label: 'Command post', glyph: 'C', color: '#f9a825', dark: true },
   medical: { label: 'Medical', glyph: '+', color: '#2e7d32' },
-  note: { label: 'Note', glyph: 'i', color: '#546e7a' }
+  note: { label: 'Note', glyph: 'i', color: '#546e7a' },
+  perimeter: { label: 'Perimeter', glyph: 'P', color: '#d6336c' },
+  route: { label: 'Route', glyph: 'R', color: '#1c7ed6' }
 };
 const UNIT_COLOR = '#00a389';
 const UNIT_STALE = '#8a8f96';
@@ -142,6 +144,18 @@ export function addTeamLayers(m) {
     },
     paint: { 'text-color': text, 'text-halo-color': halo, 'text-halo-width': 1.8 }
   });
+  // Shared lines and areas, under the badges that carry their labels.
+  const kindColor = ['match', ['get', 'kind'], ...Object.entries(PIN_KINDS).flatMap(([id, k]) => [id, k.color]), '#546e7a'];
+  m.addSource('team-shapes', { type: 'geojson', data: EMPTY });
+  m.addLayer({ id: 'team-area-fill', type: 'fill', source: 'team-shapes', filter: ['==', ['geometry-type'], 'Polygon'], layout: { visibility: vis }, paint: { 'fill-color': kindColor, 'fill-opacity': t === 'night' ? 0.12 : 0.2 } });
+  m.addLayer({ id: 'team-area-line', type: 'line', source: 'team-shapes', filter: ['==', ['geometry-type'], 'Polygon'], layout: { visibility: vis, 'line-join': 'round' }, paint: { 'line-color': kindColor, 'line-width': 3 } });
+  m.addLayer({ id: 'team-line', type: 'line', source: 'team-shapes', filter: ['==', ['geometry-type'], 'LineString'], layout: { visibility: vis, 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': kindColor, 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 3, 16, 6] } });
+  // The line or area being drawn.
+  m.addSource('team-draw', { type: 'geojson', data: EMPTY });
+  m.addLayer({ id: 'team-draw-fill', type: 'fill', source: 'team-draw', filter: ['==', ['geometry-type'], 'Polygon'], paint: { 'fill-color': '#ffd43b', 'fill-opacity': 0.18 } });
+  m.addLayer({ id: 'team-draw-line', type: 'line', source: 'team-draw', filter: ['!=', ['geometry-type'], 'Point'], paint: { 'line-color': '#ffd43b', 'line-width': 3, 'line-dasharray': [2, 1] } });
+  m.addLayer({ id: 'team-draw-pt', type: 'circle', source: 'team-draw', filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-radius': 6, 'circle-color': '#ffd43b', 'circle-stroke-color': '#000', 'circle-stroke-width': 2 } });
+  for (const id of ['team-line', 'team-area-fill']) INTERACTIVE.add(id);
   m.addSource('team-pins', { type: 'geojson', data: EMPTY });
   m.addLayer({
     id: 'team-pins', type: 'symbol', source: 'team-pins', layout: {
@@ -173,12 +187,19 @@ function draw() {
     type: 'FeatureCollection',
     features: state.pins.map((p) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [p.lon, p.lat] }, properties: { id: p.id, kind: p.kind, label: p.label } }))
   });
+  m.getSource('team-shapes').setData({
+    type: 'FeatureCollection',
+    features: state.pins.filter((p) => p.shape === 'line' || p.shape === 'area').map((p) => ({
+      type: 'Feature', properties: { id: p.id, kind: p.kind },
+      geometry: p.shape === 'area' ? { type: 'Polygon', coordinates: [[...p.points, p.points[0]]] } : { type: 'LineString', coordinates: p.points }
+    }))
+  });
 }
 
 export function setTeamVisible(on) {
   app.settings.showTeam = on;
   save();
-  for (const id of ['team-trails', 'team-units', 'team-unit-labels', 'team-pins'])
+  for (const id of ['team-trails', 'team-units', 'team-unit-labels', 'team-pins', 'team-area-fill', 'team-area-line', 'team-line'])
     if (app.map?.getLayer(id)) app.map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
 }
 
@@ -247,6 +268,8 @@ export function teamView() {
         add(body, row({ title: p.label, detail: `${k.label} · ${p.updatedBy}, ${ago(p.updatedUtc)}`, badge: k.glyph, color: k.color, onClick: () => openTeamPin(p.id, { push: true }) }));
       }
       add(body, h('div', { class: 'actions' },
+        button('Draw a line', () => startDrawing('line'), '', 'route'),
+        button('Draw an area', () => startDrawing('area')),
         button('Add a pin here', () => {
           const at = myPositionOrCentre();
           app.panel.show(pinEditor({ lat: at.lat, lon: at.lon }), { push: true });
@@ -281,15 +304,18 @@ export function openTeamPin(id, { push = false } = {}) {
   const p = state.pins.find((x) => x.id === id);
   if (!p) return toast('That pin was removed.');
   const k = PIN_KINDS[p.kind] ?? PIN_KINDS.note;
-  focus(p.lat, p.lon);
+  const isShape = p.shape === 'line' || p.shape === 'area';
+  if (isShape) { clearSelection(); fitTo(bboxOf(p.points)); } else focus(p.lat, p.lon);
   app.panel.show(placeView({
-    title: p.label, kind: `Shared pin · ${k.label}`, lat: p.lat, lon: p.lon,
+    title: p.label, kind: `Shared ${p.shape === 'area' ? 'area' : p.shape === 'line' ? 'line' : 'pin'} · ${k.label}`, lat: p.lat, lon: p.lon,
     lines: [
+      isShape ? h('p', { class: 'line' }, p.shape === 'area' ? `Area ${formatArea(areaOf(p.points))} · perimeter ${C.formatDistance(lengthOf([...p.points, p.points[0]]))}` : `Length ${C.formatDistance(lengthOf(p.points))}`) : null,
       p.note ? h('p', { class: 'line desc' }, p.note) : null,
       h('p', { class: 'line muted' }, `Added by ${p.createdBy}, ${ago(p.createdUtc)}${p.updatedUtc !== p.createdUtc ? ` · changed by ${p.updatedBy}, ${ago(p.updatedUtc)}` : ''}`)
     ],
     extraButtons: [
       button('Edit', () => app.panel.show(pinEditor(p), { push: true }), '', 'pin'),
+      isShape ? button('Zoom to', () => fitTo(bboxOf(p.points))) : null,
       button('Remove', async () => {
         if (!confirm(`Remove “${p.label}” for everyone?`)) return;
         try { await getJson(`/api/team/pins/${p.id}`, { method: 'DELETE' }); toast('Pin removed'); app.panel.back(); poll(); } catch (e) { toast(e.message); }
@@ -303,7 +329,7 @@ export function pinEditor(pin) {
   const editing = !!pin.id;
   let kind = pin.kind ?? 'hazard';
   return {
-    tab: null, title: editing ? 'Edit pin' : 'Share a pin',
+    tab: null, title: editing ? 'Edit' : pin.shape === 'area' ? 'Share an area' : pin.shape === 'line' ? 'Share a line' : 'Share a pin',
     render(body) {
       const label = h('input', { type: 'text', class: 'field', maxlength: 60, placeholder: 'What is here? e.g. Downed power line', value: pin.label ?? '', 'aria-label': 'Label' });
       const text = h('textarea', { class: 'field', rows: 3, maxlength: 500, placeholder: 'Details (optional)', 'aria-label': 'Details' }, pin.note ?? '');
@@ -318,6 +344,7 @@ export function pinEditor(pin) {
         if (!myName()) return toast('Set your name or callsign first.');
         if (!label.value.trim()) { label.focus(); return toast('Give the pin a label.'); }
         const data = { device: deviceId(), name: myName(), kind, label: label.value, note: text.value, lat: at.lat, lon: at.lon };
+        if (!editing && (pin.shape === 'line' || pin.shape === 'area')) Object.assign(data, { shape: pin.shape, points: pin.points });
         try {
           const saved = editing
             ? await getJson(`/api/team/pins/${pin.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
@@ -334,8 +361,10 @@ export function pinEditor(pin) {
         heading('Kind'), chips,
         heading('Label'), label,
         heading('Details'), text,
-        heading('Position'), where,
-        editing && app.pos ? h('div', { class: 'actions small' }, button('Move to my position', () => { at = { lat: app.pos.lat, lon: app.pos.lon }; where.textContent = C.all(at.lat, at.lon).dec + ' (your position)'; })) : null,
+        pin.shape === 'line' || pin.shape === 'area'
+          ? h('p', { class: 'line muted' }, pin.shape === 'area' ? `Area ${formatArea(areaOf(pin.points))} · ${pin.points.length} points` : `Line ${C.formatDistance(lengthOf(pin.points))} · ${pin.points.length} points`)
+          : h('div', {}, heading('Position'), where),
+        editing && app.pos && (pin.shape ?? 'point') === 'point' ? h('div', { class: 'actions small' }, button('Move to my position', () => { at = { lat: app.pos.lat, lon: app.pos.lon }; where.textContent = C.all(at.lat, at.lon).dec + ' (your position)'; })) : null,
         h('div', { class: 'actions' }, button(editing ? 'Save' : 'Share with everyone', go, 'primary', 'share'), button('Cancel', () => app.panel.back())),
         note('Everyone signed in to this Field Map server sees shared pins and can change or remove them.', 'muted'));
       if (!editing) setTimeout(() => label.focus(), 60);
@@ -346,3 +375,83 @@ export function pinEditor(pin) {
 /** The "Share as pin" button for a place view, when team features are on. */
 export const sharePinButton = (lat, lon, label = '') =>
   state.available ? button('Share as pin', () => app.panel.show(pinEditor({ lat, lon, label }), { push: true }), '', 'pin') : null;
+
+// ------------------------------------------------------------------ drawing shared lines and areas
+
+const R = 6371008.8;
+const rad = (d) => d * Math.PI / 180;
+function haversine(a, b) {
+  const dLat = rad(b[1] - a[1]), dLon = rad(b[0] - a[0]);
+  const x = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[1])) * Math.cos(rad(b[1])) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+export const lengthOf = (pts) => pts.slice(1).reduce((s, p, i) => s + haversine(pts[i], p), 0);
+/** Area in m² (planar projection around the shape: fine at incident scale). */
+export function areaOf(pts) {
+  if (pts.length < 3) return 0;
+  const lat0 = pts.reduce((s, p) => s + p[1], 0) / pts.length, k = Math.cos(rad(lat0)) * R * Math.PI / 180, m = R * Math.PI / 180;
+  let a = 0;
+  for (let i = 0; i < pts.length; i++) { const [x1, y1] = pts[i], [x2, y2] = pts[(i + 1) % pts.length]; a += x1 * k * y2 * m - x2 * k * y1 * m; }
+  return Math.abs(a) / 2;
+}
+export const formatArea = (m2) => (m2 >= 1e6 ? `${(m2 / 1e6).toFixed(m2 >= 1e7 ? 0 : 2)} km²` : m2 >= 1e4 ? `${(m2 / 1e4).toFixed(1)} ha` : `${Math.round(m2)} m²`);
+function bboxOf(pts) {
+  const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
+
+let drawing = null; // { shape: 'line'|'area', points: [[lon, lat]] }
+
+export const isDrawing = () => !!drawing;
+
+export function startDrawing(shape) {
+  if (state.available === false) return toast('Team features are off on this server.');
+  if (!myName()) return toast('Set your name or callsign in More → Team first.');
+  drawing = { shape, points: [] };
+  app.panel.close();
+  drawBar();
+  drawPreview();
+}
+
+/** A map tap while drawing adds a point (called from app.js before normal tap handling). */
+export function drawTap(lngLat) {
+  drawing.points.push([+lngLat.lng.toFixed(6), +lngLat.lat.toFixed(6)]);
+  navigator.vibrate?.(15);
+  drawPreview();
+  drawBar();
+}
+
+function drawPreview() {
+  const src = app.map?.getSource('team-draw');
+  if (!src) return;
+  if (!drawing) return src.setData(EMPTY);
+  const p = drawing.points, f = p.map((c) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: c }, properties: {} }));
+  if (drawing.shape === 'area' && p.length >= 3) f.unshift({ type: 'Feature', geometry: { type: 'Polygon', coordinates: [[...p, p[0]]] }, properties: {} });
+  else if (p.length >= 2) f.unshift({ type: 'Feature', geometry: { type: 'LineString', coordinates: p }, properties: {} });
+  src.setData({ type: 'FeatureCollection', features: f });
+}
+
+function drawBar() {
+  let bar = document.getElementById('draw-bar');
+  if (!drawing) { bar?.remove(); return; }
+  if (!bar) { bar = h('div', { id: 'draw-bar', role: 'toolbar' }); document.body.append(bar); }
+  const p = drawing.points, need = drawing.shape === 'area' ? 3 : 2;
+  const measure = drawing.shape === 'area' ? (p.length >= 3 ? formatArea(areaOf(p)) : '') : (p.length >= 2 ? C.formatDistance(lengthOf(p)) : '');
+  bar.replaceChildren(
+    h('div', { class: 'draw-text' },
+      h('b', {}, drawing.shape === 'area' ? 'Drawing an area' : 'Drawing a line'),
+      h('span', {}, p.length < need ? `Tap the map to add points (${p.length}/${need})` : `${p.length} points · ${measure}`)),
+    button('Undo', () => { drawing.points.pop(); drawPreview(); drawBar(); }, 'small'),
+    button('Done', () => finishDrawing(), p.length >= need ? 'small primary' : 'small'),
+    button('Cancel', () => { drawing = null; drawPreview(); drawBar(); }, 'small'));
+}
+
+function finishDrawing() {
+  const need = drawing.shape === 'area' ? 3 : 2;
+  if (drawing.points.length < need) return toast(drawing.shape === 'area' ? 'An area needs at least 3 points.' : 'A line needs at least 2 points.');
+  const d = drawing;
+  drawing = null;
+  drawBar();
+  drawPreview();
+  app.panel.show(pinEditor({ shape: d.shape, points: d.points, kind: d.shape === 'area' ? 'perimeter' : 'route', lat: d.points[0][1], lon: d.points[0][0] }));
+}
