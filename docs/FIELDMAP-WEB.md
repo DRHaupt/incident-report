@@ -22,6 +22,7 @@ and can add it to the Home Screen like an app.
 | Satellite / hybrid base map when online (Esri World Imagery, Sentinel-2) | ✓ | ✓ |
 | Imagery that works offline (imagery packages) | – | ✓ |
 | APRS stations from APRS-IS (receive only), with tracks | ✓ (if turned on on the server) | ✓ |
+| Live hazards: DriveBC / Alberta 511 road events, wildfire perimeters, evacuation orders and alerts, weather alerts | ✓ (fetched by the server) | ✓ |
 | Drawing, printing, APRS by radio (TNC) and APRS messaging, radio coverage prediction, terrain | – | ✓ |
 
 The layout follows the screen size only (it never checks which phone it is), and changes live when a foldable
@@ -108,6 +109,7 @@ works (see the end of step 3).
 | `Regions` | Only serve these regions, e.g. `["bc"]`. Empty: every installed region. |
 | `EventsDir` | Folder of shared event files. Default `/var/lib/fieldmap/events`. |
 | `MaxUploadMb` | Largest event file a phone may add (it's converted and kept on that phone only). |
+| `Live` | Live hazards (see below). On by default; `{ "Enabled": false }` turns them off. `Keys` holds keys for feeds that need one, e.g. `{ "Keys": { "ab511": "…" } }`. |
 | `AprsIs` | APRS stations on the map (see below). `{ "Enabled": true }` turns it on; `Server`, `Port`, `Callsign`, `ExtraFilter`, `ShowMinutes` and `TrackMinutes` are optional. |
 
 ## Team positions and shared pins
@@ -129,6 +131,29 @@ Team screen says that they're off.
   Pins are saved in `/var/lib/fieldmap/shared/pins.json` and kept until someone removes them; **Clear all pins** on
   the Team screen removes them all after an incident.
 - Layers: More → Team → Show team on the map hides units, trails and pins on that phone.
+
+## Live hazards
+
+The server fetches the same live feeds as the Windows app and shows them on every phone (Layers → Live hazards, where
+each kind can be turned off on that phone):
+
+| Feed | Shows | Refresh |
+|---|---|---|
+| DriveBC (Open511) | Road closures, incidents and construction in BC | 5 min |
+| Alberta 511 | Road events in Alberta (needs a free developer key, see below) | 5 min |
+| BC Wildfire Service | Fire perimeters; fires that are out are drawn faintly | 15 min |
+| BC evacuation orders and alerts | Order areas in red, alert areas in amber | 10 min |
+| Environment Canada | Weather warnings, watches and statements | 10 min |
+
+Only items inside the installed map regions are sent, with shapes simplified to about 25 m, so phones download a few
+hundred kilobytes at most and only when something changed. The last good copy of each feed is kept in
+`/var/lib/fieldmap/live-cache`, so phones still see it (marked with its time) while a feed or the internet is down.
+
+- **Alberta 511 key:** request a developer key from 511 Alberta, then add it inside `"FieldMap"` in
+  `/etc/fieldmap-web/appsettings.json` and restart: `"Live": { "Keys": { "ab511": "your-key" } }`.
+- **Other feeds:** to change the list (for example to add the Alberta wildfire perimeters once you have its URL), copy
+  `/opt/fieldmap-web/server/Content/live-feeds.json` to `/etc/fieldmap-web/live-feeds.json`, edit it and restart.
+- To turn live hazards off: `"Live": { "Enabled": false }`.
 
 ## APRS stations
 
