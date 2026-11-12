@@ -11,6 +11,7 @@ import { teamView, sharePinButton } from './team.js';
 import { aprsLayerToggle } from './aprs.js';
 import { liveLayerSection } from './live.js';
 import { hazmatView, loadErg, looksLikeUnNumber, searchErg, materialRow } from './hazmat.js';
+import { sendMyLocation, startSos, cancelSos, isSosActive } from './alerts.js';
 
 const PROFILES = [
   { id: 'car', label: 'Car' }, { id: 'emergency', label: 'Emergency' }, { id: 'truck', label: 'Truck' }, { id: 'walking', label: 'Walk' }
@@ -518,6 +519,8 @@ export function moreView() {
       add(body,
         heading('Tools'),
         row({ title: 'Hazmat (ERG 2024)', detail: 'UN number, name or placard → guide, isolation and protective-action zones on the map', badge: '!', color: '#e67700', onClick: () => app.panel.show(hazmatView(), { push: true }) }),
+        row({ title: 'Send my location', detail: 'Coordinates, MGRS, nearest address and map links by text or any app. Also: tap the GPS badge.', badge: '➤', color: '#1c7ed6', onClick: () => sendMyLocation() }),
+        app.team?.available ? row({ title: isSosActive() ? 'Cancel my SOS' : 'SOS', detail: isSosActive() ? 'Your SOS is active on every team phone' : 'Alert every team phone with your position', badge: 'SOS', color: '#c92a2a', onClick: async () => { if (isSosActive()) await cancelSos(); else await startSos(); app.panel.refresh(); } }) : null,
         heading('Team'),
         row({
           title: 'Team positions and shared pins',

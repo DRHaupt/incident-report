@@ -129,6 +129,85 @@ public sealed class Team
             u.Trail.RemoveAll(p => now - p.Time > TrailLength);
     }
 
+    // ------------------------------------------------------------------ SOS alerts
+
+    /// <summary>An SOS stays up for this long unless the sender cancels it (or sends it again).</summary>
+    public static readonly TimeSpan AlertLasts = TimeSpan.FromHours(1);
+    public const int MaxMessageLength = 140;
+
+    private sealed class Alert
+    {
+        public required string Device { get; init; }
+        public required string Name { get; set; }
+        public double Lat { get; set; }
+        public double Lon { get; set; }
+        public double? Accuracy { get; set; }
+        public string Message { get; set; } = "";
+        public DateTime StartedUtc { get; init; }
+        public DateTime UpdatedUtc { get; set; }
+    }
+
+    private readonly Dictionary<string, Alert> _alerts = new();
+
+    /// <summary>Raises an SOS, or updates its position while it's active. Returns null when accepted, or why not.</summary>
+    public string? RaiseAlert(string? device, string? name, double lat, double lon, double? accuracy, string? message)
+    {
+        if (CleanDevice(device) is not { } id) return "Missing device id.";
+        if (CleanName(name) is not { } who) return "Set a name or callsign first.";
+        if (!ValidPoint(lat, lon)) return "That position isn't valid.";
+        var now = _now();
+        lock (_lock)
+        {
+            PruneAlerts(now);
+            if (!_alerts.TryGetValue(id, out var a))
+            {
+                if (_alerts.Count >= MaxUnits) return "Too many alerts.";
+                a = new Alert { Device = id, Name = who, StartedUtc = now };
+                _alerts[id] = a;
+            }
+            a.Name = who;
+            a.Lat = Math.Round(lat, 6); a.Lon = Math.Round(lon, 6); a.Accuracy = Finite(accuracy);
+            if (message != null) a.Message = Clean(message.Replace('\n', ' '), MaxMessageLength);
+            a.UpdatedUtc = now;
+            _revision++;
+        }
+        return null;
+    }
+
+    public bool CancelAlert(string? device)
+    {
+        if (CleanDevice(device) is not { } id) return false;
+        lock (_lock)
+        {
+            if (!_alerts.Remove(id)) return false;
+            _revision++;
+            return true;
+        }
+    }
+
+    public List<object> Alerts()
+    {
+        var now = _now();
+        lock (_lock)
+        {
+            PruneAlerts(now);
+            return _alerts.Values.OrderBy(a => a.StartedUtc).Select(a => (object)new
+            {
+                device = a.Device, name = a.Name, lat = a.Lat, lon = a.Lon, accuracy = a.Accuracy, message = a.Message,
+                started = a.StartedUtc, updated = a.UpdatedUtc, ageSeconds = Math.Round((now - a.StartedUtc).TotalSeconds)
+            }).ToList();
+        }
+    }
+
+    private void PruneAlerts(DateTime now)
+    {
+        foreach (var id in _alerts.Where(kv => now - kv.Value.UpdatedUtc > AlertLasts).Select(kv => kv.Key).ToList())
+        {
+            _alerts.Remove(id);
+            _revision++;
+        }
+    }
+
     // ------------------------------------------------------------------ pins
 
     public sealed class Pin
@@ -287,6 +366,7 @@ public sealed class Team
 public static class TeamApi
 {
     public sealed record PositionInput(string? Device, string? Name, double Lat, double Lon, double? Accuracy, double? Heading, double? Speed);
+    public sealed record AlertInput(string? Device, string? Name, double Lat, double Lon, double? Accuracy, string? Message);
 
     public static void Map(WebApplication app)
     {
@@ -302,6 +382,7 @@ public static class TeamApi
             staleSeconds = Team.StaleAfter.TotalSeconds,
             kinds = Team.PinKinds,
             units = team.Units(),
+            alerts = team.Alerts(),
             pins = team.Pins()
         }));
 
@@ -315,6 +396,14 @@ public static class TeamApi
             team.StopSharing(device);
             return Results.Json(new { ok = true });
         });
+
+        // SOS: every team phone shows a banner and buzzes until the sender cancels it (or an hour passes).
+        group.MapPost("/sos", (AlertInput a, Team team) =>
+            team.RaiseAlert(a.Device, a.Name, a.Lat, a.Lon, a.Accuracy, a.Message) is { } error
+                ? Results.Json(new { error }, statusCode: 400)
+                : Results.Json(new { ok = true }));
+
+        group.MapDelete("/sos/{device}", (string device, Team team) => Results.Json(new { ok = team.CancelAlert(device) }));
 
         group.MapPost("/pins", (Team.PinInput input, Team team) =>
         {

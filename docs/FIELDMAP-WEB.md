@@ -172,6 +172,21 @@ compressed) and keeps it, so lookups work without signal.
   EVACUATION distances otherwise. Where Table 1 says "Refer to Table 3", the app says so instead of guessing. **Share
   with team** adds a hazard pin with the distances.
 
+### SOS and emergency alerts
+
+- **SOS:** More → Tools → SOS (or More → Team, or tap the GPS badge). After a confirmation and an optional message,
+  every team phone shows a red banner ("SOS – Medic 12 · Need medical · 1.1 km NE"), vibrates and beeps, and draws a
+  large red dot at that phone's position. While the SOS is active the phone keeps sending its position (every 10 s
+  with a fix), even when position sharing is off. The sender's banner has **Cancel SOS**; an SOS not updated for an
+  hour ends by itself. Others can **Dismiss** it on their phone. Needs the access code, like the other team features.
+- **APRS emergencies:** when the APRS layer is on and a station reports an emergency, the same banner appears.
+
+### Send my location
+
+Tap the GPS badge in the status bar (or More → Tools → Send my location) and choose **Send my location**: the phone's
+share sheet opens with your name, coordinates and accuracy, MGRS, the nearest address, the time and Apple/Google Maps
+links, ready for a text, email or any messaging app. Where there is no share sheet the text is copied.
+
 ## APRS stations
 
 The server can listen to **APRS-IS** (the internet side of APRS, fed by I-gates) and show the stations it hears on the

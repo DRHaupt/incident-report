@@ -7,6 +7,7 @@ import { placeView } from './panels.js';
 import * as C from './coords.js';
 import { getJson, postJson } from './api.js';
 import { h, row, toggle, button, note, heading, toast, add } from './ui.js';
+import { updateTeamAlerts, startSos, cancelSos, isSosActive } from './alerts.js';
 
 export const PIN_KINDS = {
   hazard: { label: 'Hazard', glyph: '!', color: '#e53935' },
@@ -23,7 +24,7 @@ const EMPTY = { type: 'FeatureCollection', features: [] };
 
 // Kept here and attached as app.team in startTeam(): app.js and this file import each other, so app isn't ready yet
 // while this file loads.
-const state = { available: null, units: [], pins: [], revision: 0, error: null };
+const state = { available: null, units: [], pins: [], alerts: [], revision: 0, error: null };
 
 export function deviceId() {
   if (!app.settings.teamDevice) {
@@ -56,6 +57,8 @@ async function poll() {
     state.available = true;
     state.error = null;
     state.units = t?.units ?? [];
+    state.alerts = t?.alerts ?? [];
+    updateTeamAlerts(t?.alerts);
     state.pins = t?.pins ?? [];
     if (t?.revision !== state.revision) {
       state.revision = t?.revision;
@@ -131,8 +134,9 @@ export function addTeamLayers(m) {
   m.addLayer({
     id: 'team-units', type: 'circle', source: 'team-units', layout: { visibility: vis },
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 6, 15, 10], 'circle-color': ['case', ['get', 'stale'], UNIT_STALE, UNIT_COLOR],
-      'circle-stroke-color': '#fff', 'circle-stroke-width': 2.5, 'circle-opacity': t === 'night' ? 0.7 : 1
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, ['case', ['get', 'sos'], 10, 6], 15, ['case', ['get', 'sos'], 16, 10]],
+      'circle-color': ['case', ['get', 'sos'], '#c92a2a', ['get', 'stale'], UNIT_STALE, UNIT_COLOR],
+      'circle-stroke-color': ['case', ['get', 'sos'], '#ffe066', '#fff'], 'circle-stroke-width': ['case', ['get', 'sos'], 4, 2.5], 'circle-opacity': t === 'night' ? 0.7 : 1
     }
   });
   m.addLayer({
@@ -163,7 +167,11 @@ function draw() {
   const others = state.units.filter((u) => u.device !== me);
   m.getSource('team-units').setData({
     type: 'FeatureCollection',
-    features: others.map((u) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [u.lon, u.lat] }, properties: { device: u.device, name: u.name, stale: u.stale } }))
+    features: [
+      ...others.filter((u) => !state.alerts.some((a) => a.device === u.device)).map((u) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [u.lon, u.lat] }, properties: { device: u.device, name: u.name, stale: u.stale, sos: false } })),
+      // An SOS is drawn large and red at its latest position, whether or not that phone shares its position.
+      ...state.alerts.filter((a) => a.device !== me).map((a) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [a.lon, a.lat] }, properties: { device: a.device, name: `SOS ${a.name}`, stale: false, sos: true } }))
+    ]
   });
   m.getSource('team-trails').setData({
     type: 'FeatureCollection',
@@ -221,6 +229,9 @@ export function teamView() {
         return;
       }
       if (state.error) add(body, note(state.error, 'warn'));
+      add(body, h('div', { class: 'actions' }, isSosActive()
+        ? button('Cancel my SOS', async () => { await cancelSos(); app.panel.refresh(); }, 'danger')
+        : button('SOS – alert every team phone', async () => { await startSos(); app.panel.refresh(); }, 'danger sos')));
       add(body, nameField(),
         toggle({
           label: 'Share my position', detail: 'Other units see where you are, with your last hour’s trail. Only while Field Map is open on screen.',
@@ -261,6 +272,8 @@ export function teamView() {
 }
 
 export function openTeamUnit(device, { push = false } = {}) {
+  const sos = state.alerts.find((a) => a.device === device);
+  if (sos) return import('./alerts.js').then((m) => m.openTeamAlertById(device));
   const u = state.units.find((x) => x.device === device);
   if (!u) return toast('That unit stopped sharing.');
   focus(u.lat, u.lon);
