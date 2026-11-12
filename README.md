@@ -14,6 +14,7 @@ offline and store their data locally:
   drawing tools and offline-safe map updates.
 * **[Field Map for phones](docs/FIELDMAP-WEB.md)** is a web version for iPhone and Android, hosted on your own
   Ubuntu server with the same map data, search, nearest and directions (a separate Linux download on each release).
+  The same screens are also packaged as an **[installed app for iOS and Android](docs/FIELDMAP-MOBILE.md)** (`mobile/`).
 
 The apps share branding, the switchable **Touch Mode** (Ctrl+T), the high-contrast **Daylight** theme
 (Ctrl+D) and the **Night** theme (Ctrl+N) through `src/Shared`, and coordinate/GPS code through

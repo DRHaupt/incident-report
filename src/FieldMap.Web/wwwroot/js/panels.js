@@ -3,7 +3,8 @@
 import { app, save, select, clearSelection, fitTo, showRoute, clearRoute, setTheme, setBase, currentBase, setLayerVisible, setEventVisible,
   addLocalEvent, removeEventLayers, keepAwake, myPositionOrCentre, updateStatus, loadEventList } from './app.js';
 import * as C from './coords.js';
-import { getJson, postJson, postFile, qs } from './api.js';
+import { getJson, postJson, postFile, qs, serverFetch } from './api.js';
+import { native, serverBase, setServer, setToken, normalizeServer, probeServer } from './native.js';
 import { saveLocalFile, deleteLocalFile } from './store.js';
 import { h, icon, row, toggle, segmented, button, note, heading, toast, copy, add, set } from './ui.js';
 import { THEMES } from './style.js';
@@ -540,7 +541,8 @@ export function moreView() {
         app.route ? h('div', { class: 'actions' }, button('Clear the route', () => { clearRoute(); app.panel.refresh(); })) : null,
         heading('Offline'),
         offlineSection(),
-        !standalone ? h('div', {}, heading('Install'), note('For a full-screen app with its own icon: in Safari tap Share, then “Add to Home Screen”. On Android, open the browser menu and choose “Install app”.')) : null,
+        native ? h('div', {}, heading('Server'), row({ title: serverBase().replace(/^https:\/\//, ''), detail: 'The Field Map server this phone uses. Tap to change.', onClick: () => showServerSetup() })) : null,
+        !standalone && !native ? h('div', {}, heading('Install'), note('For a full-screen app with its own icon: in Safari tap Share, then “Add to Home Screen”. On Android, open the browser menu and choose “Install app”.')) : null,
         heading('Map data'),
         ...app.info.regions.map((r) => row({ title: r.name, detail: `Data ${r.dataDate ?? 'unknown'} · version ${r.version}${r.isSample ? ' · SAMPLE DATA' : ''}`, onClick: () => fitTo(r.bounds) })),
         ...app.info.problems.map((p) => note(p, 'warn')),
@@ -590,7 +592,7 @@ async function saveArea(report) {
   const worker = async () => {
     while (queue.length) {
       const u = queue.shift();
-      try { const res = await fetch(u, { credentials: 'same-origin' }); if (!res.ok && res.status !== 204) failed++; } catch { failed++; }
+      try { const res = await serverFetch(u); if (!res.ok && res.status !== 204) failed++; } catch { failed++; }
       if (++done % 25 === 0) report(`Saving… ${done.toLocaleString()} of ${urls.length.toLocaleString()}`);
     }
   };
@@ -610,7 +612,8 @@ export function showLogin() {
       const go = async () => {
         msg.hidden = true;
         try {
-          await postJson('/api/login', { code: input.value });
+          const r = await postJson('/api/login', { code: input.value, app: native });
+          if (native) setToken(r?.token ?? '');
           location.reload();
         } catch (e) {
           msg.textContent = e.message;
@@ -619,8 +622,46 @@ export function showLogin() {
       };
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
       add(body, note('Enter the access code for this Field Map server. You only need to do this once on each phone.'),
-        h('div', { class: 'search-box' }, input), msg, h('div', { class: 'actions' }, button('Sign in', go, 'primary')));
+        h('div', { class: 'search-box' }, input), msg,
+        h('div', { class: 'actions' }, button('Sign in', go, 'primary'), native ? button('Change server', () => showServerSetup()) : null),
+        native ? note(serverBase(), 'muted') : null);
       setTimeout(() => input.focus(), 60);
+    }
+  });
+}
+
+/** The installed app only: which Field Map server this phone uses. Shown on first start and from More → Server. */
+export function showServerSetup() {
+  document.getElementById('splash').hidden = true;
+  const current = serverBase();
+  app.panel.show({
+    tab: null, title: 'Field Map server', full: true, locked: !current,
+    render(body) {
+      const input = h('input', { type: 'url', class: 'search-input', placeholder: 'maps.example.org', value: current, autocomplete: 'url', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', inputmode: 'url', enterkeyhint: 'go', 'aria-label': 'Server address' });
+      const msg = h('p', { class: 'note warn', hidden: true });
+      const btn = button('Connect', () => go(), 'primary');
+      const go = async () => {
+        msg.hidden = true;
+        const base = normalizeServer(input.value);
+        if (!base) { msg.textContent = 'Enter the server’s address, for example maps.example.org. It has to be an https address.'; msg.hidden = false; return; }
+        btn.disabled = true;
+        try {
+          await probeServer(base);
+          setServer(base);
+          location.reload();
+        } catch (e) {
+          msg.textContent = e.message;
+          msg.hidden = false;
+          btn.disabled = false;
+        }
+      };
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+      add(body, note(current
+        ? 'The address of the Field Map server this phone uses. Changing it signs this phone out of the old server; saved map areas for the old server stay on the phone.'
+        : 'Field Map gets its map, search and directions from your organisation’s Field Map server. Enter its address; whoever runs the server can tell you what it is.'),
+        h('div', { class: 'search-box' }, input), msg,
+        h('div', { class: 'actions' }, btn, current ? button('Cancel', () => location.reload()) : null));
+      if (!current) setTimeout(() => input.focus(), 60);
     }
   });
 }

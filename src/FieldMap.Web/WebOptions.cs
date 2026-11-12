@@ -15,6 +15,12 @@ public sealed class WebOptions
     /// <summary>When set, phones must enter this code once before they can see the map or event files.</summary>
     public string? AccessCode { get; set; }
 
+    /// <summary>
+    /// Where the installed iOS and Android apps make their requests from (their pages live inside the app, so the
+    /// server is "another site" to them and has to allow them by name). Empty: the apps can't use this server.
+    /// </summary>
+    public List<string> AppOrigins { get; set; } = new() { "capacitor://localhost", "https://localhost" };
+
     /// <summary>Largest event file a phone may upload for conversion, in megabytes.</summary>
     public int MaxUploadMb { get; set; } = 25;
 

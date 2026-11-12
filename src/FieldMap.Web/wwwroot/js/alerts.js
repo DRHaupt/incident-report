@@ -6,7 +6,7 @@
 import { app, focus } from './app.js';
 import { placeView } from './panels.js';
 import * as C from './coords.js';
-import { getJson, postJson, qs } from './api.js';
+import { getJson, postJson, qs, serverFetch } from './api.js';
 import { h, button, toast, copy, set } from './ui.js';
 
 const dismissed = new Set(read());
@@ -141,7 +141,7 @@ export async function cancelSos() {
   if (!confirm('Cancel your SOS? Team phones will stop showing it.')) return;
   sosActive = false;
   cancelledAt = Date.now();
-  try { await fetch(`/api/team/sos/${encodeURIComponent(myDevice())}`, { method: 'DELETE', credentials: 'same-origin' }); } catch { /* retried by the next poll's state */ }
+  try { await serverFetch(`/api/team/sos/${encodeURIComponent(myDevice())}`, { method: 'DELETE' }); } catch { /* retried by the next poll's state */ }
   toast('SOS cancelled');
   render();
 }
