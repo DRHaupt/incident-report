@@ -19,6 +19,7 @@ const fromHere = (lat, lon) => {
   const d = C.distance([app.pos.lon, app.pos.lat], [lon, lat]);
   return `${C.formatDistance(d)} ${C.compass(C.bearing([app.pos.lon, app.pos.lat], [lon, lat]))} of you`;
 };
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 const errorText = (e) => (e?.name === 'AbortError' ? '' : e?.message || 'Something went wrong.');
 
 export function refreshIfShowing(...tabs) {
@@ -512,7 +513,7 @@ export function moreView() {
         row({
           title: 'Team positions and shared pins',
           detail: app.team?.available === false ? 'Off on this server (needs an access code)'
-            : `${app.settings.shareTeam ? 'Sharing your position' : 'Not sharing your position'} · ${app.team?.units.length ?? 0} units · ${app.team?.pins.length ?? 0} pins`,
+            : `${app.settings.shareTeam ? 'Sharing your position' : 'Not sharing your position'} · ${plural(app.team?.units.length ?? 0, 'unit')} · ${plural(app.team?.pins.length ?? 0, 'pin')}`,
           badge: '●', color: '#00a389', onClick: () => app.panel.show(teamView(), { push: true })
         }),
         heading('While driving'),
