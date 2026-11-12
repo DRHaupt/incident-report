@@ -9,6 +9,7 @@ import { h, icon, row, toggle, segmented, button, note, heading, toast, copy, ad
 import { THEMES } from './style.js';
 import { teamView, sharePinButton } from './team.js';
 import { aprsLayerToggle } from './aprs.js';
+import { sendMyLocation, startSos, cancelSos, isSosActive } from './alerts.js';
 
 const PROFILES = [
   { id: 'car', label: 'Car' }, { id: 'emergency', label: 'Emergency' }, { id: 'truck', label: 'Truck' }, { id: 'walking', label: 'Walk' }
@@ -511,6 +512,9 @@ export function moreView() {
     render(body) {
       const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
       add(body,
+        heading('Tools'),
+        row({ title: 'Send my location', detail: 'Coordinates, MGRS, nearest address and map links by text or any app. Also: tap the GPS badge.', badge: '➤', color: '#1c7ed6', onClick: () => sendMyLocation() }),
+        app.team?.available ? row({ title: isSosActive() ? 'Cancel my SOS' : 'SOS', detail: isSosActive() ? 'Your SOS is active on every team phone' : 'Alert every team phone with your position', badge: 'SOS', color: '#c92a2a', onClick: async () => { if (isSosActive()) await cancelSos(); else await startSos(); app.panel.refresh(); } }) : null,
         heading('Team'),
         row({
           title: 'Team positions and shared pins',

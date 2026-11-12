@@ -7,7 +7,7 @@ const MAX_TILES = 12000;
 
 const SHELL = [
   './', 'index.html', 'app.css', 'manifest.webmanifest',
-  'js/app.js', 'js/panels.js', 'js/team.js', 'js/aprs.js', 'js/ui.js', 'js/api.js', 'js/store.js', 'js/style.js', 'js/coords.js',
+  'js/app.js', 'js/panels.js', 'js/team.js', 'js/alerts.js', 'js/aprs.js', 'js/ui.js', 'js/api.js', 'js/store.js', 'js/style.js', 'js/coords.js',
   'vendor/maplibre/maplibre-gl.js', 'vendor/maplibre/maplibre-gl.css',
   'icons/icon-192.png', 'icons/apple-touch-icon.png'
 ];

@@ -65,6 +65,35 @@ public sealed class TeamApiTests : IClassFixture<ServerFixture>
     }
 
     [Fact]
+    public async Task Sos_reaches_every_phone_updates_in_place_and_can_be_cancelled()
+    {
+        using var factory = _fx.Factory(Code);
+        var client = await SignedIn(factory);
+        var sos = new { device = "phone-sos-0001", name = "Medic 12", lat = 57.40, lon = -125.90, accuracy = 5.0, message = "Need medical\nnow" };
+        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/team/sos", sos)).StatusCode);
+        // Sent again with a new position: still one alert, at the new place, same start time.
+        var first = (await client.GetFromJsonAsync<JsonElement>("/api/team")).GetProperty("alerts")[0];
+        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/team/sos", sos with { lat = 57.41 })).StatusCode);
+        var alerts = (await client.GetFromJsonAsync<JsonElement>("/api/team")).GetProperty("alerts").EnumerateArray().ToList();
+        var a = Assert.Single(alerts);
+        Assert.Equal("Medic 12", a.GetProperty("name").GetString());
+        Assert.Equal("Need medical now", a.GetProperty("message").GetString());
+        Assert.Equal(57.41, a.GetProperty("lat").GetDouble(), 6);
+        Assert.Equal(first.GetProperty("started").GetString(), a.GetProperty("started").GetString());
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/team/sos", sos with { name = " " })).StatusCode);
+        Assert.True((await (await client.DeleteAsync("/api/team/sos/phone-sos-0001")).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("ok").GetBoolean());
+        Assert.Empty((await client.GetFromJsonAsync<JsonElement>("/api/team")).GetProperty("alerts").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Sos_needs_team_features()
+    {
+        var client = _fx.Default.CreateClient();
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/api/team/sos", new { device = "phone-sos-0002", name = "A", lat = 57.4, lon = -125.9 })).StatusCode);
+    }
+
+    [Fact]
     public async Task Pins_can_be_added_edited_by_anyone_removed_and_survive_a_restart()
     {
         string id;
@@ -158,6 +187,20 @@ public sealed class TeamClockTests : IDisposable
         }
         var trail = Only(team).GetProperty("trail");
         Assert.InRange(trail.GetArrayLength(), 59, 61); // about an hour of one-a-minute points
+    }
+
+    [Fact]
+    public void Sos_lasts_an_hour_unless_resent()
+    {
+        var team = NewTeam();
+        Assert.Null(team.RaiseAlert("phone-eeee-5555", "Rescue 1", 50, -120, null, "help"));
+        _now += TimeSpan.FromMinutes(50);
+        Assert.Null(team.RaiseAlert("phone-eeee-5555", "Rescue 1", 50.001, -120, null, null)); // position update keeps it alive
+        _now += TimeSpan.FromMinutes(50);
+        Assert.Single(team.Alerts());
+        Assert.Equal("help", JsonSerializer.SerializeToElement(team.Alerts()[0]).GetProperty("message").GetString());
+        _now += TimeSpan.FromMinutes(61);
+        Assert.Empty(team.Alerts());
     }
 
     [Fact]

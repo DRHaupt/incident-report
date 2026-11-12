@@ -9,6 +9,7 @@ import { Panel, h, icon, toast, set } from './ui.js';
 import * as V from './panels.js';
 import * as T from './team.js';
 import * as A from './aprs.js';
+import * as AL from './alerts.js';
 
 const maplibregl = window.maplibregl;
 const $ = (s) => document.querySelector(s);
@@ -45,6 +46,7 @@ async function start() {
   $('#btn-me').addEventListener('click', () => recenter());
   $('#btn-compass').addEventListener('click', () => toggleHeadingUp());
   $('#status-coords').addEventListener('click', () => cycleCoordFormat());
+  $('#status-gps').addEventListener('click', () => AL.openMyLocation());
   $('#route-banner').addEventListener('click', () => app.route && V.openDirections(app.route.to, app.route.toLabel, { push: false }));
   window.addEventListener('resize', queueFit);
   window.visualViewport?.addEventListener('resize', queueFit);
@@ -649,6 +651,7 @@ function onPosition(p) {
   if (app.follow) followCamera(!prev);
   if (app.route) updateRouteProgress();
   T.teamOnPosition(app.pos);
+  AL.alertsOnPosition();
 }
 
 function drawPosition() {
