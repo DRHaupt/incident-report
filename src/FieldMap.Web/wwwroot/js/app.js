@@ -433,6 +433,7 @@ function addEventLayers(ev) {
   for (const k of ['pt', 'line', 'fill']) INTERACTIVE.add(`${src}-${k}`);
   // Keep event files under the route, POIs and the position marker.
   for (const top of ['route-case', 'route', 'pois', 'repeaters', 'aprs-tracks', 'aprs', 'aprs-labels', 'team-trails', 'team-units', 'team-unit-labels', 'team-pins', 'hazmat-protect', 'hazmat-protect-line', 'hazmat-isolate', 'hazmat-isolate-line', 'hazmat-spill', 'me-acc', 'me'])
+  for (const top of ['route-case', 'route', 'pois', 'repeaters', 'aprs-tracks', 'aprs', 'aprs-labels', 'team-area-fill', 'team-area-line', 'team-line', 'team-trails', 'team-units', 'team-unit-labels', 'team-pins', 'team-draw-fill', 'team-draw-line', 'team-draw-pt', 'me-acc', 'me'])
     if (m.getLayer(top)) m.moveLayer(top);
 }
 
@@ -534,6 +535,7 @@ async function loadPois() {
 
 function onTap(e) {
   if (suppressClick) { suppressClick = false; return; }
+  if (T.isDrawing()) return T.drawTap(e.lngLat);
   const layers = [...INTERACTIVE].filter((l) => app.map.getLayer(l));
   const r = 14;
   const feats = app.map.queryRenderedFeatures([[e.point.x - r, e.point.y - r], [e.point.x + r, e.point.y + r]], { layers });
@@ -543,6 +545,7 @@ function onTap(e) {
   const f = feats.sort((a, b) => rank(a) - rank(b))[0];
   if (H.isHazmatLayer(f.layer.id)) H.onZoneTap();
   else if (f.layer.id === 'team-pins') T.openTeamPin(f.properties.id);
+  if (f.layer.id === 'team-pins' || f.layer.id === 'team-line' || f.layer.id === 'team-area-fill') T.openTeamPin(f.properties.id);
   else if (f.layer.id === 'aprs') A.openAprsStation(f.properties.key);
   else if (f.layer.id === 'team-units') T.openTeamUnit(f.properties.device);
   else if (f.layer.id === 'pois') V.openPoi(f.properties.id);
