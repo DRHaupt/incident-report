@@ -9,6 +9,7 @@ const SHELL = [
   './', 'index.html', 'app.css', 'manifest.webmanifest',
   'js/app.js', 'js/panels.js', 'js/team.js', 'js/aprs.js', 'js/live.js', 'js/ui.js', 'js/api.js', 'js/store.js', 'js/style.js', 'js/coords.js',
   'js/app.js', 'js/panels.js', 'js/team.js', 'js/alerts.js', 'js/aprs.js', 'js/ui.js', 'js/api.js', 'js/store.js', 'js/style.js', 'js/coords.js',
+  'js/app.js', 'js/panels.js', 'js/team.js', 'js/firstaid.js', 'js/aprs.js', 'js/ui.js', 'js/api.js', 'js/store.js', 'js/style.js', 'js/coords.js',
   'vendor/maplibre/maplibre-gl.js', 'vendor/maplibre/maplibre-gl.css',
   'icons/icon-192.png', 'icons/apple-touch-icon.png'
 ];
@@ -64,6 +65,7 @@ self.addEventListener('fetch', (e) => {
 
   // Map info and the event files: fresh from the server when possible, the last copy when offline.
   if (url.pathname === '/api/info' || url.pathname === '/api/erg' || url.pathname.startsWith('/api/events')) {
+  if (url.pathname === '/api/info' || url.pathname === '/api/firstaid' || url.pathname.startsWith('/api/events')) {
     e.respondWith((async () => {
       try {
         const res = await fetch(req);
