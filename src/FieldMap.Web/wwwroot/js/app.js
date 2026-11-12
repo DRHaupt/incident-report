@@ -9,6 +9,7 @@ import { Panel, h, icon, toast, set } from './ui.js';
 import * as V from './panels.js';
 import * as T from './team.js';
 import * as A from './aprs.js';
+import * as L from './live.js';
 
 const maplibregl = window.maplibregl;
 const $ = (s) => document.querySelector(s);
@@ -94,6 +95,7 @@ export async function loadInfo() {
   startGps();
   T.startTeam();
   A.startAprs();
+  L.startLive();
   if (app.settings.keepAwake) keepAwake(true);
 }
 
@@ -332,6 +334,7 @@ function addOverlays() {
       }
     });
   }
+  L.addLiveLayers(m); // under event files and everything else
   for (const ev of app.events.values()) addEventLayers(ev);
   m.addSource('route', { type: 'geojson', data: app.route ? routeGeoJson(app.route) : EMPTY });
   m.addLayer({ id: 'route-case', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#000', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 7, 16, 14], 'line-opacity': 0.6 } });
@@ -539,6 +542,7 @@ function onTap(e) {
   else if (f.layer.id === 'team-units') T.openTeamUnit(f.properties.device);
   else if (f.layer.id === 'pois') V.openPoi(f.properties.id);
   else if (f.layer.id === 'repeaters') V.openRepeater(f.properties);
+  else if (L.isLiveLayer(f.layer.id)) L.openLiveItem(f.properties.id, [e.lngLat.lng, e.lngLat.lat]);
   else {
     const id = f.layer.id.replace(/^ev-/, '').replace(/-(pt|line|fill)$/, '');
     const ev = app.events.get(id);

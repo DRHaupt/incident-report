@@ -8,6 +8,8 @@ if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")) 
     Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
 var builder = WebApplication.CreateBuilder(args);
+// One line per live-feed fetch is enough (LiveHub logs failures); the HTTP client would add four.
+builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Warning);
 builder.Configuration.AddJsonFile("/etc/fieldmap-web/appsettings.json", optional: true, reloadOnChange: false);
 builder.Configuration.AddEnvironmentVariables("FIELDMAP_");
 
@@ -20,6 +22,9 @@ builder.Services.AddSingleton<ImageryProxy>();
 builder.Services.AddSingleton<Team>();
 builder.Services.AddSingleton<AprsHub>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<AprsHub>());
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<LiveHub>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<LiveHub>());
 builder.Services.AddResponseCompression(o =>
 {
     o.EnableForHttps = true;
@@ -84,6 +89,7 @@ app.UseStaticFiles(new StaticFileOptions
 Api.Map(app);
 TeamApi.Map(app);
 AprsApi.Map(app);
+LiveApi.Map(app);
 app.Services.GetRequiredService<MapHost>(); // load the data at start-up, not on the first request
 app.Run();
 

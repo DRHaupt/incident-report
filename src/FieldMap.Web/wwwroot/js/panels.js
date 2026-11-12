@@ -9,6 +9,7 @@ import { h, icon, row, toggle, segmented, button, note, heading, toast, copy, ad
 import { THEMES } from './style.js';
 import { teamView, sharePinButton } from './team.js';
 import { aprsLayerToggle } from './aprs.js';
+import { liveLayerSection } from './live.js';
 
 const PROFILES = [
   { id: 'car', label: 'Car' }, { id: 'emergency', label: 'Emergency' }, { id: 'truck', label: 'Truck' }, { id: 'walking', label: 'Walk' }
@@ -342,6 +343,7 @@ export function layersView() {
     render(body) {
       add(body, heading('Map style'),
         segmented(Object.entries(THEMES).map(([id, t]) => ({ id, label: t.name })), app.settings.theme, (id) => { setTheme(id); app.panel.refresh(); }));
+      add(body, liveLayerSection());
 
       const imagery = app.info.imagery ?? [];
       if (imagery.length) {
