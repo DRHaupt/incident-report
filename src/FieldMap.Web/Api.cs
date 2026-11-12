@@ -29,7 +29,7 @@ public static class Api
         app.MapGet("/imagery/{id}/{z:int}/{x:int}/{y:int}", (string id, int z, int x, int y, ImageryProxy imagery, HttpContext http, CancellationToken cancel) =>
             imagery.TileAsync(id, z, x, y, http, cancel));
 
-        app.MapGet("/api/info", (MapHost host, EventFiles events, ImageryProxy imagery) =>
+        app.MapGet("/api/info", (MapHost host, EventFiles events, ImageryProxy imagery, AprsHub aprs) =>
         {
             var s = host.Current;
             return Results.Json(new
@@ -59,6 +59,7 @@ public static class Api
                     warning = l.Warning,
                     count = s.PoisByLayer.TryGetValue(l.Id, out var list) ? list.Count : 0
                 }),
+                aprs = aprs.Enabled,
                 coverage = s.Coverage == null ? null : new { maxZoom = s.Coverage.MaxZoom, description = s.Coverage.Metadata.GetValueOrDefault("description", "") },
                 imagery = imagery.Sources.Select(i => new
                 {

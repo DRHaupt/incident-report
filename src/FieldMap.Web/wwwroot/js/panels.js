@@ -8,6 +8,7 @@ import { saveLocalFile, deleteLocalFile } from './store.js';
 import { h, icon, row, toggle, segmented, button, note, heading, toast, copy, add, set } from './ui.js';
 import { THEMES } from './style.js';
 import { teamView, sharePinButton } from './team.js';
+import { aprsLayerToggle } from './aprs.js';
 
 const PROFILES = [
   { id: 'car', label: 'Car' }, { id: 'emergency', label: 'Emergency' }, { id: 'truck', label: 'Truck' }, { id: 'walking', label: 'Walk' }
@@ -387,6 +388,7 @@ export function layersView() {
           label: l.title, detail: `${l.count.toLocaleString()} · shown from zoom ${l.minZoom}`, badge: l.glyph, color: l.color,
           checked: app.settings.layers.includes(l.id), onChange: (on) => setLayerVisible(l.id, on)
         }));
+      if (app.aprs?.enabled) add(body, heading('APRS'), aprsLayerToggle());
       if (app.info.repeaters > 0)
         add(body, toggle({ label: 'Repeaters', detail: `${app.info.repeaters} from the Field Map repeater list`, badge: 'R', color: '#8e44ad', checked: app.settings.repeaters, onChange: (on) => setLayerVisible('repeaters', on) }));
       if (app.info.coverage)
