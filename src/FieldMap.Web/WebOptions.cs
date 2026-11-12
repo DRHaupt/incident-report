@@ -24,5 +24,8 @@ public sealed class WebOptions
     /// <summary>Keys or tokens for imagery sources that need one, by source id. Kept on the server, never sent to phones.</summary>
     public Dictionary<string, string> ImageryKeys { get; set; } = new();
 
+    /// <summary>APRS-IS (receive-only): APRS stations on the phones' map. Off unless AprsIs.Enabled is true.</summary>
+    public AprsIsOptions AprsIs { get; set; } = new();
+
     public string EventsFolder => string.IsNullOrWhiteSpace(EventsDir) ? Path.Combine(DataDir, "events") : EventsDir;
 }

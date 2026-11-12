@@ -21,7 +21,8 @@ and can add it to the Home Screen like an app.
 | Works with no signal | Map only (areas you've viewed or saved) | Everything |
 | Satellite / hybrid base map when online (Esri World Imagery, Sentinel-2) | ✓ | ✓ |
 | Imagery that works offline (imagery packages) | – | ✓ |
-| Drawing, printing, APRS, radio coverage prediction, terrain | – | ✓ |
+| APRS stations from APRS-IS (receive only), with tracks | ✓ (if turned on on the server) | ✓ |
+| Drawing, printing, APRS by radio (TNC) and APRS messaging, radio coverage prediction, terrain | – | ✓ |
 
 The layout follows the screen size only (it never checks which phone it is), and changes live when a foldable
 such as the iPhone Duo is opened or closed. Search text, the open panel and the map position stay as they are.
@@ -107,6 +108,7 @@ works (see the end of step 3).
 | `Regions` | Only serve these regions, e.g. `["bc"]`. Empty: every installed region. |
 | `EventsDir` | Folder of shared event files. Default `/var/lib/fieldmap/events`. |
 | `MaxUploadMb` | Largest event file a phone may add (it's converted and kept on that phone only). |
+| `AprsIs` | APRS stations on the map (see below). `{ "Enabled": true }` turns it on; `Server`, `Port`, `Callsign`, `ExtraFilter`, `ShowMinutes` and `TrackMinutes` are optional. |
 
 ## Team positions and shared pins
 
@@ -127,6 +129,26 @@ Team screen says that they're off.
   Pins are saved in `/var/lib/fieldmap/shared/pins.json` and kept until someone removes them; **Clear all pins** on
   the Team screen removes them all after an incident.
 - Layers: More → Team → Show team on the map hides units, trails and pins on that phone.
+
+## APRS stations
+
+The server can listen to **APRS-IS** (the internet side of APRS, fed by I-gates) and show the stations it hears on the
+phones: other hams, digipeaters, weather stations and objects, coloured by kind, with the last hour's track of moving
+stations. It is **receive-only**: the server logs in with passcode -1 and never sends anything, so no licence or passcode
+is needed. It listens to the area of the installed map regions (one box per region, e.g. all of BC and Alberta) and
+follows a newly installed region within a minute.
+
+Turn it on in `/etc/fieldmap-web/appsettings.json`, inside `"FieldMap"`, then restart the service:
+
+```json
+"AprsIs": { "Enabled": true }
+```
+
+Optional settings: `Server` (default `noam.aprs2.net`), `Port` (14580), `Callsign` (shown in the server's login instead
+of a generated `FMWEB####` name), `ExtraFilter` (more APRS-IS filter terms, e.g. `b/VE7*`), `ShowMinutes` (stations not
+heard for longer are left off the map, default 60) and `TrackMinutes` (60). `journalctl -u fieldmap-web` shows the
+connection and the filter in use. On the phones: Layers → APRS stations (on by default) shows the connection status and
+turns the layer off; tap a station for its details and a link to aprs.fi.
 
 ## Event files
 
