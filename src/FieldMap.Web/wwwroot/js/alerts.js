@@ -15,6 +15,7 @@ function remember() { try { sessionStorage.setItem('fieldmap.alerts.dismissed', 
 
 let teamAlerts = [], aprsAlerts = [];
 const announced = new Set();
+let lastShown = '';
 
 const myDevice = () => app.settings.teamDevice;
 const fromHere = (lat, lon) => (app.pos ? `${C.formatDistance(C.distance([app.pos.lon, app.pos.lat], [lon, lat]))} ${C.compass(C.bearing([app.pos.lon, app.pos.lat], [lon, lat]))}` : '');
@@ -42,7 +43,8 @@ function render() {
     items.push(h('div', { class: 'alert own' },
       h('div', { class: 'alert-text' }, h('b', {}, 'Your SOS is active'), h('span', {}, 'Every team phone sees your position.')),
       button('Cancel SOS', () => cancelSos(), 'small')));
-  for (const a of teamAlerts) {
+  // Newest first: only three banners fit, and a new SOS must never be hidden behind older ones.
+  for (const a of [...teamAlerts].sort((x, y) => String(y.started).localeCompare(String(x.started)))) {
     const key = `team:${a.device}:${a.started}`;
     if (dismissed.has(key)) continue;
     items.push(banner(key, `SOS – ${a.name}`, [a.message, fromHere(a.lat, a.lon), ago(a.ageSeconds)].filter(Boolean).join(' · '), () => openTeamAlert(a)));
@@ -52,8 +54,11 @@ function render() {
     if (dismissed.has(key)) continue;
     items.push(banner(key, `APRS EMERGENCY – ${s.key}`, [s.micE, fromHere(s.lat, s.lon)].filter(Boolean).join(' · '), () => import('./aprs.js').then((m) => m.openAprsStation(s.key))));
   }
-  set(el, ...items.slice(0, 3));
-  el.hidden = items.length === 0;
+  // Rebuild only when what's shown changed, so a tap isn't lost to a redraw on every poll.
+  const shown = items.slice(0, 3);
+  const key = shown.map((x) => x.textContent).join('\n');
+  if (key !== lastShown) { lastShown = key; set(el, ...shown); }
+  el.hidden = shown.length === 0;
   // New alerts buzz and beep once.
   const fresh = [...teamAlerts.map((a) => `team:${a.device}:${a.started}`), ...aprsAlerts.map((s) => `aprs:${s.key}:${s.heard?.slice(0, 13)}`)]
     .filter((k) => !dismissed.has(k) && !announced.has(k));

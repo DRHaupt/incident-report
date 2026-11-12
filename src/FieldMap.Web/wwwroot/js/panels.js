@@ -519,10 +519,10 @@ export function moreView() {
       const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
       add(body,
         heading('Tools'),
-        row({ title: 'Hazmat (ERG 2024)', detail: 'UN number, name or placard → guide, isolation and protective-action zones on the map', badge: '!', color: '#e67700', onClick: () => app.panel.show(hazmatView(), { push: true }) }),
-        row({ title: 'Send my location', detail: 'Coordinates, MGRS, nearest address and map links by text or any app. Also: tap the GPS badge.', badge: '➤', color: '#1c7ed6', onClick: () => sendMyLocation() }),
         app.team?.available ? row({ title: isSosActive() ? 'Cancel my SOS' : 'SOS', detail: isSosActive() ? 'Your SOS is active on every team phone' : 'Alert every team phone with your position', badge: 'SOS', color: '#c92a2a', onClick: async () => { if (isSosActive()) await cancelSos(); else await startSos(); app.panel.refresh(); } }) : null,
+        row({ title: 'Send my location', detail: 'Coordinates, MGRS, nearest address and map links by text or any app. Also: tap the GPS badge.', badge: '➤', color: '#1c7ed6', onClick: () => sendMyLocation() }),
         row({ title: 'First aid & CPR', detail: 'Search by what’s happening, step-by-step topics, timers and a CPR metronome. Works offline.', badge: '+', color: '#2b8a3e', onClick: () => app.panel.show(firstAidView(), { push: true }) }),
+        row({ title: 'Hazmat (ERG 2024)', detail: 'UN number, name or placard → guide, isolation and protective-action zones on the map', badge: '!', color: '#e67700', onClick: () => app.panel.show(hazmatView(), { push: true }) }),
         heading('Team'),
         row({
           title: 'Team positions and shared pins',

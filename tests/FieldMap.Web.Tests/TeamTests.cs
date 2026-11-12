@@ -201,6 +201,9 @@ public sealed class TeamClockTests : IDisposable
         Assert.Equal("help", JsonSerializer.SerializeToElement(team.Alerts()[0]).GetProperty("message").GetString());
         _now += TimeSpan.FromMinutes(61);
         Assert.Empty(team.Alerts());
+    }
+
+    [Fact]
     public void Lines_and_areas_are_stored_checked_and_redrawn()
     {
         var team = NewTeam();
