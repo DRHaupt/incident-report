@@ -24,7 +24,10 @@ public sealed class Team
     public static readonly TimeSpan TrailLength = TimeSpan.FromHours(1);
 
     /// <summary>Kinds of pin, shown with their own symbol and colour on the phones.</summary>
-    public static readonly string[] PinKinds = { "hazard", "staging", "closure", "command", "medical", "note" };
+    public static readonly string[] PinKinds = { "hazard", "staging", "closure", "command", "medical", "note", "perimeter", "route" };
+
+    /// <summary>Most points a shared line or area may have.</summary>
+    public const int MaxShapePoints = 500;
 
     private static readonly JsonSerializerOptions FileJson = new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
@@ -129,6 +132,85 @@ public sealed class Team
             u.Trail.RemoveAll(p => now - p.Time > TrailLength);
     }
 
+    // ------------------------------------------------------------------ SOS alerts
+
+    /// <summary>An SOS stays up for this long unless the sender cancels it (or sends it again).</summary>
+    public static readonly TimeSpan AlertLasts = TimeSpan.FromHours(1);
+    public const int MaxMessageLength = 140;
+
+    private sealed class Alert
+    {
+        public required string Device { get; init; }
+        public required string Name { get; set; }
+        public double Lat { get; set; }
+        public double Lon { get; set; }
+        public double? Accuracy { get; set; }
+        public string Message { get; set; } = "";
+        public DateTime StartedUtc { get; init; }
+        public DateTime UpdatedUtc { get; set; }
+    }
+
+    private readonly Dictionary<string, Alert> _alerts = new();
+
+    /// <summary>Raises an SOS, or updates its position while it's active. Returns null when accepted, or why not.</summary>
+    public string? RaiseAlert(string? device, string? name, double lat, double lon, double? accuracy, string? message)
+    {
+        if (CleanDevice(device) is not { } id) return "Missing device id.";
+        if (CleanName(name) is not { } who) return "Set a name or callsign first.";
+        if (!ValidPoint(lat, lon)) return "That position isn't valid.";
+        var now = _now();
+        lock (_lock)
+        {
+            PruneAlerts(now);
+            if (!_alerts.TryGetValue(id, out var a))
+            {
+                if (_alerts.Count >= MaxUnits) return "Too many alerts.";
+                a = new Alert { Device = id, Name = who, StartedUtc = now };
+                _alerts[id] = a;
+            }
+            a.Name = who;
+            a.Lat = Math.Round(lat, 6); a.Lon = Math.Round(lon, 6); a.Accuracy = Finite(accuracy);
+            if (message != null) a.Message = Clean(message.Replace('\n', ' '), MaxMessageLength);
+            a.UpdatedUtc = now;
+            _revision++;
+        }
+        return null;
+    }
+
+    public bool CancelAlert(string? device)
+    {
+        if (CleanDevice(device) is not { } id) return false;
+        lock (_lock)
+        {
+            if (!_alerts.Remove(id)) return false;
+            _revision++;
+            return true;
+        }
+    }
+
+    public List<object> Alerts()
+    {
+        var now = _now();
+        lock (_lock)
+        {
+            PruneAlerts(now);
+            return _alerts.Values.OrderBy(a => a.StartedUtc).Select(a => (object)new
+            {
+                device = a.Device, name = a.Name, lat = a.Lat, lon = a.Lon, accuracy = a.Accuracy, message = a.Message,
+                started = a.StartedUtc, updated = a.UpdatedUtc, ageSeconds = Math.Round((now - a.StartedUtc).TotalSeconds)
+            }).ToList();
+        }
+    }
+
+    private void PruneAlerts(DateTime now)
+    {
+        foreach (var id in _alerts.Where(kv => now - kv.Value.UpdatedUtc > AlertLasts).Select(kv => kv.Key).ToList())
+        {
+            _alerts.Remove(id);
+            _revision++;
+        }
+    }
+
     // ------------------------------------------------------------------ pins
 
     public sealed class Pin
@@ -139,13 +221,19 @@ public sealed class Team
         public string Note { get; set; } = "";
         public double Lat { get; set; }
         public double Lon { get; set; }
+
+        /// <summary>"point" (a pin), "line" (route, closure) or "area" (perimeter, zone). Pins saved before shapes are points.</summary>
+        public string Shape { get; set; } = "point";
+
+        /// <summary>A line's or area's points as [lon, lat] (GeoJSON order); empty for a point. Lat/Lon is then where its label goes.</summary>
+        public List<double[]> Points { get; set; } = new();
         public string CreatedBy { get; set; } = "";
         public DateTime CreatedUtc { get; set; }
         public string UpdatedBy { get; set; } = "";
         public DateTime UpdatedUtc { get; set; }
     }
 
-    public sealed record PinInput(string? Device, string? Name, string? Kind, string? Label, string? Note, double? Lat, double? Lon);
+    public sealed record PinInput(string? Device, string? Name, string? Kind, string? Label, string? Note, double? Lat, double? Lon, string? Shape = null, List<double[]>? Points = null);
 
     public List<Pin> Pins()
     {
@@ -157,7 +245,19 @@ public sealed class Team
     public (Pin? Pin, string? Error) AddPin(PinInput input)
     {
         if (CleanName(input.Name) is not { } who) return (null, "Set a name or callsign first.");
-        if (input.Lat is not { } lat || input.Lon is not { } lon || !ValidPoint(lat, lon)) return (null, "That position isn't valid.");
+        var shape = input.Shape is "line" or "area" ? input.Shape : "point";
+        List<double[]> points = new();
+        double lat, lon;
+        if (shape == "point")
+        {
+            if (input.Lat is not { } la || input.Lon is not { } lo || !ValidPoint(la, lo)) return (null, "That position isn't valid.");
+            (lat, lon) = (la, lo);
+        }
+        else
+        {
+            if (ShapePoints(shape, input.Points, out points) is { } problem) return (null, problem);
+            (lat, lon) = Anchor(shape, points);
+        }
         var kind = CleanKind(input.Kind);
         var label = Clean(input.Label, MaxLabelLength);
         if (label.Length == 0) return (null, "Give the pin a label.");
@@ -168,7 +268,8 @@ public sealed class Team
             var pin = new Pin
             {
                 Id = Guid.NewGuid().ToString("N")[..12], Kind = kind, Label = label, Note = Clean(input.Note, MaxNoteLength),
-                Lat = Math.Round(lat, 6), Lon = Math.Round(lon, 6), CreatedBy = who, CreatedUtc = now, UpdatedBy = who, UpdatedUtc = now
+                Lat = Math.Round(lat, 6), Lon = Math.Round(lon, 6), Shape = shape, Points = points,
+                CreatedBy = who, CreatedUtc = now, UpdatedBy = who, UpdatedUtc = now
             };
             _pins.Add(pin);
             SaveLocked();
@@ -184,7 +285,15 @@ public sealed class Team
         {
             var pin = _pins.FirstOrDefault(p => p.Id == id);
             if (pin == null) return (null, null);
-            if (input.Lat is { } lat && input.Lon is { } lon)
+            if (pin.Shape != "point" && input.Points != null)
+            {
+                // A line or area redrawn: new points, label moves with them.
+                if (ShapePoints(pin.Shape, input.Points, out var points) is { } problem) return (null, problem);
+                pin.Points = points;
+                var (la, lo) = Anchor(pin.Shape, points);
+                pin.Lat = Math.Round(la, 6); pin.Lon = Math.Round(lo, 6);
+            }
+            else if (pin.Shape == "point" && input.Lat is { } lat && input.Lon is { } lon)
             {
                 if (!ValidPoint(lat, lon)) return (null, "That position isn't valid.");
                 pin.Lat = Math.Round(lat, 6); pin.Lon = Math.Round(lon, 6);
@@ -253,10 +362,34 @@ public sealed class Team
     private static Pin Copy(Pin p) => new()
     {
         Id = p.Id, Kind = p.Kind, Label = p.Label, Note = p.Note, Lat = p.Lat, Lon = p.Lon,
+        Shape = p.Shape, Points = p.Points.Select(x => (double[])x.Clone()).ToList(),
         CreatedBy = p.CreatedBy, CreatedUtc = p.CreatedUtc, UpdatedBy = p.UpdatedBy, UpdatedUtc = p.UpdatedUtc
     };
 
     // ------------------------------------------------------------------ helpers
+
+    /// <summary>Checks a line's (2+) or area's (3+) points and rounds them. Returns null when they're fine, or why not.</summary>
+    private static string? ShapePoints(string shape, List<double[]>? input, out List<double[]> points)
+    {
+        points = new();
+        var min = shape == "area" ? 3 : 2;
+        if (input == null || input.Count < min) return shape == "area" ? "An area needs at least 3 points." : "A line needs at least 2 points.";
+        if (input.Count > MaxShapePoints) return $"Too many points (at most {MaxShapePoints}).";
+        foreach (var p in input)
+        {
+            if (p is not { Length: >= 2 } || !ValidPoint(p[1], p[0])) return "One of the points isn't valid.";
+            points.Add(new[] { Math.Round(p[0], 6), Math.Round(p[1], 6) });
+        }
+        // An area's closing point is implied.
+        if (shape == "area" && points.Count > 3 && points[0][0] == points[^1][0] && points[0][1] == points[^1][1]) points.RemoveAt(points.Count - 1);
+        return null;
+    }
+
+    /// <summary>Where a shape's label goes: an area's average point, the middle point of a line.</summary>
+    private static (double Lat, double Lon) Anchor(string shape, List<double[]> points) =>
+        shape == "area"
+            ? (points.Average(p => p[1]), points.Average(p => p[0]))
+            : (points[points.Count / 2][1], points[points.Count / 2][0]);
 
     private static string Clean(string? s, int max)
     {
@@ -287,6 +420,7 @@ public sealed class Team
 public static class TeamApi
 {
     public sealed record PositionInput(string? Device, string? Name, double Lat, double Lon, double? Accuracy, double? Heading, double? Speed);
+    public sealed record AlertInput(string? Device, string? Name, double Lat, double Lon, double? Accuracy, string? Message);
 
     public static void Map(WebApplication app)
     {
@@ -302,6 +436,7 @@ public static class TeamApi
             staleSeconds = Team.StaleAfter.TotalSeconds,
             kinds = Team.PinKinds,
             units = team.Units(),
+            alerts = team.Alerts(),
             pins = team.Pins()
         }));
 
@@ -315,6 +450,14 @@ public static class TeamApi
             team.StopSharing(device);
             return Results.Json(new { ok = true });
         });
+
+        // SOS: every team phone shows a banner and buzzes until the sender cancels it (or an hour passes).
+        group.MapPost("/sos", (AlertInput a, Team team) =>
+            team.RaiseAlert(a.Device, a.Name, a.Lat, a.Lon, a.Accuracy, a.Message) is { } error
+                ? Results.Json(new { error }, statusCode: 400)
+                : Results.Json(new { ok = true }));
+
+        group.MapDelete("/sos/{device}", (string device, Team team) => Results.Json(new { ok = team.CancelAlert(device) }));
 
         group.MapPost("/pins", (Team.PinInput input, Team team) =>
         {

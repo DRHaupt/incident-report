@@ -17,11 +17,13 @@ and can add it to the Home Screen like an app.
 | Event files (KML, KMZ, GPX, GeoJSON, CSV), event items list, search in event files | ✓ | ✓ |
 | Cell coverage layer, repeaters (own, event, amateur, licensed) | ✓ (if installed on the server) | ✓ |
 | Coordinates in decimal, DMS, deg-min, MGRS, UTM; copy for dispatch | ✓ | ✓ |
+| Hazmat: ERG 2024 lookup (UN number, name, guide, placard), guides, isolation and protective-action zones on the map | ✓ (works offline once loaded) | Field Toolkit |
 | Team positions with the last hour's trail, shared incident pins (needs an access code) | ✓ | – |
 | Works with no signal | Map only (areas you've viewed or saved) | Everything |
 | Satellite / hybrid base map when online (Esri World Imagery, Sentinel-2) | ✓ | ✓ |
 | Imagery that works offline (imagery packages) | – | ✓ |
 | APRS stations from APRS-IS (receive only), with tracks | ✓ (if turned on on the server) | ✓ |
+| Live hazards: DriveBC / Alberta 511 road events, wildfire perimeters, evacuation orders and alerts, weather alerts | ✓ (fetched by the server) | ✓ |
 | Drawing, printing, APRS by radio (TNC) and APRS messaging, radio coverage prediction, terrain | – | ✓ |
 
 The layout follows the screen size only (it never checks which phone it is), and changes live when a foldable
@@ -108,6 +110,7 @@ works (see the end of step 3).
 | `Regions` | Only serve these regions, e.g. `["bc"]`. Empty: every installed region. |
 | `EventsDir` | Folder of shared event files. Default `/var/lib/fieldmap/events`. |
 | `MaxUploadMb` | Largest event file a phone may add (it's converted and kept on that phone only). |
+| `Live` | Live hazards (see below). On by default; `{ "Enabled": false }` turns them off. `Keys` holds keys for feeds that need one, e.g. `{ "Keys": { "ab511": "…" } }`. |
 | `AprsIs` | APRS stations on the map (see below). `{ "Enabled": true }` turns it on; `Server`, `Port`, `Callsign`, `ExtraFilter`, `ShowMinutes` and `TrackMinutes` are optional. |
 
 ## Team positions and shared pins
@@ -128,7 +131,83 @@ Team screen says that they're off.
   within a few seconds and anyone can edit, move or remove it; each pin shows who added and last changed it.
   Pins are saved in `/var/lib/fieldmap/shared/pins.json` and kept until someone removes them; **Clear all pins** on
   the Team screen removes them all after an incident.
+- **Shared lines and areas:** More → Team → **Draw a line** (a route, a closure) or **Draw an area** (a perimeter, a
+  hot zone, a staging area). Tap the map to add points; the bar shows the length or area as you go, with Undo, Done
+  and Cancel. Then pick the kind (Route and Perimeter join the pin kinds), a label and details, and share it. Everyone
+  sees it in the kind's colour with its label; tap it for the length or area, who drew it, Edit, Zoom to and Remove.
+  Stored with the pins (up to 500 points each) and removed with Clear all pins.
 - Layers: More → Team → Show team on the map hides units, trails and pins on that phone.
+
+## Live hazards
+
+The server fetches the same live feeds as the Windows app and shows them on every phone (Layers → Live hazards, where
+each kind can be turned off on that phone):
+
+| Feed | Shows | Refresh |
+|---|---|---|
+| DriveBC (Open511) | Road closures, incidents and construction in BC | 5 min |
+| Alberta 511 | Road events in Alberta (needs a free developer key, see below) | 5 min |
+| BC Wildfire Service | Fire perimeters; fires that are out are drawn faintly | 15 min |
+| BC evacuation orders and alerts | Order areas in red, alert areas in amber | 10 min |
+| Environment Canada | Weather warnings, watches and statements | 10 min |
+
+Only items inside the installed map regions are sent, with shapes simplified to about 25 m, so phones download a few
+hundred kilobytes at most and only when something changed. The last good copy of each feed is kept in
+`/var/lib/fieldmap/live-cache`, so phones still see it (marked with its time) while a feed or the internet is down.
+
+- **Alberta 511 key:** request a developer key from 511 Alberta, then add it inside `"FieldMap"` in
+  `/etc/fieldmap-web/appsettings.json` and restart: `"Live": { "Keys": { "ab511": "your-key" } }`.
+- **Other feeds:** to change the list (for example to add the Alberta wildfire perimeters once you have its URL), copy
+  `/opt/fieldmap-web/server/Content/live-feeds.json` to `/etc/fieldmap-web/live-feeds.json`, edit it and restart.
+- To turn live hazards off: `"Live": { "Enabled": false }`.
+
+## Hazmat (ERG 2024)
+
+More → Tools → **Hazmat**, or type a UN number (e.g. `1005`) in the search box. The guidebook data is the Field
+Toolkit's ERG 2024 import (62 guides, 2,771 materials, Table 1, placards); a phone downloads it once (about 200 KB
+compressed) and keeps it, so lookups work without signal.
+
+- **Search** by UN/NA number, material name or `guide 128`; with an empty box, pick a **placard** to get its initial
+  response guide. Results flag toxic inhalation hazards (Table 1), water-reactive materials and polymerization (P).
+- **Material:** the guide and the Table 1 initial isolation and protective-action distances (small/large spill,
+  day/night). **Guide:** every section as printed, plus General First Aid.
+- **Draw zones on the map:** pick the spill point (your position, the map centre or a dropped pin), small or large,
+  day or night, and the direction the wind is blowing from. The isolation circle and the downwind protective-action
+  zone (90° sector or the ERG square) are drawn, from Table 1 for highlighted materials and from the guide's
+  EVACUATION distances otherwise. Where Table 1 says "Refer to Table 3", the app says so instead of guessing. **Share
+  with team** adds a hazard pin with the distances.
+
+### SOS and emergency alerts
+
+- **SOS:** More → Tools → SOS (or More → Team, or tap the GPS badge). After a confirmation and an optional message,
+  every team phone shows a red banner ("SOS – Medic 12 · Need medical · 1.1 km NE"), vibrates and beeps, and draws a
+  large red dot at that phone's position. While the SOS is active the phone keeps sending its position (every 10 s
+  with a fix), even when position sharing is off. The sender's banner has **Cancel SOS**; an SOS not updated for an
+  hour ends by itself. Others can **Dismiss** it on their phone. Needs the access code, like the other team features.
+- **APRS emergencies:** when the APRS layer is on and a station reports an emergency, the same banner appears.
+
+### Send my location
+
+Tap the GPS badge in the status bar (or More → Tools → Send my location) and choose **Send my location**: the phone's
+share sheet opens with your name, coordinates and accuracy, MGRS, the nearest address, the time and Apple/Google Maps
+links, ready for a text, email or any messaging app. Where there is no share sheet the text is copied.
+
+## First aid and CPR
+
+More → Tools → **First aid & CPR**: the Field Toolkit's first aid guide (41 topics) and CPR helper, loaded on the server
+with the toolkit's own loader and checks, with the emergency, poison-centre and crisis numbers from its `_guide.json`
+filled in. Phones download it once (about 220 KB) and keep it, so it works without signal.
+
+- **Search by what's happening** ("not breathing", "fitting", "bee sting"): the toolkit's symptom search, ported so
+  results match the Windows app. With an empty box, topics are listed by category, scene safety first.
+- **Topics:** when to call 911, numbered steps with cautions, warning signs, what not to do, related topics and sources.
+  Step buttons start **timers** (e.g. "Tourniquet applied"; kept on the phone across reloads), open the CPR helper or
+  another topic.
+- **CPR helper:** adult/child/infant, 30:2, 15:2 or hands-only, 100–120 per minute. A click on every beat (accented on
+  the first of each cycle), the compression count, breath pauses with a countdown, and a swap-compressors reminder
+  every 2 minutes. It keeps the screen on while running.
+- The guide's review status is shown on every screen. **The content is marked "Draft – awaiting clinical review"**:
+  have it reviewed by a qualified clinician (and update `_guide.json`) before relying on it operationally.
 
 ## APRS stations
 

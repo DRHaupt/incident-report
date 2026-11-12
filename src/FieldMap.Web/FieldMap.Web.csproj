@@ -12,11 +12,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FieldMap.Core\FieldMap.Core.csproj" />
+    <ProjectReference Include="..\FieldToolkit.Core\FieldToolkit.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- The same imagery source list as the Windows app. -->
+    <None Include="..\FieldToolkit\Content\erg\erg.json" Link="Content\erg.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\FieldToolkit\Content\firstaid\*.json" LinkBase="Content\firstaid" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="..\FieldMap\Content\imagery-sources.json" Link="Content\imagery-sources.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\FieldMap\Content\live-feeds.json" Link="Content\live-feeds.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

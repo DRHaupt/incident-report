@@ -65,6 +65,35 @@ public sealed class TeamApiTests : IClassFixture<ServerFixture>
     }
 
     [Fact]
+    public async Task Sos_reaches_every_phone_updates_in_place_and_can_be_cancelled()
+    {
+        using var factory = _fx.Factory(Code);
+        var client = await SignedIn(factory);
+        var sos = new { device = "phone-sos-0001", name = "Medic 12", lat = 57.40, lon = -125.90, accuracy = 5.0, message = "Need medical\nnow" };
+        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/team/sos", sos)).StatusCode);
+        // Sent again with a new position: still one alert, at the new place, same start time.
+        var first = (await client.GetFromJsonAsync<JsonElement>("/api/team")).GetProperty("alerts")[0];
+        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/team/sos", sos with { lat = 57.41 })).StatusCode);
+        var alerts = (await client.GetFromJsonAsync<JsonElement>("/api/team")).GetProperty("alerts").EnumerateArray().ToList();
+        var a = Assert.Single(alerts);
+        Assert.Equal("Medic 12", a.GetProperty("name").GetString());
+        Assert.Equal("Need medical now", a.GetProperty("message").GetString());
+        Assert.Equal(57.41, a.GetProperty("lat").GetDouble(), 6);
+        Assert.Equal(first.GetProperty("started").GetString(), a.GetProperty("started").GetString());
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/team/sos", sos with { name = " " })).StatusCode);
+        Assert.True((await (await client.DeleteAsync("/api/team/sos/phone-sos-0001")).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("ok").GetBoolean());
+        Assert.Empty((await client.GetFromJsonAsync<JsonElement>("/api/team")).GetProperty("alerts").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Sos_needs_team_features()
+    {
+        var client = _fx.Default.CreateClient();
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/api/team/sos", new { device = "phone-sos-0002", name = "A", lat = 57.4, lon = -125.9 })).StatusCode);
+    }
+
+    [Fact]
     public async Task Pins_can_be_added_edited_by_anyone_removed_and_survive_a_restart()
     {
         string id;
@@ -158,6 +187,64 @@ public sealed class TeamClockTests : IDisposable
         }
         var trail = Only(team).GetProperty("trail");
         Assert.InRange(trail.GetArrayLength(), 59, 61); // about an hour of one-a-minute points
+    }
+
+    [Fact]
+    public void Sos_lasts_an_hour_unless_resent()
+    {
+        var team = NewTeam();
+        Assert.Null(team.RaiseAlert("phone-eeee-5555", "Rescue 1", 50, -120, null, "help"));
+        _now += TimeSpan.FromMinutes(50);
+        Assert.Null(team.RaiseAlert("phone-eeee-5555", "Rescue 1", 50.001, -120, null, null)); // position update keeps it alive
+        _now += TimeSpan.FromMinutes(50);
+        Assert.Single(team.Alerts());
+        Assert.Equal("help", JsonSerializer.SerializeToElement(team.Alerts()[0]).GetProperty("message").GetString());
+        _now += TimeSpan.FromMinutes(61);
+        Assert.Empty(team.Alerts());
+    }
+
+    [Fact]
+    public void Lines_and_areas_are_stored_checked_and_redrawn()
+    {
+        var team = NewTeam();
+        var square = new List<double[]> { new[] { -120.0, 50.0 }, new[] { -119.99, 50.0 }, new[] { -119.99, 50.01 }, new[] { -120.0, 50.01 }, new[] { -120.0, 50.0 } };
+        var (area, error) = team.AddPin(new Team.PinInput("phone-ffff-6666", "IC", "perimeter", "Hot zone", null, null, null, "area", square));
+        Assert.Null(error);
+        Assert.Equal("area", area!.Shape);
+        Assert.Equal(4, area.Points.Count);           // the repeated closing point is implied
+        Assert.Equal(50.005, area.Lat, 6);              // label at the area's centre
+        Assert.Equal(-119.995, area.Lon, 6);
+
+        Assert.Equal("An area needs at least 3 points.", team.AddPin(new Team.PinInput("d", "IC", "perimeter", "x", null, null, null, "area", square.Take(2).ToList())).Error);
+        Assert.Equal("A line needs at least 2 points.", team.AddPin(new Team.PinInput("d", "IC", "route", "x", null, null, null, "line", square.Take(1).ToList())).Error);
+        Assert.Equal("One of the points isn't valid.", team.AddPin(new Team.PinInput("d", "IC", "route", "x", null, null, null, "line", new() { new[] { -120.0, 50.0 }, new[] { 200.0, 50.0 } })).Error);
+
+        // Redrawn by someone else: new points, the label follows; a point's Lat/Lon is ignored for a shape.
+        var line = new List<double[]> { new[] { -120.0, 50.0 }, new[] { -120.0, 50.02 }, new[] { -120.0, 50.04 } };
+        var (redrawn, _) = team.UpdatePin(area.Id, new Team.PinInput("e", "Engine 3", null, null, null, 10, 10, null, square.Skip(1).ToList()));
+        Assert.Equal("Engine 3", redrawn!.UpdatedBy);
+        Assert.Equal(4, redrawn.Points.Count); // four different corners: nothing to drop
+        Assert.NotEqual(10, redrawn.Lat);
+
+        var (route, _) = team.AddPin(new Team.PinInput("e", "Engine 3", "route", "Access road", null, null, null, "line", line));
+        Assert.Equal(50.02, route!.Lat, 6); // a line's label sits on its middle point
+
+        // Saved and loaded again (a restart): shapes come back as they were.
+        var again = NewTeam().Pins();
+        Assert.Contains(again, p => p.Shape == "line" && p.Points.Count == 3 && p.Label == "Access road");
+    }
+
+    [Fact]
+    public void Pins_saved_before_shapes_load_as_points()
+    {
+        Directory.CreateDirectory(Path.Combine(_dir, "shared"));
+        File.WriteAllText(Path.Combine(_dir, "shared", "pins.json"), """
+            [ { "id": "old1", "kind": "hazard", "label": "Old pin", "note": "", "lat": 50, "lon": -120,
+                "createdBy": "A", "createdUtc": "2026-11-01T00:00:00Z", "updatedBy": "A", "updatedUtc": "2026-11-01T00:00:00Z" } ]
+            """);
+        var pin = Assert.Single(NewTeam().Pins());
+        Assert.Equal("point", pin.Shape);
+        Assert.Empty(pin.Points);
     }
 
     [Fact]

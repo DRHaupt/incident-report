@@ -329,3 +329,69 @@ textarea.field { resize: vertical; min-height: 84px; line-height: 1.35; }
 .field-label { display: block; margin-bottom: 4px; color: var(--muted); font-size: 13px; }
 .chips.wrap { flex-wrap: wrap; overflow: visible; }
 .chip-dot { display: inline-block; width: 12px; height: 12px; margin-right: 8px; border-radius: 6px; vertical-align: -1px; border: 1px solid rgba(255, 255, 255, .7); }
+
+/* ------------------------------------------------------------------ live hazards */
+
+.feed-status { margin: 6px 0; }
+.feed-status .note { margin: 2px 0; }
+
+/* ------------------------------------------------------------------ hazmat (ERG) */
+
+.erg-table { margin: 6px 0 10px; overflow-x: auto; }
+.erg-table table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.erg-table th, .erg-table td { padding: 6px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.erg-table thead th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+.erg-table tbody th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+.erg-section { margin-bottom: 4px; }
+.erg-sub { margin: 10px 0 2px; font-weight: 700; font-size: 13px; }
+.erg-items { margin: 2px 0 6px; padding-left: 18px; }
+.erg-items li { margin: 3px 0; font-size: 14px; }
+
+/* ------------------------------------------------------------------ emergency alerts */
+
+#alerts { position: fixed; z-index: 8; top: calc(var(--safe-t) + 60px); left: calc(var(--safe-l) + 12px); right: calc(var(--safe-r) + 12px); display: flex; flex-direction: column; gap: 6px; }
+.alert { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: #c92a2a; color: #fff; box-shadow: var(--shadow); animation: alert-pulse 1.2s ease-in-out 3; }
+.alert.own { background: #862e9c; animation: none; }
+.alert-text { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 13px; }
+.alert-text b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alert .btn { background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .35); color: #fff; }
+.btn.sos { background: #c92a2a; color: #fff; border-color: transparent; }
+#status-gps { cursor: pointer; }
+@keyframes alert-pulse { 50% { filter: brightness(1.25); } }
+@media (min-width: 700px), (min-width: 560px) and (max-height: 520px) { #alerts { left: max(calc(var(--app-w) / 2 + 16px), var(--pane-end)); top: calc(var(--safe-t) + 8px); } }
+body[data-ui="night"] .alert { background: #6b1d1d; color: var(--text); }
+
+/* ------------------------------------------------------------------ first aid and CPR */
+
+.fa-call { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; margin: 8px 0; border-radius: var(--ctl-radius); background: #c92a2a; color: #fff; font-weight: 700; font-size: 16px; text-decoration: none; }
+.fa-call .ico { width: 20px; height: 20px; }
+.fa-emergency { margin: 8px 0; padding: 10px 12px; border: 1px solid #c92a2a; border-radius: var(--ctl-radius); background: color-mix(in srgb, #c92a2a 12%, transparent); }
+.fa-emergency ul { margin: 6px 0; padding-left: 18px; font-size: 14px; }
+.fa-steps { margin: 10px 0; padding-left: 22px; }
+.fa-steps > li { margin: 0 0 12px; }
+.fa-steps > li > b { font-size: 15px; }
+.fa-steps p { margin: 4px 0; font-size: 14px; }
+.fa-steps ul { margin: 4px 0; padding-left: 18px; font-size: 14px; }
+.fa-donot li::marker { content: "✕  "; color: var(--danger); }
+.fa-timers { display: flex; flex-direction: column; gap: 6px; }
+.fa-timer { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--ctl-radius); background: var(--btn); }
+.fa-timer.done { border-color: #c92a2a; }
+.fa-timer-label { flex: 1; min-width: 0; font-size: 14px; }
+.fa-timer-label small { color: var(--muted); }
+.fa-timer b { font-variant-numeric: tabular-nums; font-size: 18px; }
+.cpr-display { margin: 10px 0; padding: 14px; border-radius: var(--radius); background: var(--btn); text-align: center; }
+.cpr-count { font-size: 64px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.cpr-count.breaths { color: #4dabf7; font-size: 44px; }
+.cpr-phase { font-size: 16px; font-weight: 600; margin-top: 2px; }
+.cpr-stats { margin-top: 6px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cpr-swap { margin-top: 8px; padding: 6px 8px; border-radius: 8px; background: #e67700; color: #fff; font-weight: 700; }
+.btn.cpr-go { flex: 1 1 100%; min-height: 56px; font-size: 18px; }
+.cpr-rate { display: flex; align-items: center; gap: 6px; margin: 6px 0; color: var(--muted); font-size: 13px; }
+.btn.on { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+
+/* ------------------------------------------------------------------ drawing shared lines and areas */
+
+#draw-bar { position: fixed; z-index: 9; top: calc(var(--safe-t) + 60px); left: calc(var(--safe-l) + 12px); right: calc(var(--safe-r) + 12px); display: flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); box-shadow: var(--shadow); }
+.draw-text { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 13px; color: var(--muted); }
+.draw-text b { color: var(--text); font-size: 15px; }
+@media (min-width: 700px), (min-width: 560px) and (max-height: 520px) { #draw-bar { left: max(calc(var(--app-w) / 2 + 16px), var(--pane-end)); top: calc(var(--safe-t) + 8px); } }

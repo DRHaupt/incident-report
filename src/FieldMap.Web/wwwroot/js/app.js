@@ -9,6 +9,9 @@ import { Panel, h, icon, toast, set } from './ui.js';
 import * as V from './panels.js';
 import * as T from './team.js';
 import * as A from './aprs.js';
+import * as L from './live.js';
+import * as H from './hazmat.js';
+import * as AL from './alerts.js';
 
 const maplibregl = window.maplibregl;
 const $ = (s) => document.querySelector(s);
@@ -45,6 +48,7 @@ async function start() {
   $('#btn-me').addEventListener('click', () => recenter());
   $('#btn-compass').addEventListener('click', () => toggleHeadingUp());
   $('#status-coords').addEventListener('click', () => cycleCoordFormat());
+  $('#status-gps').addEventListener('click', () => AL.openMyLocation());
   $('#route-banner').addEventListener('click', () => app.route && V.openDirections(app.route.to, app.route.toLabel, { push: false }));
   window.addEventListener('resize', queueFit);
   window.visualViewport?.addEventListener('resize', queueFit);
@@ -94,6 +98,7 @@ export async function loadInfo() {
   startGps();
   T.startTeam();
   A.startAprs();
+  L.startLive();
   if (app.settings.keepAwake) keepAwake(true);
 }
 
@@ -332,6 +337,7 @@ function addOverlays() {
       }
     });
   }
+  L.addLiveLayers(m); // under event files and everything else
   for (const ev of app.events.values()) addEventLayers(ev);
   m.addSource('route', { type: 'geojson', data: app.route ? routeGeoJson(app.route) : EMPTY });
   m.addLayer({ id: 'route-case', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#000', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 7, 16, 14], 'line-opacity': 0.6 } });
@@ -371,6 +377,7 @@ function addOverlays() {
 
   A.addAprsLayers(m);
   T.addTeamLayers(m);
+  H.addHazmatLayers(m);
 
   m.addSource('me-acc', { type: 'geojson', data: EMPTY });
   m.addLayer({ id: 'me-acc', type: 'fill', source: 'me-acc', paint: { 'fill-color': t.gps, 'fill-opacity': 0.12, 'fill-outline-color': t.gps } });
@@ -425,7 +432,7 @@ function addEventLayers(ev) {
   });
   for (const k of ['pt', 'line', 'fill']) INTERACTIVE.add(`${src}-${k}`);
   // Keep event files under the route, POIs and the position marker.
-  for (const top of ['route-case', 'route', 'pois', 'repeaters', 'aprs-tracks', 'aprs', 'aprs-labels', 'team-trails', 'team-units', 'team-unit-labels', 'team-pins', 'me-acc', 'me'])
+  for (const top of ['route-case', 'route', 'pois', 'repeaters', 'aprs-tracks', 'aprs', 'aprs-labels', 'team-area-fill', 'team-area-line', 'team-line', 'team-trails', 'team-units', 'team-unit-labels', 'team-pins', 'hazmat-protect', 'hazmat-protect-line', 'hazmat-isolate', 'hazmat-isolate-line', 'hazmat-spill', 'team-draw-fill', 'team-draw-line', 'team-draw-pt', 'me-acc', 'me'])
     if (m.getLayer(top)) m.moveLayer(top);
 }
 
@@ -527,6 +534,7 @@ async function loadPois() {
 
 function onTap(e) {
   if (suppressClick) { suppressClick = false; return; }
+  if (T.isDrawing()) return T.drawTap(e.lngLat);
   const layers = [...INTERACTIVE].filter((l) => app.map.getLayer(l));
   const r = 14;
   const feats = app.map.queryRenderedFeatures([[e.point.x - r, e.point.y - r], [e.point.x + r, e.point.y + r]], { layers });
@@ -534,11 +542,13 @@ function onTap(e) {
   // Points beat lines beat areas; within a kind, the one drawn on top wins.
   const rank = (f) => (['pois', 'repeaters', 'aprs', 'team-pins', 'team-units'].includes(f.layer.id) || f.layer.id.endsWith('-pt') ? 0 : f.layer.id.endsWith('-line') ? 1 : 2);
   const f = feats.sort((a, b) => rank(a) - rank(b))[0];
-  if (f.layer.id === 'team-pins') T.openTeamPin(f.properties.id);
+  if (H.isHazmatLayer(f.layer.id)) H.onZoneTap();
+  else if (f.layer.id === 'team-pins' || f.layer.id === 'team-line' || f.layer.id === 'team-area-fill') T.openTeamPin(f.properties.id);
   else if (f.layer.id === 'aprs') A.openAprsStation(f.properties.key);
   else if (f.layer.id === 'team-units') T.openTeamUnit(f.properties.device);
   else if (f.layer.id === 'pois') V.openPoi(f.properties.id);
   else if (f.layer.id === 'repeaters') V.openRepeater(f.properties);
+  else if (L.isLiveLayer(f.layer.id)) L.openLiveItem(f.properties.id, [e.lngLat.lng, e.lngLat.lat]);
   else {
     const id = f.layer.id.replace(/^ev-/, '').replace(/-(pt|line|fill)$/, '');
     const ev = app.events.get(id);
@@ -649,6 +659,7 @@ function onPosition(p) {
   if (app.follow) followCamera(!prev);
   if (app.route) updateRouteProgress();
   T.teamOnPosition(app.pos);
+  AL.alertsOnPosition();
 }
 
 function drawPosition() {

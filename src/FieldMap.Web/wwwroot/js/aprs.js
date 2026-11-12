@@ -6,6 +6,7 @@ import { placeView } from './panels.js';
 import * as C from './coords.js';
 import { getJson } from './api.js';
 import { h, button, toggle, toast } from './ui.js';
+import { updateAprsAlerts } from './alerts.js';
 
 // Colour by kind of station, kept apart from the team (green) and pin colours.
 export const APRS_GROUPS = {
@@ -49,6 +50,7 @@ async function poll() {
       state.version = d.version;
       state.stations = d.stations ?? [];
       draw();
+      updateAprsAlerts(state.stations);
     }
   } catch (e) {
     if (e.name === 'AuthRequired') return;

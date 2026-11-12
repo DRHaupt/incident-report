@@ -27,5 +27,8 @@ public sealed class WebOptions
     /// <summary>APRS-IS (receive-only): APRS stations on the phones' map. Off unless AprsIs.Enabled is true.</summary>
     public AprsIsOptions AprsIs { get; set; } = new();
 
+    /// <summary>Live hazards: road events, wildfires, evacuations, weather alerts. On unless Live.Enabled is false.</summary>
+    public LiveOptions Live { get; set; } = new();
+
     public string EventsFolder => string.IsNullOrWhiteSpace(EventsDir) ? Path.Combine(DataDir, "events") : EventsDir;
 }
