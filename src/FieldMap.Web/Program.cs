@@ -32,6 +32,13 @@ builder.Services.AddResponseCompression(o =>
     o.Providers.Add<GzipCompressionProvider>();
     o.MimeTypes = new[] { "application/json", "application/geo+json", "text/html", "text/css", "text/javascript", "application/javascript", "application/manifest+json", "image/svg+xml" };
 });
+// The installed iOS/Android apps call this server from pages inside the app. They sign in with a token they send
+// themselves (never the cookie), so allowing them adds nothing a browser on another site could use.
+builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
+    .WithOrigins(options.AppOrigins.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim().TrimEnd('/')).ToArray())
+    .WithMethods("GET", "POST", "PUT", "DELETE")
+    .WithHeaders("Authorization", "Content-Type")
+    .SetPreflightMaxAge(TimeSpan.FromHours(24))));
 builder.Services.Configure<ForwardedHeadersOptions>(o =>
 {
     // Behind Caddy or nginx on the same machine.
@@ -57,6 +64,7 @@ app.Use((http, next) =>
 });
 app.UseForwardedHeaders();
 app.UseResponseCompression();
+app.UseCors(); // before the access gate: the app's browser asks permission (OPTIONS) without the sign-in
 
 var gate = app.Services.GetRequiredService<AccessGate>();
 app.Use(async (http, next) =>

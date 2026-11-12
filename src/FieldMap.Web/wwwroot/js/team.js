@@ -5,7 +5,7 @@
 import { app, save, focus, fitTo, INTERACTIVE, badgeImage, myPositionOrCentre, clearSelection } from './app.js';
 import { placeView } from './panels.js';
 import * as C from './coords.js';
-import { getJson, postJson } from './api.js';
+import { getJson, postJson, serverFetch } from './api.js';
 import { h, row, toggle, button, note, heading, toast, add } from './ui.js';
 import { updateTeamAlerts, startSos, cancelSos, isSosActive } from './alerts.js';
 
@@ -110,7 +110,7 @@ export async function setSharing(on) {
   if (on && app.pos) sendPosition(app.pos);
   if (!on) {
     lastSent = { time: 0, lat: 0, lon: 0 };
-    await fetch(`/api/team/position/${encodeURIComponent(deviceId())}`, { method: 'DELETE', credentials: 'same-origin' }).catch(() => {});
+    await serverFetch(`/api/team/position/${encodeURIComponent(deviceId())}`, { method: 'DELETE' }).catch(() => {});
     poll();
   }
   return true;

@@ -12,6 +12,7 @@ import * as A from './aprs.js';
 import * as L from './live.js';
 import * as H from './hazmat.js';
 import * as AL from './alerts.js';
+import { native, platform, serverBase, MAP_ORIGIN, registerMapProtocol, nativeKeepAwake, onBackButton } from './native.js';
 
 const maplibregl = window.maplibregl;
 const $ = (s) => document.querySelector(s);
@@ -29,7 +30,7 @@ export const app = {
   selected: null,
   compassHeading: null,
   wakeLock: null,
-  origin: location.origin
+  origin: native ? MAP_ORIGIN : location.origin   // where map tiles, fonts and imagery come from
 };
 
 export const save = () => saveSettings(app.settings);
@@ -63,7 +64,13 @@ async function start() {
   fitPadding();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && app.settings.keepAwake) keepAwake(true); });
 
-  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost'))
+  if (native) {
+    // The installed app: its files are already on the phone, and native.js keeps the map and reference data.
+    document.documentElement.dataset.platform = platform;
+    registerMapProtocol(maplibregl);
+    onBackButton(goBack);
+    if (!serverBase()) return V.showServerSetup();
+  } else if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost'))
     navigator.serviceWorker.register('sw.js').catch(() => {});
 
   try {
@@ -82,6 +89,11 @@ export async function loadInfo() {
     $('#splash').classList.add('error');
     $('#splash-retry').hidden = false;
     $('#splash-retry').onclick = () => location.reload();
+    if (native && !$('#splash-server')) {
+      const change = h('button', { id: 'splash-server', type: 'button', class: 'btn' }, 'Change server');
+      change.onclick = () => V.showServerSetup();
+      $('#splash').append(h('p', { class: 'splash-server' }, serverBase()), change);
+    }
     return;
   }
   $('#splash').hidden = true;
@@ -846,6 +858,7 @@ function updateRouteProgress() {
 export async function keepAwake(on) {
   app.settings.keepAwake = on;
   save();
+  if (native && await nativeKeepAwake(on)) return;
   try {
     if (on && 'wakeLock' in navigator) app.wakeLock = await navigator.wakeLock.request('screen');
     else { await app.wakeLock?.release(); app.wakeLock = null; }
@@ -853,6 +866,14 @@ export async function keepAwake(on) {
 }
 
 // ------------------------------------------------------------------ tabs
+
+/** Android's Back button: one step back in the open panel, then close it. False when nothing is open (the app closes). */
+function goBack() {
+  if (!app.panel.isOpen) return false;
+  if (app.panel.current?.locked && app.panel.stack.length <= 1) return false;
+  app.panel.back();
+  return true;
+}
 
 export function openTab(tab) {
   if (app.panel.isOpen && app.panel.current?.tab === tab && app.panel.stack.length === 1) return app.panel.close();

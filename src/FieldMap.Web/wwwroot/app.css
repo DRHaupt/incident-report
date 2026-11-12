@@ -3,10 +3,10 @@
 
 :root {
   --bottom-h: 78px;
-  --safe-t: env(safe-area-inset-top, 0px);
-  --safe-b: env(safe-area-inset-bottom, 0px);
-  --safe-l: env(safe-area-inset-left, 0px);
-  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-t: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+  --safe-b: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
+  --safe-l: max(env(safe-area-inset-left, 0px), var(--safe-area-inset-left, 0px));
+  --safe-r: max(env(safe-area-inset-right, 0px), var(--safe-area-inset-right, 0px));
   /* The app's size. Normally the viewport; see html.fit-window below for when iOS reports it too small. */
   --app-w: 100vw;
   --app-h: 100dvh;
@@ -317,6 +317,7 @@ body[data-ui="night"] #toast { color: var(--text); }
 #splash img { border-radius: 22px; }
 #splash p { color: var(--muted); max-width: 320px; }
 #splash.error p { color: var(--text); }
+#splash p.splash-server { color: var(--muted); font-size: 13px; word-break: break-all; margin: 0; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 

@@ -1,0 +1,13 @@
+{
+  "appId": "org.fieldsuite.fieldmap",
+  "appName": "Field Map",
+  "webDir": "www",
+  "backgroundColor": "#12161c",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#12161c"
+  },
+  "android": {
+    "backgroundColor": "#12161c"
+  }
+}

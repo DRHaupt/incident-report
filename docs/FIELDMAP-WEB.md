@@ -2,7 +2,8 @@
 
 A phone-first web version of Field Map. It runs on your own Ubuntu server and uses the same map data, search,
 nearest-by-drive-time and directions as the Windows app (built by MapBuilder). Crews open it in Safari or Chrome
-and can add it to the Home Screen like an app.
+and can add it to the Home Screen like an app. The same screens are also available as an installed app:
+see [Field Map for iOS and Android](FIELDMAP-MOBILE.md).
 
 ## What it does
 
@@ -109,6 +110,7 @@ works (see the end of step 3).
 | `AccessCode` | When set, each phone must enter this code once. Changing it signs every phone out. Set one whenever the server is reachable from the internet (e.g. through the tunnel), especially with event files. |
 | `Regions` | Only serve these regions, e.g. `["bc"]`. Empty: every installed region. |
 | `EventsDir` | Folder of shared event files. Default `/var/lib/fieldmap/events`. |
+| `AppOrigins` | Lets the [installed iOS and Android apps](FIELDMAP-MOBILE.md) use this server. Default: both apps. `[]` refuses them. |
 | `MaxUploadMb` | Largest event file a phone may add (it's converted and kept on that phone only). |
 | `Live` | Live hazards (see below). On by default; `{ "Enabled": false }` turns them off. `Keys` holds keys for feeds that need one, e.g. `{ "Keys": { "ab511": "…" } }`. |
 | `AprsIs` | APRS stations on the map (see below). `{ "Enabled": true }` turns it on; `Server`, `Port`, `Callsign`, `ExtraFilter`, `ShowMinutes` and `TrackMinutes` are optional. |
