@@ -1,0 +1,5 @@
+# The release is packaged on a Windows runner. These files are run on Linux (the Field Map web server installer,
+# systemd units, shell scripts), so they must keep Unix line endings whatever machine checks them out.
+deploy/** text eol=lf
+*.sh text eol=lf
+mobile/android/gradlew text eol=lf

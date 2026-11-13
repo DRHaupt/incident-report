@@ -177,6 +177,9 @@ jobs:
           Copy-Item docs/FIELDMAP-WEB.md "$root/README.md"
           Copy-Item installer/licenses "$root/licenses" -Recurse
           Get-ChildItem webpkg -Recurse -Filter *.pdb | Remove-Item
+          # Run on Linux: Windows line endings would stop the installer ("set: Illegal option -").
+          foreach ($f in Get-ChildItem "$root/deploy" -File) {
+            if ([IO.File]::ReadAllText($f.FullName).Contains("`r")) { throw "$($f.Name) has Windows line endings (see .gitattributes)" } }
           foreach ($f in "server/FieldMap.Web", "server/wwwroot/index.html", "server/wwwroot/vendor/maplibre/maplibre-gl.js", "mapbuilder/MapBuilder", "mapbuilder/regions.json", "deploy/install.sh") {
             if (-not (Test-Path "$root/$f")) { throw "Missing from the web server package: $f" } }
           tar -czf "release/FieldMapWeb-$env:SUITE_VERSION-linux-x64.tar.gz" -C webpkg fieldmap-web
