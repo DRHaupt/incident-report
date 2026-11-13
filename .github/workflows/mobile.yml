@@ -115,7 +115,9 @@ jobs:
           xcodebuild -version
           xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath "$RUNNER_TEMP/dd" CODE_SIGNING_ALLOWED=NO build | tail -n 40
+            -derivedDataPath "$RUNNER_TEMP/dd" CODE_SIGNING_ALLOWED=NO -quiet build > "$RUNNER_TEMP/xcodebuild.log" 2>&1 \
+            || { grep -E "error:|error |FAILED" "$RUNNER_TEMP/xcodebuild.log" | cut -c1-600 | head -n 40; exit 1; }
+          tail -n 5 "$RUNNER_TEMP/xcodebuild.log" | cut -c1-300
           app="$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/App.app"
           test -f "$app/public/index.html"
           test -f "$app/public/js/native.js"
