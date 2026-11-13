@@ -107,11 +107,9 @@ jobs:
       # Apple Developer account (see docs/FIELDMAP-MOBILE.md).
       - name: Build for the iPhone simulator
         run: |
-          # Build with the oldest Xcode this runner has: the project is meant to open in Xcode 15, and GitHub no
-          # longer offers a runner with that version.
-          ls -d /Applications/Xcode_*.app
-          oldest=$(ls -d /Applications/Xcode_*.app | grep -E 'Xcode_[0-9]+(\.[0-9]+)*\.app$' | sort -V | head -n 1)
-          if [ -n "$oldest" ]; then sudo xcode-select -s "$oldest"; fi
+          # The project is meant to open in Xcode 15, and GitHub no longer has a runner with that version. Xcode 16.4
+          # is the oldest one here that still has its simulator installed.
+          sudo xcode-select -s /Applications/Xcode_16.4.app
           xcodebuild -version
           xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
