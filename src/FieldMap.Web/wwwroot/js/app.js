@@ -862,7 +862,7 @@ export async function keepAwake(on) {
   try {
     if (on && 'wakeLock' in navigator) app.wakeLock = await navigator.wakeLock.request('screen');
     else { await app.wakeLock?.release(); app.wakeLock = null; }
-  } catch { if (on) toast('This browser can\'t keep the screen on. Add Field Map to the Home Screen and try again.'); }
+  } catch { if (on) toast(native ? 'This phone can\'t keep the screen on from the app yet. Set Auto-Lock to Never in the phone\'s settings instead.' : 'This browser can\'t keep the screen on. Add Field Map to the Home Screen and try again.'); }
 }
 
 // ------------------------------------------------------------------ tabs

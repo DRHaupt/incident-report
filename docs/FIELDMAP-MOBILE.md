@@ -1,7 +1,7 @@
 # Field Map for iOS and Android (installed app)
 
 The same screens as [Field Map for phones](FIELDMAP-WEB.md), packaged as a real app with
-[Capacitor](https://capacitorjs.com) 8 (MIT licence). The app's files are inside the app; the map, search, nearest,
+[Capacitor](https://capacitorjs.com) 6 (MIT licence). The app's files are inside the app; the map, search, nearest,
 directions, team and live data still come from **your Field Map server**. Each phone is told the server's address
 once, on first start.
 
@@ -18,7 +18,7 @@ app build too.
 | Sign-in (access code) | Cookie | A token the app keeps and sends with each request |
 | Map with no signal | Areas viewed or saved (browser storage) | The same, kept in the app's own storage (up to 12,000 tiles) |
 | Map info, hazmat (ERG), first aid, event files with no signal | Last copy | Last copy |
-| Keep the screen on | Browser wake lock, where supported | The phone's own setting, always works |
+| Keep the screen on | Browser wake lock, where supported | Android: always works. iPhone: where iOS supports it (see "Capacitor version") |
 | Send my location | Share sheet on iPhone; copy on some Android browsers | Share sheet on both |
 | Android Back button | Leaves the page | One step back in the panel, then closes it, then leaves |
 | GPS with the app in the background | No | No (not yet: see "Not done yet") |
@@ -43,7 +43,7 @@ so either leave Access off for the server's hostname and rely on the access code
 
 ## Building
 
-You need Node 22. For Android: Android Studio (or JDK 21 and the Android SDK). For iOS: a Mac with Xcode 26.
+You need Node 22. For Android: Android Studio (or JDK 17 and the Android SDK). For iOS: a Mac with Xcode 15 or newer.
 
 ```sh
 cd mobile
@@ -93,6 +93,18 @@ These are decisions and accounts only the organisation can make, so they are not
    manifest) and want a privacy policy. The app sends position only to the server address the user entered, and
    only while sharing is turned on.
 
+## Capacitor version
+
+The project is on **Capacitor 6** so it opens in **Xcode 15**. That is enough for the simulator and for running on
+your own phone, but Apple's stores want apps built with a current Xcode, so move back up to Capacitor 8 (Xcode 26)
+before a TestFlight or App Store release. The Capacitor 8 projects are in the repository history (commit
+`d29cf7d`). Moving up means: Capacitor 8 packages in `mobile/package.json`, regenerated `android/` and `ios/`
+projects with the same permissions, icons and signing set-up, `@capacitor-community/keep-awake` in place of
+`KeepAwakePlugin.java` (which also gives iPhones a reliable keep-screen-on), and Java 21 / `macos-26` in
+`.github/workflows/mobile.yml`.
+
+While on Capacitor 6, iOS uses Swift Package Manager (marked experimental in that version; no CocoaPods needed).
+
 ## Icons and splash screen
 
 Made from `assets/fieldmap/fieldmap.svg`. After changing the logo:
@@ -121,6 +133,5 @@ npx @capacitor/assets generate --ios --android
 
 | Part | Licence | Works offline |
 |---|---|---|
-| Capacitor 8 (core, android, ios, app, share) | MIT | Yes |
-| @capacitor-community/keep-awake | MIT | Yes |
+| Capacitor 6 (core, android, ios, app, share) | MIT | Yes |
 | MapLibre GL JS (already in the web version) | BSD-3-Clause | Yes |

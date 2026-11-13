@@ -35,7 +35,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 17   # Capacitor 6's Android build tools; 21 again with Capacitor 8
 
       - name: Install Capacitor
         run: npm ci
@@ -82,7 +82,7 @@ jobs:
           if-no-files-found: error
 
   ios:
-    runs-on: macos-26
+    runs-on: macos-14   # Xcode 15: the project is on Capacitor 6 for now (docs/FIELDMAP-MOBILE.md)
     defaults:
       run:
         working-directory: mobile
@@ -107,6 +107,8 @@ jobs:
       # Apple Developer account (see docs/FIELDMAP-MOBILE.md).
       - name: Build for the iPhone simulator
         run: |
+          # The oldest Xcode the project is meant to open in.
+          if [ -d /Applications/Xcode_15.2.app ]; then sudo xcode-select -s /Applications/Xcode_15.2.app; fi
           xcodebuild -version
           xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \

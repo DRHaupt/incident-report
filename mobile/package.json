@@ -11,14 +11,13 @@
     "ios": "npm run sync && cap open ios"
   },
   "dependencies": {
-    "@capacitor-community/keep-awake": "8.0.1",
-    "@capacitor/android": "8.6.0",
-    "@capacitor/app": "8.1.2",
-    "@capacitor/core": "8.6.0",
-    "@capacitor/ios": "8.6.0",
-    "@capacitor/share": "8.0.3"
+    "@capacitor/android": "6.2.3",
+    "@capacitor/app": "6.0.3",
+    "@capacitor/core": "6.2.3",
+    "@capacitor/ios": "6.2.3",
+    "@capacitor/share": "6.0.4"
   },
   "devDependencies": {
-    "@capacitor/cli": "8.6.0"
+    "@capacitor/cli": "6.2.3"
   }
 }
