@@ -82,7 +82,7 @@ jobs:
           if-no-files-found: error
 
   ios:
-    runs-on: macos-14   # Xcode 15: the project is on Capacitor 6 for now (docs/FIELDMAP-MOBILE.md)
+    runs-on: macos-15   # the project is on Capacitor 6 for now (docs/FIELDMAP-MOBILE.md)
     defaults:
       run:
         working-directory: mobile
@@ -107,8 +107,11 @@ jobs:
       # Apple Developer account (see docs/FIELDMAP-MOBILE.md).
       - name: Build for the iPhone simulator
         run: |
-          # The oldest Xcode the project is meant to open in.
-          if [ -d /Applications/Xcode_15.2.app ]; then sudo xcode-select -s /Applications/Xcode_15.2.app; fi
+          # Build with the oldest Xcode this runner has: the project is meant to open in Xcode 15, and GitHub no
+          # longer offers a runner with that version.
+          ls -d /Applications/Xcode_*.app
+          oldest=$(ls -d /Applications/Xcode_*.app | grep -E 'Xcode_[0-9]+(\.[0-9]+)*\.app$' | sort -V | head -n 1)
+          if [ -n "$oldest" ]; then sudo xcode-select -s "$oldest"; fi
           xcodebuild -version
           xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
