@@ -8,7 +8,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
@@ -36,6 +36,9 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <!-- Team position sharing with the app in the background (a visible "sharing" notification), and alerts for a
+         team SOS or an APRS emergency beacon. The plugins declare the foreground-service permissions. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- SOS and overdue alerts, and the CPR helper's cues. -->
     <uses-permission android:name="android.permission.VIBRATE" />
 </manifest>

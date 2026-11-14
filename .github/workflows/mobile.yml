@@ -35,7 +35,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17   # Capacitor 6's Android build tools; 21 again with Capacitor 8
+          java-version: 21
 
       - name: Install Capacitor
         run: npm ci
@@ -70,19 +70,19 @@ jobs:
           unzip -l "$apk" | grep -q 'assets/public/js/native.js'
           unzip -l "$apk" | grep -q 'assets/public/vendor/maplibre/maplibre-gl.js'
           if unzip -l "$apk" | grep -q 'assets/public/sw.js'; then echo "The service worker should not be packaged"; exit 1; fi
-          cp "$apk" "$RUNNER_TEMP/FieldMap-0.1.${{ github.run_number }}.apk"
-          ls -l "$RUNNER_TEMP"/FieldMap-*.apk
+          cp "$apk" "$RUNNER_TEMP/FieldSuite-0.1.${{ github.run_number }}.apk"
+          ls -l "$RUNNER_TEMP"/FieldSuite-*.apk
 
       # Small (a few MB) and short-lived, so it doesn't fill the artifact storage the way the Windows builds did.
       - uses: actions/upload-artifact@v4
         with:
-          name: FieldMap-android-0.1.${{ github.run_number }}
-          path: ${{ runner.temp }}/FieldMap-*.apk
+          name: FieldSuite-android-0.1.${{ github.run_number }}
+          path: ${{ runner.temp }}/FieldSuite-*.apk
           retention-days: 14
           if-no-files-found: error
 
   ios:
-    runs-on: macos-15   # the project is on Capacitor 6 for now (docs/FIELDMAP-MOBILE.md)
+    runs-on: macos-26
     defaults:
       run:
         working-directory: mobile
@@ -107,9 +107,6 @@ jobs:
       # Apple Developer account (see docs/FIELDMAP-MOBILE.md).
       - name: Build for the iPhone simulator
         run: |
-          # The project is meant to open in Xcode 15, and GitHub no longer has a runner with that version. Xcode 16.4
-          # is the oldest one here that still has its simulator installed.
-          sudo xcode-select -s /Applications/Xcode_16.4.app
           xcodebuild -version
           xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \

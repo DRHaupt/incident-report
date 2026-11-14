@@ -59,9 +59,13 @@ body:not([data-ui="light"]) .maplibregl-ctrl-attrib-button { filter: invert(1) b
 
 /* ------------------------------------------------------------------ top: search pill and route banner */
 
-#top { position: fixed; z-index: 5; top: calc(var(--safe-t) + 8px); left: calc(var(--safe-l) + 12px); right: calc(var(--safe-r) + 12px); }
+#top { position: fixed; z-index: 5; top: calc(var(--safe-t) + 8px); left: calc(var(--safe-l) + 12px); right: calc(var(--safe-r) + 12px); display: flex; gap: 8px; }
+#btn-home {
+  flex: none; width: 44px; height: 44px; padding: 11px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel);
+  color: var(--text); box-shadow: var(--shadow); cursor: pointer;
+}
 #search-pill {
-  display: flex; align-items: center; gap: 10px; width: 100%; height: 44px; padding: 0 14px; border: 1px solid var(--line);
+  display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; height: 44px; padding: 0 14px; border: 1px solid var(--line);
   border-radius: 12px; background: var(--panel); color: var(--muted); box-shadow: var(--shadow); text-align: left; cursor: pointer; font-size: 15px;
 }
 #search-pill svg { width: 19px; height: 19px; flex: none; color: var(--muted); }
@@ -396,3 +400,73 @@ body[data-ui="night"] .alert { background: #6b1d1d; color: var(--text); }
 .draw-text { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 13px; color: var(--muted); }
 .draw-text b { color: var(--text); font-size: 15px; }
 @media (min-width: 700px), (min-width: 560px) and (max-height: 520px) { #draw-bar { left: max(calc(var(--app-w) / 2 + 16px), var(--pane-end)); top: calc(var(--safe-t) + 8px); } }
+
+/* ------------------------------------------------------------------ Field Suite home screen and full-screen tools */
+
+#home {
+  position: fixed; inset: 0; z-index: 15; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg);
+  padding: calc(var(--safe-t) + 18px) calc(var(--safe-r) + 16px) calc(var(--safe-b) + 18px) calc(var(--safe-l) + 16px);
+}
+.home-inner { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; min-height: 100%; }
+.home-head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.home-head img { border-radius: 12px; flex: none; }
+.home-head h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.01em; }
+.home-head p { margin: 2px 0 0; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.home-tile {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 148px; padding: 14px; text-align: left;
+  border: 1px solid var(--line); border-radius: 16px; background: var(--btn); color: var(--text); cursor: pointer;
+}
+.home-tile:active, .home-chip:active { filter: brightness(1.15); }
+.home-art { width: 52px; height: 52px; padding: 11px; border-radius: 14px; color: #fff; margin-bottom: 8px; flex: none; }
+.home-title { font-size: 17px; font-weight: 650; }
+.home-detail { font-size: 13px; color: var(--muted); }
+.home-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.home-chip {
+  display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 10px 12px; text-align: left; min-width: 0;
+  border: 1px solid var(--line); border-radius: 14px; background: var(--btn); color: var(--text); cursor: pointer;
+}
+.home-chip-art { width: 26px; height: 26px; flex: none; color: var(--muted); }
+.home-chip span:last-child { display: flex; flex-direction: column; min-width: 0; }
+.home-chip b { font-weight: 650; font-size: 14px; }
+.home-chip small { color: var(--muted); font-size: 12px; }
+.home-sos {
+  margin-top: auto; min-height: 56px; border: 2px solid var(--danger); border-radius: 14px; background: none; color: var(--danger);
+  font-size: 16px; font-weight: 700; cursor: pointer;
+}
+.home-sos.active { background: var(--danger); color: #fff; }
+body[data-ui="night"] .home-art { filter: brightness(.55); }
+@media (max-height: 520px) { .home-tile { min-height: 104px; } .home-art { width: 40px; height: 40px; padding: 8px; margin-bottom: 2px; } }
+@media (min-width: 700px) { .home-grid { grid-template-columns: repeat(4, 1fr); } .home-inner { max-width: 900px; } }
+
+/* A tool opened from the home screen fills the screen, whatever the layout underneath. */
+body.tool #panel.open {
+  --sheet: 0; z-index: 16; left: 0; right: 0; top: 0; bottom: 0; width: auto; height: auto; max-height: none; transform: none;
+  border: 0; border-radius: 0; box-shadow: none; background: var(--bg);
+  padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
+}
+body.tool #panel .panel-grab { visibility: hidden; height: 10px; }
+body.tool #panel .panel-body { width: 100%; max-width: 720px; margin: 0 auto; }
+/* Alerts stay on top of the home screen and the tools. */
+body.home #alerts, body.tool #alerts { z-index: 18; top: calc(var(--safe-t) + 8px); }
+
+/* ------------------------------------------------------------------ incident report forms */
+
+.field { margin: 10px 0 14px; }
+.field-label { display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.field-label .req { color: var(--danger); }
+.field-input {
+  display: block; width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--ctl-radius);
+  background: var(--btn); color: var(--text); font: inherit; font-size: 16px; outline: none; -webkit-appearance: none; appearance: none;
+}
+textarea.field-input { min-height: 92px; resize: vertical; line-height: 1.35; }
+select.field-input { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 19px) 20px, calc(100% - 13px) 20px; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 34px; }
+.field-input:focus { border-color: var(--accent); }
+.field-hint { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+.field-check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 600; }
+.field-check input { width: 22px; height: 22px; flex: none; accent-color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { min-height: 38px; padding: 0 12px; border: 1px solid var(--line); border-radius: 19px; background: var(--btn); color: var(--text); font-size: 14px; cursor: pointer; }
+.chip.on { background: var(--accent); color: var(--accent-text); border-color: transparent; font-weight: 600; }
+.seg.yesno { max-width: 220px; }
+.note.pre { white-space: pre-line; }

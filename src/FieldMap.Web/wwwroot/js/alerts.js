@@ -8,6 +8,7 @@ import { placeView } from './panels.js';
 import * as C from './coords.js';
 import { getJson, postJson, qs, serverFetch } from './api.js';
 import { h, button, toast, copy, set } from './ui.js';
+import { native, notify, onNotificationTap } from './native.js';
 
 const dismissed = new Set(read());
 function read() { try { return JSON.parse(sessionStorage.getItem('fieldmap.alerts.dismissed') ?? '[]'); } catch { return []; } }
@@ -60,14 +61,23 @@ function render() {
   if (key !== lastShown) { lastShown = key; set(el, ...shown); }
   el.hidden = shown.length === 0;
   // New alerts buzz and beep once.
-  const fresh = [...teamAlerts.map((a) => `team:${a.device}:${a.started}`), ...aprsAlerts.map((s) => `aprs:${s.key}:${s.heard?.slice(0, 13)}`)]
-    .filter((k) => !dismissed.has(k) && !announced.has(k));
+  const fresh = [
+    ...teamAlerts.map((a) => ({ key: `team:${a.device}:${a.started}`, title: `SOS – ${a.name}`, body: [a.message, fromHere(a.lat, a.lon)].filter(Boolean).join(' · ') || 'This unit asked for help.', extra: { kind: 'team', id: a.device } })),
+    ...aprsAlerts.map((s) => ({ key: `aprs:${s.key}:${s.heard?.slice(0, 13)}`, title: `APRS EMERGENCY – ${s.key}`, body: [s.micE, fromHere(s.lat, s.lon)].filter(Boolean).join(' · ') || 'This station is reporting an emergency.', extra: { kind: 'aprs', id: s.key } }))
+  ].filter((x) => !dismissed.has(x.key) && !announced.has(x.key));
   if (fresh.length) {
-    fresh.forEach((k) => announced.add(k));
+    fresh.forEach((x) => announced.add(x.key));
     navigator.vibrate?.([400, 150, 400, 150, 800]);
     tone();
+    // The installed app, not on screen: a notification on the lock screen (the banner is there when it's opened).
+    if (native && document.visibilityState === 'hidden') for (const x of fresh) notify(x.title, x.body, x.extra);
   }
 }
+
+onNotificationTap((extra) => {
+  if (extra.kind === 'team') openTeamAlertById(extra.id);
+  else if (extra.kind === 'aprs') import('./aprs.js').then((m) => m.openAprsStation(extra.id));
+});
 
 function banner(key, title, detail, onView) {
   return h('div', { class: 'alert', role: 'alert' },

@@ -117,7 +117,7 @@ const fromCache = (hit) => new Response(hit.status === 204 ? null : hit.body, { 
 
 const keptOffline = (path) => {
   const p = path.split('?')[0];
-  return p === '/api/info' || p === '/api/erg' || p === '/api/firstaid' || p === '/api/events' || p.startsWith('/api/events/');
+  return p === '/api/info' || p === '/api/erg' || p === '/api/firstaid' || p === '/api/forms' || p === '/api/events' || p.startsWith('/api/events/');
 };
 const neverChanges = (path) => path.startsWith('/tiles/') || path.startsWith('/fonts/');
 
@@ -129,7 +129,11 @@ export async function nativeFetch(path, init = {}) {
   const headers = new Headers(init.headers ?? {});
   const token = read(TOKEN);
   if (token) headers.set('Authorization', 'Bearer ' + token);
-  const send = () => fetch(key, { ...init, headers, credentials: 'omit' });
+  // In the background Android slows the page's own requests to a crawl after a few minutes; the phone's own HTTP
+  // (Capacitor's) keeps working, so position updates and alert checks go through that while the app isn't on screen.
+  const send = () => (document.visibilityState === 'hidden' && !neverChanges(path) && !(init.body instanceof FormData)
+    ? phoneHttp(key, init, headers)
+    : fetch(key, { ...init, headers, credentials: 'omit' }));
 
   // Tiles and fonts never change under the same address: the phone's copy first.
   if (get && neverChanges(path)) {
@@ -160,6 +164,21 @@ export async function nativeFetch(path, init = {}) {
     }
   }
   return send();
+}
+
+async function phoneHttp(url, init, headers) {
+  const h = Object.fromEntries(headers.entries());
+  let data;
+  if (typeof init.body === 'string') { try { data = JSON.parse(init.body); } catch { data = init.body; } }
+  let r;
+  try {
+    r = await cap.nativePromise('CapacitorHttp', 'request', { url, method: init.method ?? 'GET', headers: h, data, responseType: 'text', connectTimeout: 20000, readTimeout: 20000 });
+  } catch (e) {
+    throw new TypeError(e?.message ?? 'Network request failed');
+  }
+  const body = typeof r.data === 'string' ? r.data : JSON.stringify(r.data ?? null);
+  const empty = r.status === 204 || r.status === 304;
+  return new Response(empty ? null : body, { status: r.status, headers: { 'Content-Type': 'application/json' } });
 }
 
 /** Lets MapLibre load "fieldmap://server/…" addresses through nativeFetch. Call once, before the map is made. */
@@ -201,4 +220,72 @@ export function onBackButton(handler) {
   document.addEventListener('backbutton', () => {
     if (handler() === false) cap.nativePromise('App', 'exitApp', {}).catch(() => {});
   });
+}
+
+// ------------------------------------------------------------------ position with the app in the background
+
+let watcher = null;
+
+/**
+ * Starts the phone's own location service, which keeps running (and keeps this app running) while the app is in
+ * the background or the screen is locked. Android shows a permanent notification while it's on. `onFix` gets
+ * { lat, lon, acc, heading, speed, time }; `onProblem` gets 'denied' when the person refused location.
+ */
+export function startBackgroundLocation(onFix, onProblem) {
+  if (!native || watcher) return;
+  try {
+    watcher = cap.nativeCallback('BackgroundGeolocation', 'addWatcher', {
+      backgroundTitle: 'Field Suite is sharing your position',
+      backgroundMessage: 'Your team can see where you are. Turn off Share my position in the app to stop.',
+      requestPermissions: true, stale: false, distanceFilter: 10
+    }, (loc, err) => {
+      if (err || !loc || typeof loc.latitude !== 'number') {
+        if ((err?.code ?? loc?.code) === 'NOT_AUTHORIZED') onProblem?.('denied');
+        return;
+      }
+      onFix({ lat: loc.latitude, lon: loc.longitude, acc: loc.accuracy ?? null, heading: loc.bearing ?? null, speed: loc.speed ?? null, time: loc.time ?? Date.now() });
+    });
+  } catch { watcher = null; }
+}
+
+export function stopBackgroundLocation() {
+  if (!watcher) return;
+  cap.nativePromise('BackgroundGeolocation', 'removeWatcher', { id: watcher }).catch(() => {});
+  watcher = null;
+}
+
+export const backgroundLocationOn = () => !!watcher;
+
+// ------------------------------------------------------------------ notifications
+
+const CHANNEL = 'alerts';
+let notifyReady = null, nextId = Math.floor(Date.now() / 1000) % 1000000;
+
+/** Asks for permission to show notifications (once) and sets up the alert channel. Resolves true when allowed. */
+export function enableNotifications() {
+  if (!native) return Promise.resolve(false);
+  notifyReady ??= (async () => {
+    try {
+      const p = await cap.nativePromise('LocalNotifications', 'requestPermissions', {});
+      if (p?.display !== 'granted') return false;
+      if (platform === 'android')
+        await cap.nativePromise('LocalNotifications', 'createChannel', { id: CHANNEL, name: 'Emergency alerts', description: 'Team SOS and APRS emergency beacons', importance: 5, visibility: 1, vibration: true });
+      return true;
+    } catch { return false; }
+  })();
+  return notifyReady;
+}
+
+/** Shows a notification now. `extra` comes back to onNotificationTap when the person taps it. */
+export async function notify(title, body, extra = {}) {
+  if (!(await enableNotifications())) return false;
+  try {
+    await cap.nativePromise('LocalNotifications', 'schedule', { notifications: [{ id: nextId++, title, body, channelId: CHANNEL, extra }] });
+    return true;
+  } catch { return false; }
+}
+
+export function onNotificationTap(handler) {
+  if (!native) return;
+  try { cap.addListener('LocalNotifications', 'localNotificationActionPerformed', (e) => handler(e?.notification?.extra ?? {})); } catch { /* plugin missing */ }
 }

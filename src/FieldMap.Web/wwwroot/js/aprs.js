@@ -7,6 +7,7 @@ import * as C from './coords.js';
 import { getJson } from './api.js';
 import { h, button, toggle, toast } from './ui.js';
 import { updateAprsAlerts } from './alerts.js';
+import { backgroundLocationOn } from './native.js';
 
 // Colour by kind of station, kept apart from the team (green) and pin colours.
 export const APRS_GROUPS = {
@@ -26,7 +27,10 @@ const FONT = ['Noto Sans Regular'];
 
 // Attached as app.aprs in startAprs(): app.js imports this file, so app isn't ready while it loads.
 const state = { enabled: false, version: null, stations: [], status: null, error: null };
-let timer = null;
+let timer = null, lastPoll = 0;
+
+/** Called while the app is in the background (see team.js): a poll that fell behind catches up. */
+export function aprsBackgroundTick() { if (state.enabled && Date.now() - lastPoll > 60000) poll(); }
 
 const on = () => state.enabled && app.settings.showAprs !== false;
 
@@ -40,7 +44,10 @@ export function startAprs() {
 
 async function poll() {
   clearTimeout(timer);
-  if (!on() || document.visibilityState === 'hidden') return; // restarts when shown again or the layer is turned on
+  // Stops while the page is hidden (restarts when shown again or the layer is turned on), unless the installed app is
+  // being kept running in the background, where an emergency beacon still has to raise a notification.
+  if (!on() || (document.visibilityState === 'hidden' && !backgroundLocationOn())) return;
+  lastPoll = Date.now();
   try {
     const d = await getJson(`/api/aprs${state.version != null ? `?v=${state.version}` : ''}`);
     state.error = null;

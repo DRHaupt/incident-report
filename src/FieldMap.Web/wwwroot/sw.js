@@ -8,7 +8,7 @@ const MAX_TILES = 12000;
 const SHELL = [
   './', 'index.html', 'app.css', 'manifest.webmanifest',
   'js/app.js', 'js/panels.js', 'js/team.js', 'js/aprs.js', 'js/live.js', 'js/hazmat.js', 'js/alerts.js', 'js/firstaid.js',
-  'js/ui.js', 'js/api.js', 'js/native.js', 'js/store.js', 'js/style.js', 'js/coords.js',
+  'js/ui.js', 'js/api.js', 'js/native.js', 'js/home.js', 'js/reports.js', 'js/store.js', 'js/style.js', 'js/coords.js',
   'vendor/maplibre/maplibre-gl.js', 'vendor/maplibre/maplibre-gl.css',
   'icons/icon-192.png', 'icons/apple-touch-icon.png'
 ];
@@ -63,7 +63,7 @@ self.addEventListener('fetch', (e) => {
   }
 
   // Map info and the event files: fresh from the server when possible, the last copy when offline.
-  if (url.pathname === '/api/info' || url.pathname === '/api/erg' || url.pathname === '/api/firstaid' || url.pathname.startsWith('/api/events')) {
+  if (url.pathname === '/api/info' || url.pathname === '/api/erg' || url.pathname === '/api/firstaid' || url.pathname === '/api/forms' || url.pathname.startsWith('/api/events')) {
     e.respondWith((async () => {
       try {
         const res = await fetch(req);

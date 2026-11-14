@@ -1,6 +1,6 @@
 {
-  "appId": "org.fieldsuite.fieldmap",
-  "appName": "Field Map",
+  "appId": "org.fieldsuite.app",
+  "appName": "Field Suite",
   "webDir": "www",
   "backgroundColor": "#12161c",
   "ios": {
@@ -8,6 +8,12 @@
     "backgroundColor": "#12161c"
   },
   "android": {
-    "backgroundColor": "#12161c"
+    "backgroundColor": "#12161c",
+    "useLegacyBridge": true
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "iconColor": "#F2A900"
+    }
   }
 }

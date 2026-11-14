@@ -14,6 +14,7 @@ import { liveLayerSection } from './live.js';
 import { hazmatView, loadErg, looksLikeUnNumber, searchErg, materialRow } from './hazmat.js';
 import { sendMyLocation, startSos, cancelSos, isSosActive } from './alerts.js';
 import { firstAidView } from './firstaid.js';
+import { reportsView } from './reports.js';
 
 const PROFILES = [
   { id: 'car', label: 'Car' }, { id: 'emergency', label: 'Emergency' }, { id: 'truck', label: 'Truck' }, { id: 'walking', label: 'Walk' }
@@ -524,6 +525,7 @@ export function moreView() {
         row({ title: 'Send my location', detail: 'Coordinates, MGRS, nearest address and map links by text or any app. Also: tap the GPS badge.', badge: '➤', color: '#1c7ed6', onClick: () => sendMyLocation() }),
         row({ title: 'First aid & CPR', detail: 'Search by what’s happening, step-by-step topics, timers and a CPR metronome. Works offline.', badge: '+', color: '#2b8a3e', onClick: () => app.panel.show(firstAidView(), { push: true }) }),
         row({ title: 'Hazmat (ERG 2024)', detail: 'UN number, name or placard → guide, isolation and protective-action zones on the map', badge: '!', color: '#e67700', onClick: () => app.panel.show(hazmatView(), { push: true }) }),
+        row({ title: 'Incident reports', detail: 'Fill in a report on this phone from the Incident Report Manager’s forms. Works offline once loaded.', badge: '✎', color: '#5f3dc4', onClick: () => app.panel.show(reportsView(), { push: true }) }),
         heading('Team'),
         row({
           title: 'Team positions and shared pins',

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Field Map</string>
-    <string name="title_activity_main">Field Map</string>
-    <string name="package_name">org.fieldsuite.fieldmap</string>
-    <string name="custom_url_scheme">org.fieldsuite.fieldmap</string>
+    <string name="app_name">Field Suite</string>
+    <string name="title_activity_main">Field Suite</string>
+    <string name="package_name">org.fieldsuite.app</string>
+    <string name="custom_url_scheme">org.fieldsuite.app</string>
 </resources>

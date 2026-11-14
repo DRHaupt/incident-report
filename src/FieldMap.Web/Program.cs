@@ -100,6 +100,7 @@ AprsApi.Map(app);
 LiveApi.Map(app);
 HazmatApi.Map(app);
 FirstAidApi.Map(app);
+FormsApi.Map(app);
 app.Services.GetRequiredService<MapHost>(); // load the data at start-up, not on the first request
 app.Run();
 

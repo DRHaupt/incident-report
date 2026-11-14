@@ -77,7 +77,7 @@ export async function copy(text, what = 'Copied') {
 // ------------------------------------------------------------------ the panel (bottom sheet on phones, side panel when wide)
 
 export class Panel {
-  constructor(root, { onClose, onResize } = {}) {
+  constructor(root, { onClose, onResize, onUserClose } = {}) {
     this.root = root;
     this.title = root.querySelector('.panel-title');
     this.body = root.querySelector('.panel-body');
@@ -85,7 +85,8 @@ export class Panel {
     this.stack = [];
     this.onClose = onClose;
     this.onResize = onResize;
-    root.querySelector('.panel-close').addEventListener('click', () => this.close());
+    this.onUserClose = onUserClose;   // the X, or Back on the first screen (not a close by the app itself)
+    root.querySelector('.panel-close').addEventListener('click', () => { this.close(); this.onUserClose?.(); });
     this.backBtn.addEventListener('click', () => this.back());
     this.#dragToResize(root.querySelector('.panel-grab'));
   }
@@ -104,7 +105,7 @@ export class Panel {
   refresh() { if (this.current) this.#render(this.root.classList.contains('full')); }
 
   back() {
-    if (this.stack.length <= 1) return this.close();
+    if (this.stack.length <= 1) { this.close(); this.onUserClose?.(); return; }
     this.stack.pop().dispose?.();
     this.#render(false);
   }

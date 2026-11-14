@@ -20,6 +20,7 @@ see [Field Map for iOS and Android](FIELDMAP-MOBILE.md).
 | Coordinates in decimal, DMS, deg-min, MGRS, UTM; copy for dispatch | ✓ | ✓ |
 | Hazmat: ERG 2024 lookup (UN number, name, guide, placard), guides, isolation and protective-action zones on the map | ✓ (works offline once loaded) | Field Toolkit |
 | Team positions with the last hour's trail, shared incident pins (needs an access code) | ✓ | – |
+| Incident reports: the Incident Report Manager's forms, filled in on the phone and shared as text (kept on that phone) | ✓ (works offline once loaded) | Incident Report Manager |
 | Works with no signal | Map only (areas you've viewed or saved) | Everything |
 | Satellite / hybrid base map when online (Esri World Imagery, Sentinel-2) | ✓ | ✓ |
 | Imagery that works offline (imagery packages) | – | ✓ |

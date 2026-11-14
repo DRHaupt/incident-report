@@ -8,6 +8,8 @@ import * as C from './coords.js';
 import { getJson, postJson, serverFetch } from './api.js';
 import { h, row, toggle, button, note, heading, toast, add } from './ui.js';
 import { updateTeamAlerts, startSos, cancelSos, isSosActive } from './alerts.js';
+import { native, startBackgroundLocation, stopBackgroundLocation, backgroundLocationOn, enableNotifications } from './native.js';
+import { refreshHome } from './home.js';
 
 export const PIN_KINDS = {
   hazard: { label: 'Hazard', glyph: '!', color: '#e53935' },
@@ -41,19 +43,38 @@ const myName = () => (app.settings.teamName ?? '').trim();
 
 // ------------------------------------------------------------------ syncing with the server
 
-let pollTimer = null;
+let pollTimer = null, lastPoll = 0;
 let lastSent = { time: 0, lat: 0, lon: 0 };
+let onBackgroundFix = () => {};
 
-export function startTeam() {
+// The installed app: while sharing is on, the phone's location service keeps the app running in the background,
+// so positions keep going out and alerts keep coming in with the screen off.
+function background(on) {
+  if (!native) return;
+  if (!on) return stopBackgroundLocation();
+  enableNotifications();
+  startBackgroundLocation((pos) => onBackgroundFix(pos), (problem) => {
+    if (problem === 'denied') toast('Location permission is off for Field Suite, so your position can’t be shared in the background. Allow it in the phone’s settings.', 6000);
+  });
+}
+
+/** Called with fixes from the phone's location service while the app isn't on screen: polls that fell behind catch up. */
+export function teamBackgroundTick() { if (Date.now() - lastPoll > 30000) poll(); }
+
+export function startTeam(backgroundFix) {
   app.team = state;
+  onBackgroundFix = backgroundFix ?? onBackgroundFix;
+  if (app.settings.shareTeam && myName()) background(true);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') poll(); });
   poll();
 }
 
 async function poll() {
   clearTimeout(pollTimer);
-  if (document.visibilityState === 'hidden') return; // resumes on visibilitychange
-  let next = POLL_MS;
+  const hidden = document.visibilityState === 'hidden';
+  if (hidden && !backgroundLocationOn()) return; // resumes on visibilitychange
+  lastPoll = Date.now();
+  let next = hidden ? 15000 : POLL_MS;
   try {
     const t = await getJson('/api/team');
     state.available = true;
@@ -107,6 +128,8 @@ export async function setSharing(on) {
   if (on && !myName()) { toast('Set your name or callsign first.'); return false; }
   app.settings.shareTeam = on;
   save();
+  background(on);
+  refreshHome();
   if (on && app.pos) sendPosition(app.pos);
   if (!on) {
     lastSent = { time: 0, lat: 0, lon: 0 };
@@ -255,7 +278,7 @@ export function teamView() {
         : button('SOS – alert every team phone', async () => { await startSos(); app.panel.refresh(); }, 'danger sos')));
       add(body, nameField(),
         toggle({
-          label: 'Share my position', detail: 'Other units see where you are, with your last hour’s trail. Only while Field Map is open on screen.',
+          label: 'Share my position', detail: native ? 'Other units see where you are, with your last hour’s trail. Keeps going with the app in the background or the screen locked, until you turn it off or close the app.' : 'Other units see where you are, with your last hour’s trail. Only while Field Map is open on screen.',
           checked: !!app.settings.shareTeam, onChange: async (on) => { await setSharing(on); app.panel.refresh(); }
         }),
         toggle({ label: 'Show team on the map', detail: 'Units, their trails and shared pins', checked: app.settings.showTeam !== false, onChange: (on) => setTeamVisible(on) }));

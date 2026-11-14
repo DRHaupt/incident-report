@@ -16,6 +16,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The incident report form templates of the Windows Incident Report Manager (a Windows-only project), compiled
+         in from source so phones get exactly the same forms. -->
+    <Compile Include="..\IncidentReporting\Templates\*.cs" LinkBase="IncidentForms\Templates" />
+    <Compile Include="..\IncidentReporting\Models\*.cs" LinkBase="IncidentForms\Models" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- The same imagery source list as the Windows app. -->
     <None Include="..\FieldToolkit\Content\erg\erg.json" Link="Content\erg.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="..\FieldToolkit\Content\firstaid\*.json" LinkBase="Content\firstaid" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

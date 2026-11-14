@@ -12,6 +12,7 @@ import * as A from './aprs.js';
 import * as L from './live.js';
 import * as H from './hazmat.js';
 import * as AL from './alerts.js';
+import * as HM from './home.js';
 import { native, platform, serverBase, MAP_ORIGIN, registerMapProtocol, nativeKeepAwake, onBackButton } from './native.js';
 
 const maplibregl = window.maplibregl;
@@ -41,7 +42,8 @@ async function start() {
   document.body.dataset.ui = THEMES[app.settings.theme]?.ui ?? 'dark';
   const bottom = $('#bottom');
   new ResizeObserver(() => { document.documentElement.style.setProperty('--bottom-h', `${bottom.offsetHeight}px`); queueFit(); }).observe(bottom);
-  app.panel = new Panel($('#panel'), { onResize: fitPadding });
+  app.panel = new Panel($('#panel'), { onResize: fitPadding, onUserClose: HM.onPanelClosedByUser });
+  $('#btn-home').addEventListener('click', () => HM.showHome());
   setAuthHandler(() => V.showLogin());
   for (const b of document.querySelectorAll('#tabs button'))
     b.addEventListener('click', () => openTab(b.dataset.tab));
@@ -108,7 +110,8 @@ export async function loadInfo() {
   createMap();
   loadEventList();
   startGps();
-  T.startTeam();
+  T.startTeam(onBackgroundFix);
+  if (native) HM.showHome();   // the installed app opens on the Field Suite home screen
   A.startAprs();
   L.startLive();
   if (app.settings.keepAwake) keepAwake(true);
@@ -601,6 +604,7 @@ function longPress(map, fire) {
 // ------------------------------------------------------------------ selection marker
 
 export function select(lat, lon, { fly = true, zoom } = {}) {
+  HM.leaveTool();
   app.selected = { lat, lon };
   if (!app.marker) {
     const el = h('div', { class: 'sel-marker' }, icon('pin', 'sel-pin'));
@@ -617,6 +621,7 @@ export function select(lat, lon, { fly = true, zoom } = {}) {
 
 /** Moves the map to a point without the red selection marker (for things that have their own symbol). */
 export function focus(lat, lon, zoom = 15) {
+  HM.leaveTool();
   clearSelection();
   app.follow = false;
   updateMeButton();
@@ -629,6 +634,7 @@ export function clearSelection() {
 }
 
 export function fitTo(bbox) {
+  HM.leaveTool();
   app.follow = false;
   updateMeButton();
   requestAnimationFrame(() => app.map.fitBounds([[bbox[0], bbox[1]], [bbox[2], bbox[3]]], { padding: 50, maxZoom: 16 }));
@@ -672,6 +678,14 @@ function onPosition(p) {
   if (app.route) updateRouteProgress();
   T.teamOnPosition(app.pos);
   AL.alertsOnPosition();
+}
+
+/** A fix from the phone's own location service (the installed app, sharing its position): used while the page isn't on screen. */
+function onBackgroundFix(pos) {
+  if (document.visibilityState !== 'hidden') return;   // on screen, the page's own GPS watch does the work
+  onPosition({ coords: { latitude: pos.lat, longitude: pos.lon, accuracy: pos.acc ?? 50, heading: pos.heading ?? NaN, speed: pos.speed ?? 0 } });
+  T.teamBackgroundTick();
+  A.aprsBackgroundTick();
 }
 
 function drawPosition() {
@@ -797,6 +811,7 @@ export function routeGeoJson(r) {
 }
 
 export function showRoute(r, to, toLabel) {
+  HM.leaveTool();
   const cum = [0];
   for (let i = 1; i < r.geometry.length; i++) cum.push(cum[i - 1] + C.distance(r.geometry[i - 1], r.geometry[i]));
   app.route = { ...r, to, toLabel, cumulative: cum };
@@ -869,13 +884,15 @@ export async function keepAwake(on) {
 
 /** Android's Back button: one step back in the open panel, then close it. False when nothing is open (the app closes). */
 function goBack() {
-  if (!app.panel.isOpen) return false;
+  if (HM.isHome()) return false;
+  if (!app.panel.isOpen) { HM.showHome(); return true; }
   if (app.panel.current?.locked && app.panel.stack.length <= 1) return false;
   app.panel.back();
   return true;
 }
 
 export function openTab(tab) {
+  HM.leaveTool();
   if (app.panel.isOpen && app.panel.current?.tab === tab && app.panel.stack.length === 1) return app.panel.close();
   const views = { search: V.searchView, nearest: V.nearestView, layers: V.layersView, items: V.itemsView, more: V.moreView };
   app.panel.show(views[tab]());
