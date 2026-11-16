@@ -45,6 +45,20 @@ jobs:
         run: dotnet test tests/FieldMap.UiTests -c Release --no-build
         timeout-minutes: 15
 
+      - name: Test (Incident Report Manager in Night at 150 % display scaling)
+        run: dotnet test tests/IncidentReporting.UiTests -c Release --no-build
+        timeout-minutes: 10
+
+      # Small PNGs of the Night/Daylight windows for checking the look (kept 3 days; no build artifacts otherwise).
+      - name: Keep the UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: tests/IncidentReporting.UiTests/bin/Release/**/ui-screenshots/*.png
+          retention-days: 3
+          if-no-files-found: ignore
+
       - name: Publish Incident Report Manager (self-contained, single file)
         run: >
           dotnet publish src/IncidentReporting/IncidentReporting.csproj -c Release -r win-x64

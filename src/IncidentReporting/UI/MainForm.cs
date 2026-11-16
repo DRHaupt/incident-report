@@ -14,6 +14,7 @@ public sealed class MainForm : Form
     private readonly ListView _list = new();
     private readonly WebBrowser _preview = new();
     private readonly SplitContainer _rightSplit = new();
+    private readonly SplitContainer _split = new() { Dock = DockStyle.Fill, FixedPanel = FixedPanel.Panel1, SplitterWidth = 5 };
     private readonly ToolStripTextBox _search = new();
     private readonly ToolStripStatusLabel _countLabel = new();
     private readonly ToolStripStatusLabel _dbLabel = new();
@@ -41,6 +42,11 @@ public sealed class MainForm : Form
         BuildLayout();
         BuildTree();
         UiMode.Track(this);
+        // After the mode is applied (fonts and row heights final): fit the sidebar and re-colour the preview.
+        Load += (_, _) => FitSidebar();
+        void OnModeChanged(object? s, EventArgs e) { FitSidebar(); UpdatePreview(); }
+        UiMode.Changed += OnModeChanged;
+        FormClosed += (_, _) => UiMode.Changed -= OnModeChanged;
         UpdateStatusBar();
         _searchDelay.Tick += (_, _) => { _searchDelay.Stop(); RefreshList(); };
     }
@@ -56,7 +62,7 @@ public sealed class MainForm : Form
 
     private void BuildLayout()
     {
-        var split = new SplitContainer { Dock = DockStyle.Fill, FixedPanel = FixedPanel.Panel1, SplitterWidth = 5 };
+        var split = _split;
         Controls.Add(split);
 
         _tree.Dock = DockStyle.Fill;
@@ -112,7 +118,7 @@ public sealed class MainForm : Form
         _preview.IsWebBrowserContextMenuEnabled = false;
         _preview.WebBrowserShortcutsEnabled = false;
         _preview.ScriptErrorsSuppressed = true;
-        _preview.DocumentText = BlankPreview();
+        _preview.DocumentText = Themed(BlankPreview());
         _rightSplit.Panel2.Controls.Add(_preview);
 
         Controls.Add(BuildToolStrip());
@@ -126,11 +132,28 @@ public sealed class MainForm : Form
         status.Items.AddRange(new ToolStripItem[] { _countLabel, _dbLabel, _userLabel });
         Controls.Add(status);
 
-        Load += (_, _) =>
+        Load += (_, _) => _rightSplit.SplitterDistance = (int)(_rightSplit.Height * 0.55);
+    }
+
+    /// <summary>Makes the Report Views sidebar wide enough for its longest entry at the current text size.</summary>
+    private void FitSidebar()
+    {
+        if (_split.Width <= 0)
+            return;
+        var widest = 0;
+        void Measure(TreeNodeCollection nodes)
         {
-            split.SplitterDistance = 230;
-            _rightSplit.SplitterDistance = (int)(_rightSplit.Height * 0.55);
-        };
+            foreach (TreeNode n in nodes)
+            {
+                widest = Math.Max(widest, TextRenderer.MeasureText(n.Text, _tree.Font).Width + _tree.Indent * (n.Level + 1));
+                Measure(n.Nodes);
+            }
+        }
+        Measure(_tree.Nodes);
+        // Room for the expand glyphs, a vertical scroll bar and counts that grow ("Draft (12)").
+        var wanted = widest + SystemInformation.VerticalScrollBarWidth + UiMode.ScaleValue(36);
+        var max = Math.Max(UiMode.ScaleValue(200), (int)(_split.Width * 0.4));
+        _split.SplitterDistance = Math.Clamp(wanted, Math.Min(UiMode.ScaleValue(200), max), max);
     }
 
     private MenuStrip BuildMenu()
@@ -430,7 +453,27 @@ public sealed class MainForm : Form
         if (_rightSplit.Panel2Collapsed)
             return;
         var r = SelectedReport;
-        _preview.DocumentText = r == null ? BlankPreview() : ExportService.BuildHtml(r, AppSession.Settings.OrganizationName);
+        _preview.DocumentText = Themed(r == null ? BlankPreview() : ExportService.BuildHtml(r, AppSession.Settings.OrganizationName));
+    }
+
+    /// <summary>
+    /// The preview is a web page, which the theme can't reach: in Night and Daylight a style sheet is added so it
+    /// matches the rest of the window. (Exports and printouts keep the normal black-on-white look.)
+    /// </summary>
+    private static string Themed(string html)
+    {
+        string? css = UiMode.Night
+            ? "html,body{background:#0A0C0F!important;color:#C4B496!important}" +
+              "*{color:#C4B496!important;border-color:#3A3328!important;background-color:transparent!important}" +
+              "h1,h2,b,strong{color:#C88A10!important}h2,td.l{background-color:#14171C!important}img{opacity:.6}"
+            : UiMode.Daylight
+                ? "html,body{background:#fff!important;color:#000!important}*{color:#000!important;border-color:#000!important}"
+                : null;
+        if (css == null)
+            return html;
+        var style = "<style>" + css + "</style>";
+        var at = html.IndexOf("</head>", StringComparison.OrdinalIgnoreCase);
+        return at >= 0 ? html.Insert(at, style) : style + html;
     }
 
     private static string BlankPreview() =>

@@ -31,6 +31,8 @@ internal static class Program
         {
             AppSession.Initialize();
             UiMode.Initialize(AppSession.Settings.TouchMode, AppSession.Settings.DaylightTheme, night: AppSession.Settings.NightTheme);
+            // Rows, panels and buttons grow with Windows display scaling (e.g. 150 % on a Toughbook) like the text does.
+            UiMode.ScaleWithDpi = true;
             UiMode.Changed += (_, _) => SaveUiPreferences();
         }
         catch (Exception ex)

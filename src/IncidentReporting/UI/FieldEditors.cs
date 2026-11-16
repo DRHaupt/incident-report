@@ -90,7 +90,8 @@ public static class FieldEditorFactory
         {
             Field = field;
             _format = format;
-            _picker = new DateTimePicker { ShowCheckBox = true, Checked = false };
+            // Follows the Night and Daylight themes (the standard picker always draws in Windows' light colours).
+            _picker = new ThemedDateTimePicker { ShowCheckBox = true, Checked = false };
             var dtf = CultureInfo.CurrentCulture.DateTimeFormat;
             switch (format)
             {

@@ -51,6 +51,8 @@ public static class UiMode
         public FlatStyle? FlatStyle;
         public int BorderSize;
         public Color BorderColor;
+        public FlatStyle ComboFlatStyle;
+        public bool GridLines;
     }
 
     private static readonly ConditionalWeakTable<Control, BaseInfo> _base = new();
@@ -75,7 +77,47 @@ public static class UiMode
     /// <summary>"Standard", "Daylight" or "Night" (for status bars).</summary>
     public static string ThemeName => Theme.ToString();
 
-    public static float Scale => Touch ? TouchScale : 1f;
+    /// <summary>
+    /// Forms built in code don't scale their fixed pixel sizes with Windows display scaling (125 %, 150 %…), while
+    /// text in points does, so text outgrows its boxes. With this on, every fixed size the mode manages (docked bands,
+    /// side panels, buttons, row heights, column widths) is also multiplied by the display scale.
+    /// </summary>
+    public static bool ScaleWithDpi { get; set; }
+
+    /// <summary>For tests: pretend the display scale is this (e.g. 1.5 for 150 %). 0 uses the real one.</summary>
+    public static float DpiScaleOverride { get; set; }
+
+    private static float? _systemDpiScale;
+
+    /// <summary>The display scale applied to fixed sizes (1 unless <see cref="ScaleWithDpi"/> is on).</summary>
+    public static float DpiScale => !ScaleWithDpi ? 1f : DpiScaleOverride > 0 ? DpiScaleOverride : _systemDpiScale ??= SystemDpiScale();
+
+    private static float SystemDpiScale()
+    {
+        try
+        {
+            using var g = Graphics.FromHwnd(IntPtr.Zero);
+            return Math.Max(1f, g.DpiX / 96f);
+        }
+        catch (Exception)
+        {
+            return 1f;
+        }
+    }
+
+    public static float Scale => (Touch ? TouchScale : 1f) * DpiScale;
+
+    /// <summary>A size in 96-dpi pixels scaled for the current mode and display.</summary>
+    public static int ScaleValue(int value) => (int)Math.Round(value * Scale);
+
+    private static int Dpi(int value) => (int)Math.Round(value * DpiScale);
+
+    /// <summary>Selection colours for custom-drawn lists in the current theme.</summary>
+    public static Color SelectionBack => Daylight ? Color.Black : Night ? NightPalette.AmberBack : SystemColors.Highlight;
+    public static Color SelectionFore => Daylight ? Color.White : Night ? NightPalette.Amber : SystemColors.HighlightText;
+
+    /// <summary>Secondary text (hints, disabled entries) in the current theme.</summary>
+    public static Color MutedText => Daylight ? Color.Black : Night ? NightPalette.MutedText : SystemColors.GrayText;
 
     /// <summary>Body text size in points in the standard scale. Every other text style is sized relative to it.</summary>
     public static float BaseFontSize { get; private set; } = 9f;
@@ -193,7 +235,7 @@ public static class UiMode
     {
         dialog.Load += (_, _) =>
         {
-            if (Touch)
+            if (Scale != 1f)
             {
                 dialog.MinimumSize = ScaleSize(dialog.MinimumSize);
                 dialog.Size = ScaleSize(dialog.Size);
@@ -218,7 +260,10 @@ public static class UiMode
 
     private static Size ScaleSize(Size s) => new((int)(s.Width * Scale), (int)(s.Height * Scale));
 
-    private static int Scaled(int value) => (int)(value * Scale);
+    private static int Scaled(int value) => (int)Math.Round(value * Scale);
+
+    // Rows must at least fit their text (the font grows with display scaling and the mode).
+    private static int RowFor(Font font, int baseHeight) => Math.Max(Scaled(baseHeight), (int)Math.Ceiling(font.GetHeight()) + Dpi(8));
 
     private static BaseInfo Base(Control c) => _base.GetValue(c, x => new BaseInfo
     {
@@ -233,7 +278,9 @@ public static class UiMode
         ForeColor = x.ForeColor,
         FlatStyle = x is ButtonBase bb ? bb.FlatStyle : null,
         BorderSize = x is ButtonBase bb2 ? bb2.FlatAppearance.BorderSize : 0,
-        BorderColor = x is ButtonBase bb3 ? bb3.FlatAppearance.BorderColor : Color.Empty
+        BorderColor = x is ButtonBase bb3 ? bb3.FlatAppearance.BorderColor : Color.Empty,
+        ComboFlatStyle = x is ComboBox cb ? cb.FlatStyle : FlatStyle.Standard,
+        GridLines = x is ListView lv2 && lv2.GridLines
     });
 
     private static void ApplyControl(Control c)
@@ -244,6 +291,8 @@ public static class UiMode
             c.Font = GetFont(role.Value);
         else if (c is Form)
             c.Font = GetFont(FontRole.Normal);
+        if (c is Form form)
+            NativeTheme.TitleBar(form, Night);
 
         // Fixed-size docked chrome (header bands, button bars, side panels, captions) grows with the mode.
         if (!c.AutoSize && c is not ToolStrip and not Splitter and not Form && !_fixedSize.TryGetValue(c, out _))
@@ -272,28 +321,36 @@ public static class UiMode
 
             case Button button when button.Dock == DockStyle.None && !_fixedSize.TryGetValue(button, out _):
                 button.Width = Scaled(b.Size.Width);
-                button.Height = Touch ? Math.Max(TouchButtonHeight, Scaled(b.Size.Height)) : b.Size.Height;
+                button.Height = Touch ? Math.Max(Dpi(TouchButtonHeight), Scaled(b.Size.Height)) : Scaled(b.Size.Height);
                 break;
 
             case CheckBox box when _optionBoxes.TryGetValue(box, out _):
                 box.Appearance = Touch ? Appearance.Button : Appearance.Normal;
                 box.TextAlign = Touch ? ContentAlignment.MiddleCenter : ContentAlignment.MiddleLeft;
-                box.Size = Touch ? new Size(Scaled(b.Size.Width), TouchButtonHeight) : b.Size;
+                box.Size = Touch ? new Size(Scaled(b.Size.Width), Dpi(TouchButtonHeight)) : ScaleSize(b.Size);
                 break;
 
             case TextBox text when text.Dock == DockStyle.None && !_fixedSize.TryGetValue(text, out _):
                 text.Width = Scaled(b.Size.Width);
                 if (text.Multiline)
+                {
                     text.Height = Scaled(b.Size.Height);
+                    NativeTheme.Scrollbars(text, Night);
+                }
                 break;
 
-            case ComboBox combo when combo.Dock == DockStyle.None:
-                combo.Width = Scaled(b.Size.Width);
+            case ComboBox combo:
+                if (combo.Dock == DockStyle.None)
+                    combo.Width = Scaled(b.Size.Width);
+                // The themed (visual styles) drop-down ignores BackColor; the flat one follows the theme.
+                combo.FlatStyle = Night || Daylight ? FlatStyle.Flat : b.ComboFlatStyle;
                 break;
 
-            case DateTimePicker picker when picker.Dock == DockStyle.None:
-                picker.Width = Scaled(b.Size.Width);
+            case DateTimePicker picker:
+                if (picker.Dock == DockStyle.None)
+                    picker.Width = Scaled(b.Size.Width);
                 picker.CalendarFont = GetFont(FontRole.Normal);
+                picker.Invalidate();
                 break;
 
             case TableLayoutPanel table:
@@ -310,7 +367,8 @@ public static class UiMode
                 break;
 
             case TreeView tree:
-                tree.ItemHeight = Touch ? TouchRowHeight : b.ItemHeight;
+                tree.ItemHeight = Touch ? Dpi(TouchRowHeight) : RowFor(tree.Font, b.ItemHeight);
+                NativeTheme.Scrollbars(tree, Night);
                 break;
 
             case ListView list:
@@ -318,6 +376,7 @@ public static class UiMode
                 list.SmallImageList = Touch ? RowSpacer : null;
                 for (var i = 0; i < list.Columns.Count && i < b.HeaderWidths.Length; i++)
                     list.Columns[i].Width = Scaled(b.HeaderWidths[i]);
+                ThemeListView(list, b);
                 break;
 
             case ListBox listBox:
@@ -330,8 +389,18 @@ public static class UiMode
                         listBox.DrawItem += DrawListItem;
                     }
                 }
-                if (_ownerDrawn.TryGetValue(listBox, out _))
-                    listBox.ItemHeight = Touch ? TouchListItemHeight : Math.Max(b.ItemHeight, 18);
+                // Lists that draw their own items too: rows must fit the text at any display scale.
+                if (listBox.DrawMode == DrawMode.OwnerDrawFixed)
+                    listBox.ItemHeight = Touch ? Dpi(TouchListItemHeight) : RowFor(listBox.Font, Math.Max(b.ItemHeight, 18));
+                NativeTheme.Scrollbars(listBox, Night);
+                break;
+
+            case TextBox { Multiline: true } multi:
+                NativeTheme.Scrollbars(multi, Night);
+                break;
+
+            case ScrollableControl { AutoScroll: true } scrolling when scrolling is not Form:
+                NativeTheme.Scrollbars(scrolling, Night);
                 break;
         }
 
@@ -559,6 +628,15 @@ public static class UiMode
         {
             text.Font = font;
             text.Width = Scaled(b.Width);
+            text.BackColor = Night ? NightPalette.Raised : SystemColors.Window;
+            text.ForeColor = Night ? NightPalette.Text : SystemColors.WindowText;
+            text.BorderStyle = Night || Daylight ? BorderStyle.FixedSingle : BorderStyle.Fixed3D;
+        }
+        else if (item is ToolStripComboBox tcombo)
+        {
+            tcombo.FlatStyle = Night || Daylight ? FlatStyle.Flat : FlatStyle.Standard;
+            tcombo.BackColor = Night ? NightPalette.Raised : SystemColors.Window;
+            tcombo.ForeColor = Night ? NightPalette.Text : SystemColors.WindowText;
         }
         if (item is ToolStripDropDownItem dropDown)
         {
@@ -668,6 +746,61 @@ public static class UiMode
             public override Color SeparatorDark => NightPalette.Border;
             public override Color ToolStripBorder => NightPalette.Border;
         }
+    }
+
+    // ------------------------------------------------------------------ list views
+
+    private static readonly ConditionalWeakTable<ListView, object> _themedLists = new();
+
+    /// <summary>
+    /// List views can't colour their column headers or grid lines, so in Night and Daylight the headers are drawn
+    /// here (rows still draw normally in the list's colours) and grid lines, which Windows always draws light, are
+    /// turned off in Night.
+    /// </summary>
+    private static void ThemeListView(ListView list, BaseInfo b)
+    {
+        var themed = Night || Daylight;
+        if (themed && !_themedLists.TryGetValue(list, out _))
+        {
+            _themedLists.Add(list, new object());
+            list.DrawColumnHeader += DrawListHeader;
+            list.DrawItem += (_, e) => e.DrawDefault = true;
+            list.DrawSubItem += (_, e) => e.DrawDefault = true;
+        }
+        if (list.View == View.Details)
+            list.OwnerDraw = themed;
+        list.GridLines = b.GridLines && !Night;
+        NativeTheme.Scrollbars(list, Night);
+        NativeTheme.ListHeader(list, Night);
+        list.Invalidate();
+    }
+
+    private static void DrawListHeader(object? sender, DrawListViewColumnHeaderEventArgs e)
+    {
+        if (sender is not ListView list || !(Night || Daylight))
+        {
+            e.DrawDefault = true;
+            return;
+        }
+        var back = Night ? NightPalette.Header : Color.Black;
+        var fore = Night ? NightPalette.Text : Color.White;
+        var line = Night ? NightPalette.Border : Color.White;
+        using (var brush = new SolidBrush(back))
+            e.Graphics.FillRectangle(brush, e.Bounds);
+        using (var pen = new Pen(line))
+        {
+            e.Graphics.DrawLine(pen, e.Bounds.Right - 1, e.Bounds.Top + 3, e.Bounds.Right - 1, e.Bounds.Bottom - 4);
+            e.Graphics.DrawLine(pen, e.Bounds.Left, e.Bounds.Bottom - 1, e.Bounds.Right, e.Bounds.Bottom - 1);
+        }
+        var rect = new Rectangle(e.Bounds.X + Dpi(6), e.Bounds.Y, e.Bounds.Width - Dpi(10), e.Bounds.Height);
+        var align = e.Header?.TextAlign switch
+        {
+            HorizontalAlignment.Right => TextFormatFlags.Right,
+            HorizontalAlignment.Center => TextFormatFlags.HorizontalCenter,
+            _ => TextFormatFlags.Left
+        };
+        TextRenderer.DrawText(e.Graphics, e.Header?.Text ?? "", GetFont(FontRole.Bold), rect, fore,
+            align | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine);
     }
 
     private static void DrawListItem(object? sender, DrawItemEventArgs e)

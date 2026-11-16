@@ -174,14 +174,16 @@ public sealed class ReportEditorForm : Form
             return;
         var text = _nav.Items[e.Index].ToString() ?? "";
         var selected = (e.State & DrawItemState.Selected) != 0;
-        var bg = selected ? SystemColors.Highlight : SystemColors.Window;
-        var fg = selected ? SystemColors.HighlightText : SystemColors.ControlText;
+        // Colours from the list itself and the theme, so Night and Daylight apply here too.
+        var bg = selected ? UiMode.SelectionBack : _nav.BackColor;
+        var fg = selected ? UiMode.SelectionFore : _nav.ForeColor;
         using (var b = new SolidBrush(bg))
             e.Graphics.FillRectangle(b, e.Bounds);
         var isExtra = text is AttachmentsPage or HistoryPage or LinkedPage;
         if (isExtra && !selected)
-            fg = SystemColors.GrayText;
-        var rect = new Rectangle(e.Bounds.X + 8, e.Bounds.Y, e.Bounds.Width - 8, e.Bounds.Height);
+            fg = UiMode.MutedText;
+        var pad = UiMode.ScaleValue(8);
+        var rect = new Rectangle(e.Bounds.X + pad, e.Bounds.Y, e.Bounds.Width - pad, e.Bounds.Height);
         TextRenderer.DrawText(e.Graphics, text, _nav.Font, rect, fg, TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
     }
 
