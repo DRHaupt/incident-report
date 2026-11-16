@@ -59,6 +59,20 @@ jobs:
           retention-days: 3
           if-no-files-found: ignore
 
+      # On work branches only (never the default branch): add the screenshots to that branch as a normal commit, so
+      # they can be looked at with plain git where GitHub's artifact storage can't be reached.
+      - name: Commit the UI screenshots to the work branch
+        if: always() && github.event_name == 'push' && github.ref_name != github.event.repository.default_branch
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem tests/IncidentReporting.UiTests/bin/Release -Recurse -Filter *.png -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -like '*ui-screenshots' }
+          if (-not $files) { Write-Host "No screenshots"; exit 0 }
+          New-Item -ItemType Directory ui-screenshots -Force | Out-Null
+          $files | Copy-Item -Destination ui-screenshots
+          git add ui-screenshots
+          git -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" commit -q -m "UI screenshots from CI run ${{ github.run_number }}"
+          git push -q origin HEAD:${{ github.ref_name }}
+
       - name: Publish Incident Report Manager (self-contained, single file)
         run: >
           dotnet publish src/IncidentReporting/IncidentReporting.csproj -c Release -r win-x64
