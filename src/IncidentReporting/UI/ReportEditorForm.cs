@@ -103,7 +103,7 @@ public sealed class ReportEditorForm : Form
         var requiredNote = new Label
         {
             Text = "Fields marked with * are required before the report can be submitted.",
-            Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, ForeColor = SystemColors.GrayText
+            Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, ForeColor = SystemColors.GrayText, AutoEllipsis = true
         };
         btnSave.Click += (_, _) => SaveReport();
         btnSaveClose.Click += (_, _) => { if (SaveReport()) Close(); };
@@ -168,6 +168,16 @@ public sealed class ReportEditorForm : Form
         Controls.Add(header);
     }
 
+    /// <summary>
+    /// A section page that scrolls to a field vertically only. With large text a wide field can be wider than the
+    /// page, and the standard panel would then scroll sideways to it and hide the field labels on the left.
+    /// </summary>
+    private sealed class FieldPage : Panel
+    {
+        protected override Point ScrollToControl(Control activeControl) =>
+            new(DisplayRectangle.X, base.ScrollToControl(activeControl).Y);
+    }
+
     private void DrawNavItem(object? sender, DrawItemEventArgs e)
     {
         if (e.Index < 0)
@@ -192,7 +202,7 @@ public sealed class ReportEditorForm : Form
         foreach (var section in _form.Sections)
         {
             _nav.Items.Add(section.Title);
-            var page = new Panel { Dock = DockStyle.Fill, AutoScroll = true, Visible = false, Padding = new Padding(18, 12, 18, 18) };
+            var page = new FieldPage { Dock = DockStyle.Fill, AutoScroll = true, Visible = false, Padding = new Padding(18, 12, 18, 18) };
             var table = new TableLayoutPanel
             {
                 ColumnCount = 2,

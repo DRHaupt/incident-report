@@ -265,7 +265,26 @@ public static class UiMode
     // Rows must at least fit their text (the font grows with display scaling and the mode).
     private static int RowFor(Font font, int baseHeight) => Math.Max(Scaled(baseHeight), (int)Math.Ceiling(font.GetHeight()) + Dpi(8));
 
-    private static BaseInfo Base(Control c) => _base.GetValue(c, x => new BaseInfo
+    private static BaseInfo Base(Control c) => _base.GetValue(c, CaptureBase);
+
+    private static BaseInfo CaptureBase(Control x)
+    {
+        // A control that doesn't set its own colours shows its parent's (ambient colours). If the parent has already
+        // been themed, those are the themed colours: take the parent's standard colours instead, or the control
+        // would keep e.g. Night's black after switching to Daylight.
+        var back = x.BackColor;
+        var fore = x.ForeColor;
+        if (x.Parent is { } parent && _base.TryGetValue(parent, out var pb))
+        {
+            if (back == parent.BackColor)
+                back = pb.BackColor;
+            if (fore == parent.ForeColor)
+                fore = pb.ForeColor;
+        }
+        return CaptureBase(x, back, fore);
+    }
+
+    private static BaseInfo CaptureBase(Control x, Color back, Color fore) => new()
     {
         Size = x.Size,
         MaximumSize = x.MaximumSize,
@@ -274,14 +293,14 @@ public static class UiMode
         ColumnWidths = x is TableLayoutPanel t ? t.ColumnStyles.Cast<ColumnStyle>().Select(cs => cs.Width).ToArray() : Array.Empty<float>(),
         RowHeights = x is TableLayoutPanel t2 ? t2.RowStyles.Cast<RowStyle>().Select(rs => rs.Height).ToArray() : Array.Empty<float>(),
         HeaderWidths = x is ListView lv ? lv.Columns.Cast<ColumnHeader>().Select(ch => ch.Width).ToArray() : Array.Empty<int>(),
-        BackColor = x.BackColor,
-        ForeColor = x.ForeColor,
+        BackColor = back,
+        ForeColor = fore,
         FlatStyle = x is ButtonBase bb ? bb.FlatStyle : null,
         BorderSize = x is ButtonBase bb2 ? bb2.FlatAppearance.BorderSize : 0,
         BorderColor = x is ButtonBase bb3 ? bb3.FlatAppearance.BorderColor : Color.Empty,
         ComboFlatStyle = x is ComboBox cb ? cb.FlatStyle : FlatStyle.Standard,
         GridLines = x is ListView lv2 && lv2.GridLines
-    });
+    };
 
     private static void ApplyControl(Control c)
     {

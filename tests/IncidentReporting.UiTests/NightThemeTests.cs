@@ -126,11 +126,17 @@ public class NightThemeTests
                 // Drop-downs and date pickers follow the theme.
                 Assert.All(All(editor).OfType<ComboBox>(), c => Assert.Equal(FlatStyle.Flat, c.FlatStyle));
                 Assert.All(All(editor).OfType<DateTimePicker>(), p => Assert.IsType<ThemedDateTimePicker>(p));
+                // The visible section page shows its labels: it isn't scrolled sideways to reach a wide field.
+                var page = All(editor).OfType<Panel>().First(p => p.Visible && p.AutoScroll && p.Controls.OfType<TableLayoutPanel>().Any());
+                Assert.Equal(0, page.DisplayRectangle.X);
                 Shot(editor, "report-night-150");
 
                 // Same windows in Daylight and back, live.
                 UiMode.SetTheme(UiTheme.Daylight);
                 Pump(500);
+                // Panels that take their parent's colour don't keep Night's black after the switch.
+                Assert.Equal(Color.White, page.BackColor);
+                Assert.Equal(Color.White, nav.BackColor);
                 Shot(editor, "report-daylight-150");
                 UiMode.SetTheme(UiTheme.Standard);
                 Pump(500);
