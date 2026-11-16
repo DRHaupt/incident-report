@@ -16,7 +16,13 @@ export const DEFAULTS = {
   baseMode: 'map',         // 'map' | 'imagery' | 'hybrid'
   imageryId: null,
   acceptedImagery: [],     // imagery sources whose terms this phone's user accepted
-  view: null
+  view: null,
+  teamName: '',            // name or callsign shown to other units
+  teamDevice: null,        // random id for this phone, made on first use
+  shareTeam: false,        // send this phone's position to the team
+  showTeam: true,          // show units and shared pins on the map
+  showAprs: true,          // show APRS stations (when the server has APRS-IS on)
+  liveHidden: []           // live hazard kinds hidden on this phone ('road', 'fire', 'evacuation', 'weather')
 };
 
 export function loadSettings() {

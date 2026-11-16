@@ -7,6 +7,12 @@ import { getJson, qs, setAuthHandler } from './api.js';
 import { loadSettings, saveSettings, listLocalFiles } from './store.js';
 import { Panel, h, icon, toast, set } from './ui.js';
 import * as V from './panels.js';
+import * as T from './team.js';
+import * as A from './aprs.js';
+import * as L from './live.js';
+import * as H from './hazmat.js';
+import * as AL from './alerts.js';
+import { native, platform, serverBase, MAP_ORIGIN, registerMapProtocol, nativeKeepAwake, onBackButton } from './native.js';
 
 const maplibregl = window.maplibregl;
 const $ = (s) => document.querySelector(s);
@@ -24,7 +30,7 @@ export const app = {
   selected: null,
   compassHeading: null,
   wakeLock: null,
-  origin: location.origin
+  origin: native ? MAP_ORIGIN : location.origin   // where map tiles, fonts and imagery come from
 };
 
 export const save = () => saveSettings(app.settings);
@@ -43,16 +49,28 @@ async function start() {
   $('#btn-me').addEventListener('click', () => recenter());
   $('#btn-compass').addEventListener('click', () => toggleHeadingUp());
   $('#status-coords').addEventListener('click', () => cycleCoordFormat());
+  $('#status-gps').addEventListener('click', () => AL.openMyLocation());
   $('#route-banner').addEventListener('click', () => app.route && V.openDirections(app.route.to, app.route.toLabel, { push: false }));
   window.addEventListener('resize', queueFit);
   window.visualViewport?.addEventListener('resize', queueFit);
   new ResizeObserver(queueFit).observe($('#panel'));
   // Optional fold reporting (behind feature flags in Safari): the layout already works without it.
   navigator.devicePosture?.addEventListener?.('change', queueFit);
+  // Rotating or folding can leave iOS (Home Screen app) with a viewport smaller than the window: see fitWindow().
+  fitWindow();
+  window.addEventListener('orientationchange', refreshViewport);
+  screen.orientation?.addEventListener?.('change', refreshViewport);
+  navigator.devicePosture?.addEventListener?.('change', refreshViewport);
   fitPadding();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && app.settings.keepAwake) keepAwake(true); });
 
-  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost'))
+  if (native) {
+    // The installed app: its files are already on the phone, and native.js keeps the map and reference data.
+    document.documentElement.dataset.platform = platform;
+    registerMapProtocol(maplibregl);
+    onBackButton(goBack);
+    if (!serverBase()) return V.showServerSetup();
+  } else if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost'))
     navigator.serviceWorker.register('sw.js').catch(() => {});
 
   try {
@@ -71,6 +89,11 @@ export async function loadInfo() {
     $('#splash').classList.add('error');
     $('#splash-retry').hidden = false;
     $('#splash-retry').onclick = () => location.reload();
+    if (native && !$('#splash-server')) {
+      const change = h('button', { id: 'splash-server', type: 'button', class: 'btn' }, 'Change server');
+      change.onclick = () => V.showServerSetup();
+      $('#splash').append(h('p', { class: 'splash-server' }, serverBase()), change);
+    }
     return;
   }
   $('#splash').hidden = true;
@@ -85,6 +108,9 @@ export async function loadInfo() {
   createMap();
   loadEventList();
   startGps();
+  T.startTeam();
+  A.startAprs();
+  L.startLive();
   if (app.settings.keepAwake) keepAwake(true);
 }
 
@@ -169,8 +195,9 @@ function fitPadding() {
   const padding = { top: split ? 16 : top.offsetTop + top.offsetHeight + 8, left: 0, right: 0, bottom: 0 };
   // Two panes: the map always centres on the right-hand side, so your position never sits on the fold and the map
   // doesn't jump when the panel opens or closes.
-  if (split) padding.left = Math.max(0, Math.min(p.offsetLeft + p.offsetWidth, window.innerWidth - 200));
-  else if (open) padding.bottom = Math.max(0, Math.min(p.offsetHeight, window.innerHeight * 0.6));
+  const size = appSize();
+  if (split) padding.left = Math.max(0, Math.min(p.offsetLeft + p.offsetWidth, size.w - 200));
+  else if (open) padding.bottom = Math.max(0, Math.min(p.offsetHeight, size.h * 0.6));
   const same = (a, b) => ['top', 'left', 'right', 'bottom'].every((k) => Math.abs(a[k] - b[k]) < 1);
   if (same(app.map.getPadding(), padding)) return;
   // Changing the padding jumps the camera, which would cut short a fly-to that's under way.
@@ -183,12 +210,57 @@ let fitQueued = false;
 function queueFit() {
   if (fitQueued) return;
   fitQueued = true;
-  requestAnimationFrame(() => { fitQueued = false; fitPadding(); });
+  requestAnimationFrame(() => { fitQueued = false; fitWindow(); fitPadding(); });
+}
+
+// Some iPhones (seen on an iPhone Duo Home Screen app) give the page a viewport smaller than the window (innerWidth/
+// innerHeight below outerWidth/outerHeight): a strip the width of the Dynamic Island area goes missing on the right or
+// at the bottom and grows with each rotation, leaving an empty band. In a Home Screen app the window is the whole
+// screen, so outer* is the real size; html.fit-window in app.css then sizes the app to it. In Safari itself outer*
+// includes the browser's own bars, so this only runs in a Home Screen app.
+const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+let lastWindow = '';
+function fitWindow() {
+  const root = document.documentElement;
+  const w = standalone ? Math.max(window.innerWidth, window.outerWidth) : window.innerWidth;
+  const h = standalone ? Math.max(window.innerHeight, window.outerHeight) : window.innerHeight;
+  const short = w - window.innerWidth > 1 || h - window.innerHeight > 1;
+  const key = short ? `${w}x${h}/${window.innerWidth}` : '';
+  if (key === lastWindow) return;
+  lastWindow = key;
+  root.classList.toggle('fit-window', short);
+  if (short) {
+    root.style.setProperty('--win-w', `${w}px`);
+    root.style.setProperty('--win-h', `${h}px`);
+    root.style.setProperty('--gap-r', `${w - window.innerWidth}px`);
+  }
+  app.map?.resize();
+}
+
+// The app's size: the real window when fitWindow() is correcting it, else the viewport.
+function appSize() {
+  const b = document.body;
+  return document.documentElement.classList.contains('fit-window') ? { w: b.offsetWidth, h: b.offsetHeight } : { w: window.innerWidth, h: window.innerHeight };
+}
+
+// Called after a rotation or fold change. Waits for the rotation to settle, then: undoes any scroll the page picked up
+// (the app never scrolls, so a scrolled page leaves a gap under the fixed bars), re-checks the window size and re-fits
+// the map. Runs a second time in case the first came before iOS was done.
+let viewportTimers = [];
+function refreshViewport() {
+  viewportTimers.forEach(clearTimeout);
+  viewportTimers = [250, 800].map((ms) => setTimeout(() => {
+    if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+    lastWindow = '-'; // re-apply even if the numbers look the same
+    fitWindow();
+    app.map?.resize();
+    queueFit();
+  }, ms));
 }
 
 // ------------------------------------------------------------------ map symbols
 
-function badgeImage(text, fill, textColor, size = 30) {
+export function badgeImage(text, fill, textColor, size = 30) {
   const ratio = 2, s = size * ratio;
   const c = document.createElement('canvas');
   c.width = c.height = s;
@@ -277,6 +349,7 @@ function addOverlays() {
       }
     });
   }
+  L.addLiveLayers(m); // under event files and everything else
   for (const ev of app.events.values()) addEventLayers(ev);
   m.addSource('route', { type: 'geojson', data: app.route ? routeGeoJson(app.route) : EMPTY });
   m.addLayer({ id: 'route-case', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#000', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 7, 16, 14], 'line-opacity': 0.6 } });
@@ -313,6 +386,10 @@ function addOverlays() {
     paint: { 'text-color': t.label, 'text-halo-color': t.halo, 'text-halo-width': 1.4 }
   });
   INTERACTIVE.add('repeaters');
+
+  A.addAprsLayers(m);
+  T.addTeamLayers(m);
+  H.addHazmatLayers(m);
 
   m.addSource('me-acc', { type: 'geojson', data: EMPTY });
   m.addLayer({ id: 'me-acc', type: 'fill', source: 'me-acc', paint: { 'fill-color': t.gps, 'fill-opacity': 0.12, 'fill-outline-color': t.gps } });
@@ -367,7 +444,7 @@ function addEventLayers(ev) {
   });
   for (const k of ['pt', 'line', 'fill']) INTERACTIVE.add(`${src}-${k}`);
   // Keep event files under the route, POIs and the position marker.
-  for (const top of ['route-case', 'route', 'pois', 'repeaters', 'me-acc', 'me'])
+  for (const top of ['route-case', 'route', 'pois', 'repeaters', 'aprs-tracks', 'aprs', 'aprs-labels', 'team-area-fill', 'team-area-line', 'team-line', 'team-trails', 'team-units', 'team-unit-labels', 'team-pins', 'hazmat-protect', 'hazmat-protect-line', 'hazmat-isolate', 'hazmat-isolate-line', 'hazmat-spill', 'team-draw-fill', 'team-draw-line', 'team-draw-pt', 'me-acc', 'me'])
     if (m.getLayer(top)) m.moveLayer(top);
 }
 
@@ -469,15 +546,21 @@ async function loadPois() {
 
 function onTap(e) {
   if (suppressClick) { suppressClick = false; return; }
+  if (T.isDrawing()) return T.drawTap(e.lngLat);
   const layers = [...INTERACTIVE].filter((l) => app.map.getLayer(l));
   const r = 14;
   const feats = app.map.queryRenderedFeatures([[e.point.x - r, e.point.y - r], [e.point.x + r, e.point.y + r]], { layers });
   if (!feats.length) return;
   // Points beat lines beat areas; within a kind, the one drawn on top wins.
-  const rank = (f) => (f.layer.id === 'pois' || f.layer.id === 'repeaters' || f.layer.id.endsWith('-pt') ? 0 : f.layer.id.endsWith('-line') ? 1 : 2);
+  const rank = (f) => (['pois', 'repeaters', 'aprs', 'team-pins', 'team-units'].includes(f.layer.id) || f.layer.id.endsWith('-pt') ? 0 : f.layer.id.endsWith('-line') ? 1 : 2);
   const f = feats.sort((a, b) => rank(a) - rank(b))[0];
-  if (f.layer.id === 'pois') V.openPoi(f.properties.id);
+  if (H.isHazmatLayer(f.layer.id)) H.onZoneTap();
+  else if (f.layer.id === 'team-pins' || f.layer.id === 'team-line' || f.layer.id === 'team-area-fill') T.openTeamPin(f.properties.id);
+  else if (f.layer.id === 'aprs') A.openAprsStation(f.properties.key);
+  else if (f.layer.id === 'team-units') T.openTeamUnit(f.properties.device);
+  else if (f.layer.id === 'pois') V.openPoi(f.properties.id);
   else if (f.layer.id === 'repeaters') V.openRepeater(f.properties);
+  else if (L.isLiveLayer(f.layer.id)) L.openLiveItem(f.properties.id, [e.lngLat.lng, e.lngLat.lat]);
   else {
     const id = f.layer.id.replace(/^ev-/, '').replace(/-(pt|line|fill)$/, '');
     const ev = app.events.get(id);
@@ -532,6 +615,14 @@ export function select(lat, lon, { fly = true, zoom } = {}) {
   }
 }
 
+/** Moves the map to a point without the red selection marker (for things that have their own symbol). */
+export function focus(lat, lon, zoom = 15) {
+  clearSelection();
+  app.follow = false;
+  updateMeButton();
+  requestAnimationFrame(() => app.map.flyTo({ center: [lon, lat], zoom: Math.max(app.map.getZoom(), zoom), speed: 1.6 }));
+}
+
 export function clearSelection() {
   app.marker?.remove();
   app.selected = null;
@@ -579,6 +670,8 @@ function onPosition(p) {
   updateStatus();
   if (app.follow) followCamera(!prev);
   if (app.route) updateRouteProgress();
+  T.teamOnPosition(app.pos);
+  AL.alertsOnPosition();
 }
 
 function drawPosition() {
@@ -765,6 +858,7 @@ function updateRouteProgress() {
 export async function keepAwake(on) {
   app.settings.keepAwake = on;
   save();
+  if (native && await nativeKeepAwake(on)) return;
   try {
     if (on && 'wakeLock' in navigator) app.wakeLock = await navigator.wakeLock.request('screen');
     else { await app.wakeLock?.release(); app.wakeLock = null; }
@@ -772,6 +866,14 @@ export async function keepAwake(on) {
 }
 
 // ------------------------------------------------------------------ tabs
+
+/** Android's Back button: one step back in the open panel, then close it. False when nothing is open (the app closes). */
+function goBack() {
+  if (!app.panel.isOpen) return false;
+  if (app.panel.current?.locked && app.panel.stack.length <= 1) return false;
+  app.panel.back();
+  return true;
+}
 
 export function openTab(tab) {
   if (app.panel.isOpen && app.panel.current?.tab === tab && app.panel.stack.length === 1) return app.panel.close();

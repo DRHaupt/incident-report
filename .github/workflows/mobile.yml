@@ -1,0 +1,117 @@
+name: Mobile apps
+
+# Field Map for iOS and Android (mobile/): the phone web app packaged with Capacitor.
+# Only runs when the app or its web files change; the macOS job is the expensive one.
+on:
+  push:
+    paths:
+      - 'mobile/**'
+      - 'src/FieldMap.Web/wwwroot/**'
+      - '.github/workflows/mobile.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install Capacitor
+        run: npm ci
+
+      - name: Copy the web app into the Android project
+        run: |
+          node scripts/copy-web.mjs
+          npx cap sync android
+
+      - name: Signing key (optional – see docs/FIELDMAP-MOBILE.md)
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/fieldmap.keystore"
+            echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/fieldmap.keystore" >> "$GITHUB_ENV"
+            echo "Signed with the Field Map key."
+          else
+            echo "::warning::No ANDROID_KEYSTORE_BASE64 secret: this APK has a throw-away key, so it can't be installed over an earlier build (uninstall first)."
+          fi
+
+      - name: Build the APK
+        working-directory: mobile/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: ./gradlew assembleDebug --no-daemon -PappVersionCode=${{ github.run_number }} -PappVersionName=0.1.${{ github.run_number }}
+
+      - name: Check the APK holds the app
+        run: |
+          apk=android/app/build/outputs/apk/debug/app-debug.apk
+          unzip -l "$apk" | grep -q 'assets/public/index.html'
+          unzip -l "$apk" | grep -q 'assets/public/js/native.js'
+          unzip -l "$apk" | grep -q 'assets/public/vendor/maplibre/maplibre-gl.js'
+          if unzip -l "$apk" | grep -q 'assets/public/sw.js'; then echo "The service worker should not be packaged"; exit 1; fi
+          cp "$apk" "$RUNNER_TEMP/FieldMap-0.1.${{ github.run_number }}.apk"
+          ls -l "$RUNNER_TEMP"/FieldMap-*.apk
+
+      # Small (a few MB) and short-lived, so it doesn't fill the artifact storage the way the Windows builds did.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FieldMap-android-0.1.${{ github.run_number }}
+          path: ${{ runner.temp }}/FieldMap-*.apk
+          retention-days: 14
+          if-no-files-found: error
+
+  ios:
+    runs-on: macos-26
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install Capacitor
+        run: npm ci
+
+      - name: Copy the web app into the Xcode project
+        run: |
+          node scripts/copy-web.mjs
+          npx cap sync ios
+
+      # Compiles for the simulator without signing: proves the project builds. A build for real iPhones needs an
+      # Apple Developer account (see docs/FIELDMAP-MOBILE.md).
+      - name: Build for the iPhone simulator
+        run: |
+          xcodebuild -version
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/dd" CODE_SIGNING_ALLOWED=NO build | tail -n 40
+          app="$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/App.app"
+          test -f "$app/public/index.html"
+          test -f "$app/public/js/native.js"
+          test ! -e "$app/public/sw.js"

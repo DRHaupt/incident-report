@@ -297,4 +297,55 @@ public sealed class ImageryProxyTests : IClassFixture<ServerFixture>, IDisposabl
         _upstream.Close();
         File.Delete(_catalog);
     }
+
+    [Fact]
+    public async Task The_installed_app_signs_in_with_a_token_from_its_own_origin()
+    {
+        using var factory = _fx.Factory("blue-heron-42");
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false });
+        HttpRequestMessage FromApp(HttpMethod method, string path, string origin = "capacitor://localhost")
+        {
+            var m = new HttpRequestMessage(method, path);
+            m.Headers.Add("Origin", origin);
+            return m;
+        }
+
+        // The app's browser asks first (no sign-in on that request): allowed for the app, with the Authorization header.
+        var ask = FromApp(HttpMethod.Options, "/api/info");
+        ask.Headers.Add("Access-Control-Request-Method", "GET");
+        ask.Headers.Add("Access-Control-Request-Headers", "authorization");
+        var allowed = await client.SendAsync(ask);
+        Assert.True(allowed.IsSuccessStatusCode);
+        Assert.Equal("capacitor://localhost", allowed.Headers.GetValues("Access-Control-Allow-Origin").Single());
+        Assert.Contains("authorization", string.Join(",", allowed.Headers.GetValues("Access-Control-Allow-Headers")), StringComparison.OrdinalIgnoreCase);
+
+        // Not signed in: refused, but readable by the app so it can show the sign-in.
+        var refused = await client.SendAsync(FromApp(HttpMethod.Get, "/api/info"));
+        Assert.Equal(HttpStatusCode.Unauthorized, refused.StatusCode);
+        Assert.Equal("capacitor://localhost", refused.Headers.GetValues("Access-Control-Allow-Origin").Single());
+
+        // A browser sign-in gets no token; the app asks for one.
+        var web = await (await client.PostAsJsonAsync("/api/login", new { code = "blue-heron-42" })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(web.TryGetProperty("token", out _));
+        var login = FromApp(HttpMethod.Post, "/api/login", "https://localhost");
+        login.Content = JsonContent.Create(new { code = "blue-heron-42", app = true });
+        var signedIn = await client.SendAsync(login);
+        Assert.Equal(HttpStatusCode.OK, signedIn.StatusCode);
+        var token = (await signedIn.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString();
+        Assert.False(string.IsNullOrEmpty(token));
+
+        var info = FromApp(HttpMethod.Get, "/api/info");
+        info.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(info)).StatusCode);
+        var status = FromApp(HttpMethod.Get, "/api/status");
+        status.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        Assert.True((await (await client.SendAsync(status)).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("signedIn").GetBoolean());
+        var wrong = FromApp(HttpMethod.Get, "/api/info");
+        wrong.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token + "x");
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.SendAsync(wrong)).StatusCode);
+
+        // Any other website gets no permission to read the answers.
+        var other = await client.SendAsync(FromApp(HttpMethod.Get, "/api/status", "https://example.com"));
+        Assert.False(other.Headers.Contains("Access-Control-Allow-Origin"));
+    }
 }

@@ -3,10 +3,17 @@
 import { app, save, select, clearSelection, fitTo, showRoute, clearRoute, setTheme, setBase, currentBase, setLayerVisible, setEventVisible,
   addLocalEvent, removeEventLayers, keepAwake, myPositionOrCentre, updateStatus, loadEventList } from './app.js';
 import * as C from './coords.js';
-import { getJson, postJson, postFile, qs } from './api.js';
+import { getJson, postJson, postFile, qs, serverFetch } from './api.js';
+import { native, serverBase, setServer, setToken, normalizeServer, probeServer } from './native.js';
 import { saveLocalFile, deleteLocalFile } from './store.js';
 import { h, icon, row, toggle, segmented, button, note, heading, toast, copy, add, set } from './ui.js';
 import { THEMES } from './style.js';
+import { teamView, sharePinButton } from './team.js';
+import { aprsLayerToggle } from './aprs.js';
+import { liveLayerSection } from './live.js';
+import { hazmatView, loadErg, looksLikeUnNumber, searchErg, materialRow } from './hazmat.js';
+import { sendMyLocation, startSos, cancelSos, isSosActive } from './alerts.js';
+import { firstAidView } from './firstaid.js';
 
 const PROFILES = [
   { id: 'car', label: 'Car' }, { id: 'emergency', label: 'Emergency' }, { id: 'truck', label: 'Truck' }, { id: 'walking', label: 'Walk' }
@@ -18,6 +25,7 @@ const fromHere = (lat, lon) => {
   const d = C.distance([app.pos.lon, app.pos.lat], [lon, lat]);
   return `${C.formatDistance(d)} ${C.compass(C.bearing([app.pos.lon, app.pos.lat], [lon, lat]))} of you`;
 };
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 const errorText = (e) => (e?.name === 'AbortError' ? '' : e?.message || 'Something went wrong.');
 
 export function refreshIfShowing(...tabs) {
@@ -56,7 +64,9 @@ export function searchView() {
           set(results, ...events.map(eventRow), note(errorText(e), 'warn'));
           return;
         }
-        const rows = [...events.map(eventRow), ...server.map(resultRow)];
+        let erg = [];
+        if (looksLikeUnNumber(q)) { try { await loadErg(); erg = searchErg(q); } catch { /* offline without the guidebook yet */ } }
+        const rows = [...erg.map(materialRow), ...events.map(eventRow), ...server.map(resultRow)];
         set(results, ...(rows.length ? rows : [note(`Nothing found for “${q}”.`)]));
       };
       input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(run, 250); });
@@ -70,7 +80,7 @@ export function searchView() {
 
 function hints() {
   return h('div', { class: 'hints' },
-    note('Try a street address, an intersection (“Main & 5th”), a place, a business, a highway km (“Hwy 5 km 120”), coordinates or MGRS, or a type of place such as “hospital” or “hydrant”.'),
+    note('Try a street address, an intersection (“Main & 5th”), a place, a business, a highway km (“Hwy 5 km 120”), coordinates or MGRS, a type of place such as “hospital” or “hydrant”, or a UN number for hazmat (“1005”).'),
     app.events.size ? note('Names in your event files are searched too.') : null);
 }
 
@@ -139,7 +149,7 @@ function bboxOf(f) {
 // ------------------------------------------------------------------ place details
 
 /** A details view for any point. `lines` are extra rows of text; the address is looked up from the server. */
-function placeView({ title, kind, lat, lon, lines = [], warning, source, extraButtons = [], lookup = true, tab }) {
+export function placeView({ title, kind, lat, lon, lines = [], warning, source, extraButtons = [], lookup = true, tab }) {
   return {
     tab, title: title.length > 28 ? 'Details' : title,
     render(body) {
@@ -174,12 +184,12 @@ function coordsBlock(lat, lon) {
 
 export function openPoint(lat, lon, title, kind, { push = false } = {}) {
   select(lat, lon);
-  app.panel.show(placeView({ title, kind, lat, lon }), { push });
+  app.panel.show(placeView({ title, kind, lat, lon, extraButtons: [sharePinButton(lat, lon, title)] }), { push });
 }
 
 export function openWhatsHere(lat, lon) {
   select(lat, lon, { fly: false });
-  app.panel.show(placeView({ title: 'Dropped pin', kind: 'Touch and hold anywhere on the map to drop a pin', lat, lon }));
+  app.panel.show(placeView({ title: 'Dropped pin', kind: 'Touch and hold anywhere on the map to drop a pin', lat, lon, extraButtons: [sharePinButton(lat, lon)] }));
 }
 
 export async function openPoi(id, { push = false } = {}) {
@@ -339,6 +349,7 @@ export function layersView() {
     render(body) {
       add(body, heading('Map style'),
         segmented(Object.entries(THEMES).map(([id, t]) => ({ id, label: t.name })), app.settings.theme, (id) => { setTheme(id); app.panel.refresh(); }));
+      add(body, liveLayerSection());
 
       const imagery = app.info.imagery ?? [];
       if (imagery.length) {
@@ -385,6 +396,7 @@ export function layersView() {
           label: l.title, detail: `${l.count.toLocaleString()} · shown from zoom ${l.minZoom}`, badge: l.glyph, color: l.color,
           checked: app.settings.layers.includes(l.id), onChange: (on) => setLayerVisible(l.id, on)
         }));
+      if (app.aprs?.enabled) add(body, heading('APRS'), aprsLayerToggle());
       if (app.info.repeaters > 0)
         add(body, toggle({ label: 'Repeaters', detail: `${app.info.repeaters} from the Field Map repeater list`, badge: 'R', color: '#8e44ad', checked: app.settings.repeaters, onChange: (on) => setLayerVisible('repeaters', on) }));
       if (app.info.coverage)
@@ -506,7 +518,19 @@ export function moreView() {
     tab: 'more', title: 'More',
     render(body) {
       const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-      add(body, 
+      add(body,
+        heading('Tools'),
+        app.team?.available ? row({ title: isSosActive() ? 'Cancel my SOS' : 'SOS', detail: isSosActive() ? 'Your SOS is active on every team phone' : 'Alert every team phone with your position', badge: 'SOS', color: '#c92a2a', onClick: async () => { if (isSosActive()) await cancelSos(); else await startSos(); app.panel.refresh(); } }) : null,
+        row({ title: 'Send my location', detail: 'Coordinates, MGRS, nearest address and map links by text or any app. Also: tap the GPS badge.', badge: '➤', color: '#1c7ed6', onClick: () => sendMyLocation() }),
+        row({ title: 'First aid & CPR', detail: 'Search by what’s happening, step-by-step topics, timers and a CPR metronome. Works offline.', badge: '+', color: '#2b8a3e', onClick: () => app.panel.show(firstAidView(), { push: true }) }),
+        row({ title: 'Hazmat (ERG 2024)', detail: 'UN number, name or placard → guide, isolation and protective-action zones on the map', badge: '!', color: '#e67700', onClick: () => app.panel.show(hazmatView(), { push: true }) }),
+        heading('Team'),
+        row({
+          title: 'Team positions and shared pins',
+          detail: app.team?.available === false ? 'Off on this server (needs an access code)'
+            : `${app.settings.shareTeam ? 'Sharing your position' : 'Not sharing your position'} · ${plural(app.team?.units.length ?? 0, 'unit')} · ${plural(app.team?.pins.length ?? 0, 'pin')}`,
+          badge: '●', color: '#00a389', onClick: () => app.panel.show(teamView(), { push: true })
+        }),
         heading('While driving'),
         toggle({ label: 'Keep the screen on', detail: 'Stops the phone locking while Field Map is open', checked: app.settings.keepAwake, onChange: (on) => keepAwake(on) }),
         heading('Coordinates in the status bar'),
@@ -517,7 +541,8 @@ export function moreView() {
         app.route ? h('div', { class: 'actions' }, button('Clear the route', () => { clearRoute(); app.panel.refresh(); })) : null,
         heading('Offline'),
         offlineSection(),
-        !standalone ? h('div', {}, heading('Install'), note('For a full-screen app with its own icon: in Safari tap Share, then “Add to Home Screen”. On Android, open the browser menu and choose “Install app”.')) : null,
+        native ? h('div', {}, heading('Server'), row({ title: serverBase().replace(/^https:\/\//, ''), detail: 'The Field Map server this phone uses. Tap to change.', onClick: () => showServerSetup() })) : null,
+        !standalone && !native ? h('div', {}, heading('Install'), note('For a full-screen app with its own icon: in Safari tap Share, then “Add to Home Screen”. On Android, open the browser menu and choose “Install app”.')) : null,
         heading('Map data'),
         ...app.info.regions.map((r) => row({ title: r.name, detail: `Data ${r.dataDate ?? 'unknown'} · version ${r.version}${r.isSample ? ' · SAMPLE DATA' : ''}`, onClick: () => fitTo(r.bounds) })),
         ...app.info.problems.map((p) => note(p, 'warn')),
@@ -567,7 +592,7 @@ async function saveArea(report) {
   const worker = async () => {
     while (queue.length) {
       const u = queue.shift();
-      try { const res = await fetch(u, { credentials: 'same-origin' }); if (!res.ok && res.status !== 204) failed++; } catch { failed++; }
+      try { const res = await serverFetch(u); if (!res.ok && res.status !== 204) failed++; } catch { failed++; }
       if (++done % 25 === 0) report(`Saving… ${done.toLocaleString()} of ${urls.length.toLocaleString()}`);
     }
   };
@@ -587,7 +612,8 @@ export function showLogin() {
       const go = async () => {
         msg.hidden = true;
         try {
-          await postJson('/api/login', { code: input.value });
+          const r = await postJson('/api/login', { code: input.value, app: native });
+          if (native) setToken(r?.token ?? '');
           location.reload();
         } catch (e) {
           msg.textContent = e.message;
@@ -596,8 +622,46 @@ export function showLogin() {
       };
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
       add(body, note('Enter the access code for this Field Map server. You only need to do this once on each phone.'),
-        h('div', { class: 'search-box' }, input), msg, h('div', { class: 'actions' }, button('Sign in', go, 'primary')));
+        h('div', { class: 'search-box' }, input), msg,
+        h('div', { class: 'actions' }, button('Sign in', go, 'primary'), native ? button('Change server', () => showServerSetup()) : null),
+        native ? note(serverBase(), 'muted') : null);
       setTimeout(() => input.focus(), 60);
+    }
+  });
+}
+
+/** The installed app only: which Field Map server this phone uses. Shown on first start and from More → Server. */
+export function showServerSetup() {
+  document.getElementById('splash').hidden = true;
+  const current = serverBase();
+  app.panel.show({
+    tab: null, title: 'Field Map server', full: true, locked: !current,
+    render(body) {
+      const input = h('input', { type: 'url', class: 'search-input', placeholder: 'maps.example.org', value: current, autocomplete: 'url', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', inputmode: 'url', enterkeyhint: 'go', 'aria-label': 'Server address' });
+      const msg = h('p', { class: 'note warn', hidden: true });
+      const btn = button('Connect', () => go(), 'primary');
+      const go = async () => {
+        msg.hidden = true;
+        const base = normalizeServer(input.value);
+        if (!base) { msg.textContent = 'Enter the server’s address, for example maps.example.org. It has to be an https address.'; msg.hidden = false; return; }
+        btn.disabled = true;
+        try {
+          await probeServer(base);
+          setServer(base);
+          location.reload();
+        } catch (e) {
+          msg.textContent = e.message;
+          msg.hidden = false;
+          btn.disabled = false;
+        }
+      };
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+      add(body, note(current
+        ? 'The address of the Field Map server this phone uses. Changing it signs this phone out of the old server; saved map areas for the old server stay on the phone.'
+        : 'Field Map gets its map, search and directions from your organisation’s Field Map server. Enter its address; whoever runs the server can tell you what it is.'),
+        h('div', { class: 'search-box' }, input), msg,
+        h('div', { class: 'actions' }, btn, current ? button('Cancel', () => location.reload()) : null));
+      if (!current) setTimeout(() => input.focus(), 60);
     }
   });
 }

@@ -23,13 +23,16 @@ public static class Api
         {
             var body = await http.Request.ReadFromJsonAsync<LoginRequest>();
             var problem = gate.TryLogin(http, body?.Code);
-            return problem == null ? Results.Json(new { ok = true }) : Results.Json(new { ok = false, error = problem }, statusCode: 403);
+            if (problem != null)
+                return Results.Json(new { ok = false, error = problem }, statusCode: 403);
+            // The installed app asks for the token (it can't use the cookie, see AccessGate.IsAllowed).
+            return body?.App == true ? Results.Json(new { ok = true, token = gate.Token }) : Results.Json(new { ok = true });
         });
 
         app.MapGet("/imagery/{id}/{z:int}/{x:int}/{y:int}", (string id, int z, int x, int y, ImageryProxy imagery, HttpContext http, CancellationToken cancel) =>
             imagery.TileAsync(id, z, x, y, http, cancel));
 
-        app.MapGet("/api/info", (MapHost host, EventFiles events, ImageryProxy imagery) =>
+        app.MapGet("/api/info", (MapHost host, EventFiles events, ImageryProxy imagery, AprsHub aprs, LiveHub live) =>
         {
             var s = host.Current;
             return Results.Json(new
@@ -59,6 +62,8 @@ public static class Api
                     warning = l.Warning,
                     count = s.PoisByLayer.TryGetValue(l.Id, out var list) ? list.Count : 0
                 }),
+                aprs = aprs.Enabled,
+                live = live.Enabled && live.Feeds.Count > 0,
                 coverage = s.Coverage == null ? null : new { maxZoom = s.Coverage.MaxZoom, description = s.Coverage.Metadata.GetValueOrDefault("description", "") },
                 imagery = imagery.Sources.Select(i => new
                 {
@@ -315,7 +320,7 @@ public static class Api
         }).DisableAntiforgery();
     }
 
-    public sealed record LoginRequest(string? Code);
+    public sealed record LoginRequest(string? Code, bool? App = null);
 
     internal static VehicleProfile Profile(string? name) => name?.ToLowerInvariant() switch
     {

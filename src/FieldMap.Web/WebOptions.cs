@@ -15,6 +15,12 @@ public sealed class WebOptions
     /// <summary>When set, phones must enter this code once before they can see the map or event files.</summary>
     public string? AccessCode { get; set; }
 
+    /// <summary>
+    /// Where the installed iOS and Android apps make their requests from (their pages live inside the app, so the
+    /// server is "another site" to them and has to allow them by name). Empty: the apps can't use this server.
+    /// </summary>
+    public List<string> AppOrigins { get; set; } = new() { "capacitor://localhost", "https://localhost" };
+
     /// <summary>Largest event file a phone may upload for conversion, in megabytes.</summary>
     public int MaxUploadMb { get; set; } = 25;
 
@@ -23,6 +29,12 @@ public sealed class WebOptions
 
     /// <summary>Keys or tokens for imagery sources that need one, by source id. Kept on the server, never sent to phones.</summary>
     public Dictionary<string, string> ImageryKeys { get; set; } = new();
+
+    /// <summary>APRS-IS (receive-only): APRS stations on the phones' map. Off unless AprsIs.Enabled is true.</summary>
+    public AprsIsOptions AprsIs { get; set; } = new();
+
+    /// <summary>Live hazards: road events, wildfires, evacuations, weather alerts. On unless Live.Enabled is false.</summary>
+    public LiveOptions Live { get; set; } = new();
 
     public string EventsFolder => string.IsNullOrWhiteSpace(EventsDir) ? Path.Combine(DataDir, "events") : EventsDir;
 }

@@ -8,6 +8,8 @@ if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")) 
     Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
 var builder = WebApplication.CreateBuilder(args);
+// One line per live-feed fetch is enough (LiveHub logs failures); the HTTP client would add four.
+builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Warning);
 builder.Configuration.AddJsonFile("/etc/fieldmap-web/appsettings.json", optional: true, reloadOnChange: false);
 builder.Configuration.AddEnvironmentVariables("FIELDMAP_");
 
@@ -17,6 +19,12 @@ builder.Services.AddSingleton<MapHost>();
 builder.Services.AddSingleton<EventFiles>();
 builder.Services.AddSingleton<AccessGate>();
 builder.Services.AddSingleton<ImageryProxy>();
+builder.Services.AddSingleton<Team>();
+builder.Services.AddSingleton<AprsHub>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<AprsHub>());
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<LiveHub>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<LiveHub>());
 builder.Services.AddResponseCompression(o =>
 {
     o.EnableForHttps = true;
@@ -24,6 +32,13 @@ builder.Services.AddResponseCompression(o =>
     o.Providers.Add<GzipCompressionProvider>();
     o.MimeTypes = new[] { "application/json", "application/geo+json", "text/html", "text/css", "text/javascript", "application/javascript", "application/manifest+json", "image/svg+xml" };
 });
+// The installed iOS/Android apps call this server from pages inside the app. They sign in with a token they send
+// themselves (never the cookie), so allowing them adds nothing a browser on another site could use.
+builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
+    .WithOrigins(options.AppOrigins.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim().TrimEnd('/')).ToArray())
+    .WithMethods("GET", "POST", "PUT", "DELETE")
+    .WithHeaders("Authorization", "Content-Type")
+    .SetPreflightMaxAge(TimeSpan.FromHours(24))));
 builder.Services.Configure<ForwardedHeadersOptions>(o =>
 {
     // Behind Caddy or nginx on the same machine.
@@ -49,6 +64,7 @@ app.Use((http, next) =>
 });
 app.UseForwardedHeaders();
 app.UseResponseCompression();
+app.UseCors(); // before the access gate: the app's browser asks permission (OPTIONS) without the sign-in
 
 var gate = app.Services.GetRequiredService<AccessGate>();
 app.Use(async (http, next) =>
@@ -79,6 +95,11 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 Api.Map(app);
+TeamApi.Map(app);
+AprsApi.Map(app);
+LiveApi.Map(app);
+HazmatApi.Map(app);
+FirstAidApi.Map(app);
 app.Services.GetRequiredService<MapHost>(); // load the data at start-up, not on the first request
 app.Run();
 

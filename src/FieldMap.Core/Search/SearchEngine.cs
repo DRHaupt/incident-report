@@ -140,10 +140,10 @@ public sealed class SearchEngine : IDisposable
     public List<Poi> NearestPois(string layer, GeoPoint p, int count, double maxKm = 200)
     {
         var all = new List<Poi>();
-        foreach (var region in _regions)
-            lock (region.Lock)
+        for (var ri = 0; ri < _regions.Count; ri++)
+            lock (_regions[ri].Lock)
             {
-                using var c = region.Db.CreateCommand();
+                using var c = _regions[ri].Db.CreateCommand();
                 // A bounding box first (cheap), widened until enough are found.
                 foreach (var radius in new[] { 10.0, 40, maxKm })
                 {
@@ -155,7 +155,7 @@ public sealed class SearchEngine : IDisposable
                     c.Parameters.AddWithValue("$b", box.MaxLat);
                     c.Parameters.AddWithValue("$c", box.MinLon);
                     c.Parameters.AddWithValue("$d", box.MaxLon);
-                    var found = ReadPois(c);
+                    var found = ReadPois(c, ri);
                     if (found.Count >= count || radius >= maxKm)
                     {
                         all.AddRange(found);
@@ -169,12 +169,12 @@ public sealed class SearchEngine : IDisposable
     public List<Poi> LoadPois()
     {
         var all = new List<Poi>();
-        foreach (var region in _regions)
-            lock (region.Lock)
+        for (var ri = 0; ri < _regions.Count; ri++)
+            lock (_regions[ri].Lock)
             {
-                using var c = region.Db.CreateCommand();
+                using var c = _regions[ri].Db.CreateCommand();
                 c.CommandText = "SELECT id,layer,kind,name,lat,lon,props,source,last_verified,source_id FROM pois";
-                all.AddRange(ReadPois(c));
+                all.AddRange(ReadPois(c, ri));
             }
         return all;
     }
@@ -208,14 +208,15 @@ public sealed class SearchEngine : IDisposable
         return null;
     }
 
-    internal static List<Poi> ReadPois(SqliteCommand c)
+    /// <summary>Reads POI rows; ids get the region's key (see <see cref="RegionKey"/>) so they're unique across regions.</summary>
+    internal static List<Poi> ReadPois(SqliteCommand c, int region)
     {
         var list = new List<Poi>();
         using var r = c.ExecuteReader();
         while (r.Read())
             list.Add(new Poi
             {
-                Id = r.GetInt64(0),
+                Id = RegionKey(region, r.GetInt64(0)),
                 Layer = r.GetString(1),
                 Kind = r.GetString(2),
                 Name = r.GetString(3),
@@ -376,23 +377,24 @@ public sealed class SearchEngine : IDisposable
                     };
                     var score = sim * 0.85 + rank / 1000.0 - ProximityPenalty(near, p);
                     long? id = r.IsDBNull(8) ? null : r.GetInt64(8);
-                    if (kind == ResultKind.Business && id is { } bid)
-                        id = BusinessKey(_regions.IndexOf(region), bid);
+                    if (kind is (ResultKind.Business or ResultKind.Poi) && id is { } rawId)
+                        id = RegionKey(_regions.IndexOf(region), rawId);
                     results.Add(new SearchResult(kind, name, r.IsDBNull(3) ? "" : r.GetString(3), p, score, r.IsDBNull(6) ? null : r.GetString(6), id));
                 }
             }
         return results;
     }
 
-    // Business ids are per region; results carry region * 1e9 + id.
-    private const long BusinessRegionStride = 1_000_000_000L;
+    // POI and business ids are numbered per region (each starts at 1), so with BC and Alberta both loaded the same id
+    // exists twice. Ids handed out carry region * 1e9 + id; the first region's ids are unchanged.
+    private const long RegionStride = 1_000_000_000L;
 
-    private static long BusinessKey(int region, long id) => region * BusinessRegionStride + id;
+    private static long RegionKey(int region, long id) => region * RegionStride + id;
 
     /// <summary>A business found by search (id from <see cref="SearchResult.PoiId"/>), or null.</summary>
     public Business? GetBusiness(long key)
     {
-        var ri = (int)(key / BusinessRegionStride);
+        var ri = (int)(key / RegionStride);
         if (ri < 0 || ri >= _regions.Count)
             return null;
         var region = _regions[ri];
@@ -402,7 +404,7 @@ public sealed class SearchEngine : IDisposable
             {
                 using var c = region.Db.CreateCommand();
                 c.CommandText = "SELECT name,kind,lat,lon,address,phone,hours,website FROM businesses WHERE id=$id";
-                c.Parameters.AddWithValue("$id", key % BusinessRegionStride);
+                c.Parameters.AddWithValue("$id", key % RegionStride);
                 using var r = c.ExecuteReader();
                 if (!r.Read())
                     return null;
@@ -475,7 +477,7 @@ public sealed class SearchEngine : IDisposable
         {
             // Below a matching name, above loose matches; nearer first.
             var score = 0.8 - ProximityPenalty(near, b.Point);
-            results.Add(new SearchResult(ResultKind.Business, b.Name, b.Kind + (b.Address.Length > 0 ? ", " + b.Address : ""), b.Point, score, null, BusinessKey(ri, b.Id)));
+            results.Add(new SearchResult(ResultKind.Business, b.Name, b.Kind + (b.Address.Length > 0 ? ", " + b.Address : ""), b.Point, score, null, RegionKey(ri, b.Id)));
         }
         return results;
     }

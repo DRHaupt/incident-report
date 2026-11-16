@@ -3,13 +3,18 @@
 export class AuthRequired extends Error { constructor(m) { super(m); this.name = 'AuthRequired'; } }
 export class ApiError extends Error { constructor(m) { super(m); this.name = 'ApiError'; } }
 
+import { native, nativeFetch } from './native.js';
+
 let onAuth = () => {};
 export const setAuthHandler = (fn) => { onAuth = fn; };
+
+/** fetch() for a server path: same site in a browser, the chosen server (with the sign-in) in the installed app. */
+export const serverFetch = (path, init = {}) => (native ? nativeFetch(path, init) : fetch(path, { credentials: 'same-origin', ...init }));
 
 async function request(path, init = {}) {
   let res;
   try {
-    res = await fetch(path, { credentials: 'same-origin', ...init });
+    res = await serverFetch(path, init);
   } catch (e) {
     if (e.name === 'AbortError') throw e;
     throw new ApiError('No connection to the server.');

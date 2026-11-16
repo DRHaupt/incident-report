@@ -6,7 +6,7 @@ namespace FieldMap.Web;
 
 /// <summary>
 /// Optional shared access code. Phones enter it once; the server answers with a long-lived HttpOnly cookie derived from
-/// the code, so changing the code signs every phone out. Repeated wrong codes from one address are slowed down.
+/// the code, so changing the code signs every phone out. The installed app gets the same value as a token. Repeated wrong codes from one address are slowed down.
 /// </summary>
 public sealed class AccessGate
 {
@@ -28,8 +28,20 @@ public sealed class AccessGate
 
     public bool Enabled => _code != null;
 
-    public bool IsAllowed(HttpContext http) =>
-        !Enabled || (http.Request.Cookies.TryGetValue(CookieName, out var c) && FixedEquals(c, _token!));
+    /// <summary>What a signed-in phone presents: the browser as a cookie, the installed app as a bearer token.</summary>
+    public string? Token => _token;
+
+    public bool IsAllowed(HttpContext http)
+    {
+        if (!Enabled)
+            return true;
+        if (http.Request.Cookies.TryGetValue(CookieName, out var c) && FixedEquals(c, _token!))
+            return true;
+        // The installed iOS/Android app runs from its own files, so for the browser inside it this server is another
+        // site and the cookie above is never sent. It sends the same token in the Authorization header instead.
+        var auth = http.Request.Headers.Authorization.ToString();
+        return auth.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) && FixedEquals(auth[7..].Trim(), _token!);
+    }
 
     public static bool IsProtectedPath(PathString path) =>
         (path.StartsWithSegments("/api") && !path.StartsWithSegments("/api/login") && !path.StartsWithSegments("/api/status")) ||
